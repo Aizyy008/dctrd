@@ -25,9 +25,6 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        
-        // Update currency rates every 12 hours
-        $schedule->command('currency:update')->twiceDaily(1, 13);
     }
 
     /**
