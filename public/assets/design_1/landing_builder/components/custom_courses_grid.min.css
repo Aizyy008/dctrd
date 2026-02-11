@@ -36,6 +36,8 @@
 @media (max-width: 991px) {
   .custom-courses-grid-section {
     height: auto;
+    margin-right: 0;
+    margin-left: 0;
   }
   .custom-courses-grid-section__floating-image-1, .custom-courses-grid-section__floating-image-2 {
     bottom: -54px;

@@ -6,13 +6,23 @@
  */
 
 
- :root {
+:root {
 
     --gray-sidebar: #EDF3F7;
     --mid-gray: #FBFCFF;
     --gray: #F5F8F9;
 
 }
+
+
+@media print {
+    * {
+        -webkit-print-color-adjust: exact !important; /* Chrome, Safari */
+        print-color-adjust: exact !important; /* Firefox */
+        color-adjust: exact !important;
+    }
+}
+
 
 /*# sourceMappingURL=custom.css.map */
 .cursor-pointer {
@@ -155,8 +165,8 @@
 }
 
 
-.webinar-form .webinar-category-filters {
-    padding: 24px 28px;
+.webinar-category-filters {
+    padding: 16px;
     border-radius: 10px;
     box-shadow: none;
     background-color: #ffffff;
@@ -622,21 +632,21 @@ table tr th:first-child, table tr td:first-child {
     max-height: 60px;
 }
 
-.webinars-lists-dropdown {
+/*.webinars-lists-dropdown {
     left: auto !important;
     right: 0;
     transform: translate3d(-167px, 14px, 0px) !important;
-}
+}*/
 
 .webinars-lists-dropdown .fa {
     width: 18px;
     min-width: 18px;
 }
 
-.rtl .webinars-lists-dropdown {
+/*.rtl .webinars-lists-dropdown {
     left: 0 !important;
     right: auto !important;
-}
+}*/
 
 .rtl .custom-file-label::after {
     right: auto !important;
@@ -757,7 +767,7 @@ table tr th:first-child, table tr td:first-child {
 }
 
 .select2-container {
-    z-index: 1212 !important;
+    z-index: 600 !important;
 }
 
 .modal .select2-container {

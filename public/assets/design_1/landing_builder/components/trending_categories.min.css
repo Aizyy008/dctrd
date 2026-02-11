@@ -16,6 +16,11 @@
   left: 0;
   transform: translateX(-100%);
 }
+@media (max-width: 991px) {
+  .trending-categories-section__floating-background {
+    display: none;
+  }
+}
 .trending-categories-section__item-card {
   position: relative;
   top: 0;

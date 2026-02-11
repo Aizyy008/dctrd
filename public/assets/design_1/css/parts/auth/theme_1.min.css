@@ -34,6 +34,10 @@
   transform: translateY(-50%);
   z-index: 3;
 }
+.rtl .auth-page-card .password-input-visibility {
+  right: auto;
+  left: 12px;
+}
 .auth-page-card .auth-slider-container {
   min-height: 630px;
   height: 100%;

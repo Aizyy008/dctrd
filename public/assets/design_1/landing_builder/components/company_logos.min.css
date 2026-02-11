@@ -11,3 +11,9 @@
 .company-logos-section__logo-card img {
   max-height: 32px;
 }
+@media (max-width: 991px) {
+  .company-logos-section {
+    margin-right: 0;
+    margin-left: 0;
+  }
+}

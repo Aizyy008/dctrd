@@ -234,6 +234,10 @@
 
         handleSearchableSelect2('search-upcoming-course-select2', adminPanelPrefix + '/upcoming_courses/search', 'title');
 
+        handleSearchableSelect2('search-event-select2', adminPanelPrefix + '/events/search', 'title');
+
+        handleSearchableSelect2('search-meeting-package-select2', adminPanelPrefix + '/meeting-packages/search', 'title');
+
 
         var datefilter = $('.datefilter');
         datefilter.daterangepicker({
@@ -270,20 +274,6 @@
         makeSummernote($(".summernote"))
     }
 
-
-    $('body').on('change', '.js-edit-content-locale, .js-reload-when-selected', function (e) {
-        const val = $(this).val();
-
-        if (val) {
-            var url = window.location.origin + window.location.pathname + window.location.search;
-
-            url += (url.indexOf('?') > -1) ? '&' : '?';
-
-            url += 'locale=' + val;
-
-            window.location.href = url;
-        }
-    });
 
     var $colorpickerinput = $(".colorpickerinput");
     if ($colorpickerinput.length) {
@@ -327,80 +317,6 @@
         return o;
     };
 
-    //
-    // delete sweet alert
-    $('body').on('click', '.delete-action', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const href = $(this).attr('href');
-
-        const title = $(this).attr('data-title') ?? deleteAlertHint;
-        const confirm = $(this).attr('data-confirm') ?? deleteAlertConfirm;
-
-        var html = '<div class="">\n' +
-            '    <p class="text-center">' + title + '</p>\n' +
-            '    <div class="d-flex align-items-center justify-content-center">\n' +
-            '        <button type="button" id="swlDelete" data-href="' + href + '" class="btn btn-sm btn-primary">' + confirm + '</button>\n' +
-            '        <button type="button" class="btn btn-sm btn-danger ml-10 close-swl">' + deleteAlertCancel + '</button>\n' +
-            '    </div>\n' +
-            '</div>';
-
-        Swal.fire({
-            title: deleteAlertTitle,
-            html: html,
-            icon: 'warning',
-            showConfirmButton: false,
-            showCancelButton: false,
-            allowOutsideClick: () => !Swal.isLoading(),
-        })
-    });
-
-    $('body').on('click', '#swlDelete', function (e) {
-        e.preventDefault();
-        var $this = $(this);
-        const href = $this.attr('data-href');
-
-        $this.addClass('loadingbar primary').prop('disabled', true);
-
-        $.get(href, function (result) {
-            if (result && result.code === 200) {
-
-                const title = result.title ?? deleteAlertSuccess;
-                const msg = result.msg ?? deleteAlertSuccessHint;
-
-                Swal.fire({
-                    title: title,
-                    html: `<div class="text-center mt-8 mb-12">${msg}</div>`,
-                    showConfirmButton: false,
-                    icon: 'success',
-                });
-
-                if (typeof result.dont_reload === "undefined") {
-                    setTimeout(() => {
-                        if (typeof result.redirect_to !== "undefined" && result.redirect_to !== undefined && result.redirect_to !== null && result.redirect_to !== '') {
-                            window.location.href = result.redirect_to;
-                        } else {
-                            window.location.reload();
-                        }
-                    }, 1000);
-                }
-            } else {
-                Swal.fire({
-                    title: deleteAlertFail,
-                    text: deleteAlertFailHint,
-                    icon: 'error',
-                })
-            }
-        }).error(err => {
-            Swal.fire({
-                title: deleteAlertFail,
-                text: deleteAlertFailHint,
-                icon: 'error',
-            })
-        }).always(() => {
-            $this.removeClass('loadingbar primary').prop('disabled', false);
-        });
-    })
 
     $('body').on('change', 'input[type="file"].custom-file-input', function () {
         const value = this.value;

@@ -26,6 +26,10 @@
   z-index: 1;
   transition: all 0.3s ease;
 }
+.profile-container .product-card, .profile-container .product-card__mask {
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+}
 .product-card:hover .product-card__mask {
   top: -8px;
   bottom: 8px;

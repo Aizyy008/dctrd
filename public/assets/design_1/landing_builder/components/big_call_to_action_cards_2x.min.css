@@ -30,8 +30,8 @@
 }
 @media (max-width: 991px) {
   .big-call-to-action-cards-2x-section {
-    margin-left: -24px;
-    margin-right: -24px;
+    margin-left: 0;
+    margin-right: 0;
     padding: 80px 24px 48px;
   }
 }
