@@ -17,14 +17,17 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => '/development'], function () {
 
     Route::get('/', function () {
-        return 'api test';
+        return response()->json([
+            'code' => 200,
+            'message' => 'OK, API test'
+        ]);
     });
 
     Route::middleware('api') ->group(base_path('routes/api/auth.php'));
 
     Route::namespace('Web')->group(base_path('routes/api/guest.php'));
 
-    Route::prefix('panel')->middleware('api.auth')->namespace('Panel')->group(base_path('routes/api/user.php'));
+    Route::prefix('panel')->namespace('Panel')->group(base_path('routes/api/user.php'));
 
     Route::group(['namespace' => 'Config', 'middleware' => []], function () {
         Route::get('/config', ['uses' => 'ConfigController@list']);
