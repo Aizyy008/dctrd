@@ -112,7 +112,7 @@ return [
 'finish_meeting' => 'Finish meeting',
 'meeting_no_result' => 'No meeting requests!',
 'meeting_no_result_hint' => 'Your scheduled meetings will appear here.',
-'student_contact_information' => 'Student contact information',
+'student_contact_information' => 'Contact information',
 'instructor_contact_information' => 'Instructor contact information',
 'my_timesheet' => 'My timesheet',
 'saturday' => 'Saturday',

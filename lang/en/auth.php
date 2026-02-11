@@ -90,5 +90,9 @@ return [
     'logout' => 'Logout',
     'phone' => 'Phone',
     'reset_password_notification' => 'Reset Password',
+    'new_password' => 'New Password',
+    'retype_new_password' => 'Retype New Password',
+    'reset_your_password' => 'Reset your Password',
+
 
 ];

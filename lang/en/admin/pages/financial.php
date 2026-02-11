@@ -49,7 +49,7 @@ return [
 'offline_payment' => 'Offline Payment',
 'offline_payments' => 'Offline Payments',
 'bank' => 'Bank',
-'referral_code' => 'Referral Code',
+'referral_code' => 'Reference Code',
 
 'documents' => 'Documents',
 'new_document' => 'New Document',
@@ -117,5 +117,6 @@ return [
 'from_date' => 'From Date',
 'to_date' => 'To Date',
 'document_number' => 'Document ID',
+'edit_subscribe' => 'Edit subscribe',
 
 ];
