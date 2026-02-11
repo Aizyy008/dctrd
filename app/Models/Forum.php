@@ -59,6 +59,21 @@ class Forum extends Model implements TranslatableContract
         return $this->hasMany('App\Models\ForumTopic', 'forum_id', 'id');
     }
 
+    public function visits()
+    {
+        return $this->morphMany(VisitLog::class, 'targetable');
+    }
+
+    public function userGroup()
+    {
+        return $this->belongsTo('App\Models\Group', 'group_id', 'id');
+    }
+
+    public function userRole()
+    {
+        return $this->belongsTo('App\Models\Role', 'role_id', 'id');
+    }
+
     public function getUrl()
     {
         return '/forums/' . $this->slug . '/topics';

@@ -17,6 +17,7 @@ class CookieSecurityController extends Controller
 
         return response()->json([
             'code' => 200,
+            'title' => trans('public.request_success'),
             'msg' => trans('update.cookie_security_successfully_submitted')
         ]);
     }
@@ -29,7 +30,24 @@ class CookieSecurityController extends Controller
 
         return response()->json([
             'code' => 200,
+            'title' => trans('public.request_success'),
             'msg' => trans('update.cookie_security_successfully_submitted')
+        ]);
+    }
+
+    public function getCustomizeModal()
+    {
+        $cookieSettings = getCookieSettings();
+
+        $data = [
+            'cookieSettings' => $cookieSettings,
+        ];
+
+        $html = (string)view()->make("design_1.web.includes.cookie_security.customize_modal", $data);
+
+        return response()->json([
+            'code' => 200,
+            'html' => $html,
         ]);
     }
 
@@ -53,4 +71,5 @@ class CookieSecurityController extends Controller
             Cookie::queue($this->cookieKey, json_encode($data), 30 * 24 * 60);
         }
     }
+
 }

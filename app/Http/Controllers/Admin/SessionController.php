@@ -91,6 +91,7 @@ class SessionController extends Controller
                     'moderator_secret' => $data['moderator_secret'] ?? '',
                     'check_previous_parts' => $data['check_previous_parts'],
                     'access_after_day' => $data['access_after_day'],
+                    'enable_attendance' => (!empty($data['enable_attendance']) and $data['enable_attendance'] == 'on'),
                     'status' => (!empty($data['status']) and $data['status'] == 'on') ? Session::$Active : Session::$Inactive,
                     'created_at' => time()
                 ]);
@@ -127,6 +128,11 @@ class SessionController extends Controller
                 if (!empty($session) and !empty($session->chapter_id)) {
                     WebinarChapterItem::makeItem($webinar->creator_id, $session->chapter_id, $session->id, WebinarChapterItem::$chapterSession);
                 }
+
+                $webinar->update([
+                    'updated_at' => time()
+                ]);
+
 
                 return response()->json([
                     'code' => 200,
@@ -219,6 +225,7 @@ class SessionController extends Controller
                     'agora_settings' => $agoraSettings,
                     'check_previous_parts' => $data['check_previous_parts'],
                     'access_after_day' => $data['access_after_day'],
+                    'enable_attendance' => (!empty($data['enable_attendance']) and $data['enable_attendance'] == 'on'),
                     'updated_at' => time()
                 ]);
 
@@ -233,6 +240,10 @@ class SessionController extends Controller
                 if ($changeChapter) {
                     WebinarChapterItem::changeChapter($session->creator_id, $oldChapterId, $session->chapter_id, $session->id, WebinarChapterItem::$chapterSession);
                 }
+
+                $webinar->update([
+                    'updated_at' => time()
+                ]);
 
                 removeContentLocale();
 

@@ -27,7 +27,8 @@ class PagesController extends Controller
                 'page' => $page
             ];
 
-            return view('web.default.pages.other_pages', $data);
+
+            return view('design_1.web.pages.index', $data);
         }
 
         abort(404);

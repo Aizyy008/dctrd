@@ -16,7 +16,7 @@ class RelatedCoursesController extends Controller
 
         $validator = Validator::make($data, [
             'item_id' => 'required',
-            'item_type' => 'required|in:webinar,bundle,product,upcomingCourse',
+            'item_type' => 'required|in:webinar,bundle,product,upcomingCourse,event',
             'course_id' => 'required|exists:webinars,id',
         ]);
 
@@ -50,7 +50,7 @@ class RelatedCoursesController extends Controller
 
         $validator = Validator::make($data, [
             'item_id' => 'required',
-            'item_type' => 'required|in:webinar,bundle,product,upcomingCourse',
+            'item_type' => 'required|in:webinar,bundle,product,upcomingCourse,event',
             'course_id' => 'required|exists:webinars,id',
         ]);
 
@@ -118,6 +118,10 @@ class RelatedCoursesController extends Controller
 
             case 'upcomingCourse':
                 $type = "App\Models\UpcomingCourse";
+                break;
+
+            case 'event':
+                $type = "App\Models\Event";
                 break;
         }
 

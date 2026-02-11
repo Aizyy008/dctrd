@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Exports\BlogsExport;
 use App\Http\Controllers\Admin\traits\ProductBadgeTrait;
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
@@ -13,12 +12,6 @@ use App\Models\Translation\BlogTranslation;
 use App\Models\Role;
 use App\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Validator;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class BlogController extends Controller
 {
@@ -106,10 +99,12 @@ class BlogController extends Controller
         $this->validate($request, [
             'locale' => 'required',
             'title' => 'required|string|max:255',
+            'subtitle' => 'required|string',
             'category_id' => 'required|numeric',
             'image' => 'required|string',
             'description' => 'required|string',
             'content' => 'required|string',
+            'study_time' => 'nullable|numeric',
         ]);
 
         $data = $request->all();
@@ -118,6 +113,7 @@ class BlogController extends Controller
             'slug' => Blog::makeSlug($data['title']),
             'category_id' => $data['category_id'],
             'author_id' => !empty($data['author_id']) ? $data['author_id'] : auth()->id(),
+            'study_time' => $data['study_time'] ?? null,
             'image' => $data['image'],
             'enable_comment' => (!empty($data['enable_comment']) and $data['enable_comment'] == 'on'),
             'status' => (!empty($data['status']) and $data['status'] == 'on') ? 'publish' : 'pending',
@@ -131,6 +127,7 @@ class BlogController extends Controller
                 'locale' => mb_strtolower($data['locale']),
             ], [
                 'title' => $data['title'],
+                'subtitle' => $data['subtitle'],
                 'description' => $data['description'],
                 'meta_description' => $data['meta_description'],
                 'content' => $data['content'],
@@ -144,7 +141,7 @@ class BlogController extends Controller
             }
         }
 
-        return redirect(getAdminPanelUrl().'/blog');
+        return redirect(getAdminPanelUrl("/blog/{$blog->id}/edit"));
     }
 
     public function edit(Request $request, $post_id)
@@ -173,10 +170,12 @@ class BlogController extends Controller
 
         $this->validate($request, [
             'title' => 'required|string|max:255',
+            'subtitle' => 'required|string',
             'category_id' => 'required|numeric',
             'image' => 'required|string',
             'description' => 'required|string',
             'content' => 'required|string',
+            'study_time' => 'nullable|numeric',
         ]);
 
         $data = $request->all();
@@ -185,6 +184,7 @@ class BlogController extends Controller
         $post->update([
             'category_id' => $data['category_id'],
             'author_id' => !empty($data['author_id']) ? $data['author_id'] : $post->author_id,
+            'study_time' => $data['study_time'] ?? null,
             'image' => $data['image'],
             'enable_comment' => (!empty($data['enable_comment']) and $data['enable_comment'] == 'on'),
             'status' => (!empty($data['status']) and $data['status'] == 'on') ? 'publish' : 'pending',
@@ -197,6 +197,7 @@ class BlogController extends Controller
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => $data['subtitle'],
             'description' => $data['description'],
             'meta_description' => $data['meta_description'],
             'content' => $data['content'],
@@ -219,7 +220,7 @@ class BlogController extends Controller
             sendNotification('publish_instructor_blog_post', $notifyOptions, $post->author_id);
         }
 
-        return redirect(getAdminPanelUrl().'/blog');
+        return redirect(getAdminPanelUrl("/blog/{$post->id}/edit"));
     }
 
     public function delete($post_id)
@@ -250,150 +251,4 @@ class BlogController extends Controller
 
         return response()->json($result, 200);
     }
-
-    public function export()
-    {
-        return Excel::download(new BlogsExport, 'blogs.xlsx');
-    }
-
-    public function import(Request $request)
-{
-    $request->validate([
-        'excel_file' => 'required|mimes:xlsx,xls,csv'
-    ]);
-
-    if (!$request->hasFile('excel_file')) {
-        return back()->with('error', 'No file was uploaded.');
-    }
-
-    $file = $request->file('excel_file');
-
-    try {
-        $data = Excel::toArray([], $file)[0];
-
-        if (empty($data) || count($data) < 2) {
-            return back()->with('error', 'The uploaded file is empty or has an incorrect format.');
-        }
-
-        // Remove the header row
-        array_shift($data);
-
-        DB::beginTransaction();
-        try {
-            foreach ($data as $row) {
-                if (count($row) < 6) {
-                    continue;
-                }
-
-                $titleEn = trim($row[0]);
-                $titleAr = trim($row[1]);
-                $titleEs = trim($row[2]);
-                $categoryId = intval($row[3]);
-                $authorId = intval($row[4]);
-                $status = strtolower(trim($row[5]));
-
-                // Validate category
-                $category = DB::table('blog_categories')->where('id', $categoryId)->exists();
-                if (!$category) {
-                    return back()->with('error', "Category ID '{$categoryId}' not found.");
-                }
-
-                // Validate author
-                $author = DB::table('users')->where('id', $authorId)->exists();
-                if (!$author) {
-                    return back()->with('error', "Author ID '{$authorId}' not found.");
-                }
-
-                // Validate status (only allow "pending" or "published")
-                if (!in_array($status, ['pending', 'publish'])) {
-                    $status = 'pending';
-                }
-
-                // Create Blog Entry
-                $blog = Blog::create([
-                    'category_id' => $categoryId,
-                    'author_id' => $authorId,
-                    'slug' => Str()->slug($titleEn), // Generate a unique slug
-                    'status' => $status,
-                    'visit_count' => 0,
-                    'enable_comment' => 1,
-                     'created_at' => now()->timestamp, // Convert to UNIX timestamp
-                ]);
-
-                // Insert into blog_translations for multiple languages
-                DB::table('blog_translations')->insert([
-                    [
-                        'blog_id' => $blog->id,
-                        'locale' => 'en',
-                        'title' => $titleEn,
-                        'description' => null,
-                        'content' => null,
-                        'meta_description' => null,
-                    ],
-                    [
-                        'blog_id' => $blog->id,
-                        'locale' => 'ar',
-                        'title' => $titleAr,
-                        'description' => null,
-                        'content' => null,
-                        'meta_description' => null,
-
-                    ],
-                    [
-                        'blog_id' => $blog->id,
-                        'locale' => 'es',
-                        'title' => $titleEs,
-                        'description' => null,
-                        'content' => null,
-                        'meta_description' => null,
-                    ]
-                ]);
-            }
-
-            DB::commit();
-            return back()->with('success', 'Blogs imported successfully!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error inserting data: ' . $e->getMessage());
-        }
-    } catch (\Exception $e) {
-        return back()->with('error', 'Error processing file: ' . $e->getMessage());
-    }
-    }
-
-
-
-
-    public function downloadTemplate()
-    {
-        $headers = ['Title En','Title Ar','Title Es','Category ID', 'Author ID', 'Status'];
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Set headers in the first row (A1:F1)
-        foreach ($headers as $index => $header) {
-            $sheet->setCellValueByColumnAndRow($index + 1, 1, $header);
-        }
-
-        // Apply bold styling to headers
-        $styleArray = [
-            'font' => ['bold' => true],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-        ];
-        $sheet->getStyle('A1:F1')->applyFromArray($styleArray);
-
-        // Auto-size columns
-        foreach (range('A', 'F') as $column) {
-            $sheet->getColumnDimension($column)->setAutoSize(true);
-        }
-
-        $writer = new Xlsx($spreadsheet);
-        $fileName = 'blog_import_template.xlsx';
-        $tempFilePath = storage_path('app/' . $fileName);
-        $writer->save($tempFilePath);
-
-        return response()->download($tempFilePath)->deleteFileAfterSend(true);
-    }
-
 }

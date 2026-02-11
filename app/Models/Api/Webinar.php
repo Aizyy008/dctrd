@@ -77,7 +77,7 @@ class Webinar extends Model
                 'count' => $this->sales->count(),
                 'amount' => $this->sales->sum('amount'),
             ],
-            'sales_count_number'=>$this->sales_count_number,
+            'sales_count_number' => $this->sales_count_number,
             'is_favorite' => $this->isFavorite(),
 
             'price_string' => ($this->price > 0) ? handlePrice($this->price) : null,
@@ -157,14 +157,14 @@ class Webinar extends Model
             'subscribe' => $this->subscribe ? true : false,
             'description' => $this->description,
             'prerequisites' => $this->prerequisites()
-                ->whereHas('prerequisiteWebinar')
+                ->whereHas('course')
                 ->orderBy('order', 'asc')
                 ->get()
                 ->map(function ($prerequisite) {
-                    if ($prerequisite->prerequisiteWebinar) {
+                    if ($prerequisite->course) {
                         return [
                             'required' => $prerequisite->required,
-                            'webinar' => $prerequisite->prerequisiteWebinar->brief ?? null,
+                            'webinar' => $prerequisite->course->brief ?? null,
                         ];
                     }
                 }),
@@ -444,6 +444,7 @@ class Webinar extends Model
         }
         return $array;
     }
+
     public function scopeHandleFilters($query)
     {
         $request = request();
@@ -640,11 +641,14 @@ class Webinar extends Model
         return $progress;
     }
 
-    public function getProgress($isLearningPage = false)
+    public function getProgress($isLearningPage = false, $user = null)
     {
         $progress = 0;
 
-        $user = apiAuth();
+        if (empty($user)) {
+            $user = apiAuth();
+        }
+
         if (!$user and !$this->isWebinar()) {
             return null;
         }
@@ -852,7 +856,7 @@ class Webinar extends Model
         $prerequisites = $this->prerequisites;
         if (count($prerequisites)) {
             foreach ($prerequisites as $prerequisite) {
-                $prerequisiteWebinar = $prerequisite->prerequisiteWebinar;
+                $prerequisiteWebinar = $prerequisite->course;
 
                 if ($prerequisite->required and !empty($prerequisiteWebinar) and !$prerequisiteWebinar->checkUserHasBought($user)) {
                     $isRequiredPrerequisite = true;

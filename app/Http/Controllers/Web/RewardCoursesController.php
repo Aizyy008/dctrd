@@ -16,6 +16,11 @@ class RewardCoursesController extends Controller
 
         $classesController = new ClassesController();
 
+
+        $filterMaxPrice = $webinarsQuery->max('price') ?? 10000;
+        $coursesRatingsCount = $classesController->getCoursesCountByRatings(deepClone($webinarsQuery));
+
+
         $webinarsQuery = $classesController->handleFilters($request, $webinarsQuery);
 
         $sort = $request->get('sort', null);
@@ -25,8 +30,11 @@ class RewardCoursesController extends Controller
                 ->orderBy('webinars.updated_at', 'desc');
         }
 
-        $webinars = $webinarsQuery->with(['tickets'])
-            ->paginate(6);
+        $getListData = $classesController->getListData($request, $webinarsQuery);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
 
         $seoSettings = getSeoMetas('reward_courses');
         $pageTitle = !empty($seoSettings['title']) ? $seoSettings['title'] : '';
@@ -37,14 +45,12 @@ class RewardCoursesController extends Controller
             'pageTitle' => $pageTitle,
             'pageDescription' => $pageDescription,
             'pageRobot' => $pageRobot,
-            'webinars' => $webinars,
-            'webinarsCount' => $webinars->total(),
-            'sortFormAction' => '/reward-courses',
-            'category' => null,
-            'featureWebinars' => null,
-            'isRewardCourses' => true
+            'pageBasePath' => $request->getPathInfo(),
+            'filterMaxPrice' => ($filterMaxPrice > 1000) ? $filterMaxPrice : 1000,
+            'coursesRatingsCount' => $coursesRatingsCount,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view(getTemplate() . '.pages.categories', $data);
+        return view('design_1.web.courses.lists.reward_courses', $data);
     }
 }

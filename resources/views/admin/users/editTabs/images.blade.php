@@ -4,7 +4,7 @@
             <form action="{{ getAdminPanelUrl() }}/users/{{ $user->id .'/updateImage' }}" method="Post">
                 {{ csrf_field() }}
 
-                <div class="form-group mt-15">
+                <div class="form-group">
                     <label class="input-label">{{ trans('admin/main.avatar') }}</label>
                     <div class="input-group">
                         <div class="input-group-prepend">

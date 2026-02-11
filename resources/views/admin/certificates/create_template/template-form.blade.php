@@ -37,7 +37,7 @@
                 <div class="invalid-feedback">@error('image') {{ $message }} @enderror</div>
             </div>
             <div class="invalid-feedback">@error('image') {{ $message }} @enderror</div>
-            <div class="text-muted text-small mt-1">{{ trans('update.certificate_template_image_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.certificate_template_image_hint') }}</div>
         </div>
 
         <div class="form-group">

@@ -3,15 +3,17 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
+use App\Models\Certificate;
 use App\Models\Comment;
 use App\Models\CourseForum;
-
 use App\Models\Gift;
 use App\Models\InstallmentOrder;
 use App\Models\Quiz;
 use App\Models\QuizzesResult;
 use App\Models\Role;
 use App\Models\Sale;
+use App\Models\TimeSpentOnCourse;
+use App\Models\VisitLog;
 use App\Models\Webinar;
 use App\Models\WebinarAssignment;
 use App\Models\WebinarAssignmentHistory;
@@ -23,11 +25,12 @@ use Illuminate\Support\Facades\DB;
 
 class WebinarStatisticController extends Controller
 {
-    public function index(Request $request, $webinarId)
+
+    public function index(Request $request, $courseId)
     {
         $user = auth()->user();
 
-        $webinar = Webinar::where('id', $webinarId)
+        $course = Webinar::where('id', $courseId)
             ->where(function ($query) use ($user) {
                 $query->where(function ($query) use ($user) {
                     $query->where('creator_id', $user->id)
@@ -60,13 +63,13 @@ class WebinarStatisticController extends Controller
             ])
             ->first();
 
-        if (!empty($webinar)) {
-            $studentsIds = Sale::where('webinar_id', $webinarId)
+        if (!empty($course)) {
+            $studentsIds = Sale::where('webinar_id', $course->id)
                 ->whereNull('refund_at')
                 ->pluck('buyer_id')
                 ->toArray();
 
-            $gifts = Gift::query()->where('webinar_id', $webinar->id)
+            $gifts = Gift::query()->where('webinar_id', $course->id)
                 ->where('status', 'active')
                 ->where(function ($query) {
                     $query->whereNull('date');
@@ -75,109 +78,145 @@ class WebinarStatisticController extends Controller
                 ->whereHas('sale')
                 ->get();
 
-            $installmentStudentIds = InstallmentOrder::query()
-                ->where('webinar_id', $webinar->id)
-                ->where('status', 'open')
-                ->pluck('user_id')
-                ->toArray();
+            $courseStudentsLists = $this->getStudentsLists($request, $course, $studentsIds, $gifts);
 
-            $studentsIds = array_merge($studentsIds, $installmentStudentIds);
+            if ($request->ajax()) {
+                return $courseStudentsLists;
+            }
 
-            $getStudents = $this->getStudents($request, $webinar, $studentsIds, $gifts);
+            $topSummary = $this->getTopSummary($course, $studentsIds, $gifts);
 
             $data = [
                 'pageTitle' => trans('update.course_statistics'),
-                'webinar' => $webinar,
-                'students' => $getStudents['users'],
-                'unregisteredUsers' => $getStudents['unregisteredUsers'],
-                'studentsCount' => count(array_unique($studentsIds)) + count($gifts),
-                'commentsCount' => $this->getCommentsCount($webinarId),
-                'salesCount' => count($studentsIds) + count($gifts),
-                'salesAmount' => $this->getSalesAmounts($webinarId, $gifts->pluck('id')->toArray()),
-                'chaptersCount' => $webinar->chapters->count(),
-                'sessionsCount' => $webinar->sessions->count(),
-                'pendingQuizzesCount' => $this->getPendingQuizzesCount($webinarId),
-                'pendingAssignmentsCount' => $this->getPendingAssignmentsCount($webinarId),
-                'courseRate' => $webinar->getRate(),
-                'courseRateCount' => $webinar->reviews->count(),
-                'quizzesAverageGrade' => $this->getQuizzesAverageGrade($webinarId),
-                'assignmentsAverageGrade' => $this->getAssignmentsAverageGrade($webinarId),
-                'courseForumsMessagesCount' => $this->getCourseForumsMessagesCount($webinarId),
-                'courseForumsStudentsCount' => $this->getCourseForumsStudentsCount($webinarId),
-                'studentsUserRolesChart' => $this->handleStudentsUserRolesChart($studentsIds),
-                'courseProgressChart' => $this->handleCourseProgressChart($webinar, $studentsIds),
-                'quizStatusChart' => $this->handleQuizStatusChart($webinar),
-                'assignmentsStatusChart' => $this->handleAssignmentsStatusChart($webinar),
-                'monthlySalesChart' => $this->getMonthlySalesChart($webinarId),
-                'courseProgressLineChart' => $this->handleCourseProgressLineChart($webinar, $studentsIds),
+                'course' => $course,
+                'pieCharts' => $this->getPieChartsData($course, $studentsIds),
+                'learningActivity' => $this->getStudentLearningActivityData($studentsIds),
+                'courseProgressLineChart' => $this->handleCourseProgressLineChart($course, $studentsIds),
+                'monthlySalesChart' => $this->getMonthlySalesChart($course->id),
+                'visitorsChart' => $this->handleVisitorsChart($user),
+                'courseStudents' => $courseStudentsLists,
             ];
 
-            return view('web.default.panel.webinar.course_statistics.index', $data);
+            $data = array_merge($data, $topSummary);
+            $data = array_merge($data, $this->getAvgStatsData($course));
+
+            return view('design_1.panel.webinars.course_statistics.index', $data);
         }
 
         abort(404);
     }
 
-    private function getStudents(Request $request, $webinar, $studentsIds, $gifts)
+    private function getTopSummary($course, $studentsIds, $gifts)
     {
-        $receiptsGift = [];
-        $unregisteredGift = [];
 
-        foreach ($gifts as $gift) {
-            $receipt = $gift->receipt;
+        $courseWatchTimeSeconds = TimeSpentOnCourse::query()->where('course_id', $course->id)
+            ->sum('seconds_spent');
+        $courseWatchTimeMinutes = ($courseWatchTimeSeconds > 0) ? $courseWatchTimeSeconds / 60 : 0;
 
-            if (!empty($receipt)) {
-                $receiptsGift[] = $receipt->id;
-            } else {
-                $unregisteredGift[] = $gift;
-            }
-        }
-
-        $studentsIds = array_merge($studentsIds, $receiptsGift);
-
-        $users = User::query()->whereIn('id', $studentsIds)
-            ->paginate(10);
-
-        $quizzesIds = $webinar->quizzes->pluck('id')->toArray();
-        $assignmentsIds = $webinar->assignments->pluck('id')->toArray();
-
-        foreach ($users as $user) {
-            $user->course_progress = $this->getCourseProgressForStudent($webinar, $user->id);
-
-            $user->passed_quizzes = Quiz::whereIn('quizzes.id', $quizzesIds)
-                ->join('quizzes_results', 'quizzes_results.quiz_id', 'quizzes.id')
-                ->select(DB::raw('count(quizzes_results.id) as count'))
-                ->where('quizzes_results.user_id', $user->id)
-                ->where('quizzes_results.status', QuizzesResult::$passed)
-                ->first()->count;
-
-            $assignmentsHistoriesCount = WebinarAssignmentHistory::whereIn('assignment_id', $assignmentsIds)
-                ->where('student_id', $user->id)
-                ->count();
-
-            $user->unsent_assignments = count($assignmentsIds) - $assignmentsHistoriesCount;
-
-            $user->pending_assignments = WebinarAssignmentHistory::whereIn('assignment_id', $assignmentsIds)
-                ->where('student_id', $user->id)
-                ->where('status', WebinarAssignmentHistory::$pending)
-                ->count();
-        }
-
-        $unregisteredUsers = Collection::make(new User());
-
-        if (count($unregisteredGift) and $request->get('page', 1) == 1) {
-            foreach ($unregisteredGift as $item) {
-                $newUser = new User();
-                $newUser->full_name = $item->name;
-                $newUser->email = $item->email;
-
-                $unregisteredUsers = $unregisteredUsers->push($newUser);
-            }
-        }
+        $visitsCount = $course->visits()->count();
 
         return [
-            'users' => $users,
-            'unregisteredUsers' => $unregisteredUsers,
+            'studentsCount' => count(array_unique($studentsIds)) + count($gifts),
+            'commentsCount' => $this->getCommentsCount($course->id),
+            'salesAmount' => $this->getSalesAmounts($course->id, $gifts->pluck('id')->toArray()),
+            'courseForumsMessagesCount' => $this->getCourseForumsMessagesCount($course->id),
+            'pendingAssignmentsCount' => $this->getPendingAssignmentsCount($course->id),
+            'pendingQuizzesCount' => $this->getPendingQuizzesCount($course->id),
+            'courseWatchTimeMinutes' => $courseWatchTimeMinutes,
+            'visitsCount' => $visitsCount,
+        ];
+    }
+
+    private function getAvgStatsData($course): array
+    {
+        return [
+            'courseRate' => $course->getRate(),
+            'courseRateCount' => $course->reviews->count(),
+            'quizzesAverageGrade' => $this->getQuizzesAverageGrade($course->id),
+            'assignmentsAverageGrade' => $this->getAssignmentsAverageGrade($course->id),
+            'courseForumsMessagesCount' => $this->getCourseForumsMessagesCount($course->id),
+            'courseForumsStudentsCount' => $this->getCourseForumsStudentsCount($course->id),
+        ];
+    }
+
+    private function getPieChartsData($course, $studentsIds)
+    {
+        $studentsUserRolesChart = $this->handleStudentsUserRolesChart($studentsIds);
+        $courseProgressChart = $this->handleCourseProgressChart($course, $studentsIds);
+        $quizStatusChart = $this->handleQuizStatusChart($course);
+        $assignmentsStatusChart = $this->handleAssignmentsStatusChart($course);
+
+        return [
+            'studentsUserRolesChart' => $studentsUserRolesChart,
+            'courseProgressChart' => $courseProgressChart,
+            'quizStatusChart' => $quizStatusChart,
+            'assignmentsStatusChart' => $assignmentsStatusChart,
+        ];
+    }
+
+    private function getStudentLearningActivityData($studentsIds): array
+    {
+        $learningPageActivityQuery = TimeSpentOnCourse::query()->whereIn('user_id', $studentsIds)
+            ->where('page', 'learning_page');
+
+        $time = time();
+        $beginOfYear = strtotime(date('Y-01-01', $time));// First day of the year.
+        $endOfYear = strtotime(date('Y-m-d', strtotime('12/31'))); // Last day of the year.
+
+
+        $labels = [];
+        $data = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $date = Carbon::create(date('Y'), $month);
+
+            $startDate = $date->timestamp;
+            $endDate = $date->copy()->endOfMonth()->timestamp;
+
+            $labels[] = trans('panel.month_' . $month);
+
+            $activitySeconds = deepClone($learningPageActivityQuery)->where('entry_time', '>=', $startDate)
+                ->where('exit_time', '<=', $endDate)
+                ->sum('seconds_spent');
+
+            $data[] = ($activitySeconds > 0) ? round($activitySeconds / 60, 1) : 0;
+        }
+
+        // Today Activity
+        $beginOfDay = strtotime("today", $time);
+        $endOfDay = strtotime("tomorrow", $beginOfDay) - 1;
+
+        $totalActivitySeconds = deepClone($learningPageActivityQuery)->sum('seconds_spent');
+
+        // Current Month
+        $beginOfMonth = strtotime(date('Y-m-01', $time));// First day of the month.
+        $endOfMonth = strtotime(date('Y-m-t', $time));// Last day of the month.
+
+        $monthActivitySeconds = deepClone($learningPageActivityQuery)->where('entry_time', '>=', $beginOfMonth)
+            ->where('exit_time', '<=', $endOfMonth)
+            ->sum('seconds_spent');
+
+        // Current Year
+        $yearActivitySeconds = deepClone($learningPageActivityQuery)->where('entry_time', '>=', $beginOfYear)
+            ->where('exit_time', '<=', $endOfYear)
+            ->sum('seconds_spent');
+
+
+        $stats = [
+            'total' => ($totalActivitySeconds > 0) ? round($totalActivitySeconds / 60, 1) : 0,
+            'year' => ($yearActivitySeconds > 0) ? round($yearActivitySeconds / 60, 1) : 0,
+            'month' => ($monthActivitySeconds > 0) ? round($monthActivitySeconds / 60, 1) : 0,
+        ];
+
+
+        $learningActivityChart = [
+            'labels' => $labels,
+            'data' => $data,
+        ];
+
+        return [
+            'learningActivityChart' => $learningActivityChart,
+            'activityStats' => $stats,
         ];
     }
 
@@ -279,8 +318,13 @@ class WebinarStatisticController extends Controller
             ->get();
 
         $data = [0, 0, 0];
+        $hasData = false;
 
         foreach ($users as $user) {
+            if ($user->count > 0) {
+                $hasData = true;
+            }
+
             if ($user->role_name == Role::$user) {
                 $data[0] = $user->count;
             } else if ($user->role_name == Role::$teacher) {
@@ -292,7 +336,8 @@ class WebinarStatisticController extends Controller
 
         return [
             'labels' => $labels,
-            'data' => $data
+            'data' => $data,
+            'hasData' => $hasData,
         ];
     }
 
@@ -303,6 +348,8 @@ class WebinarStatisticController extends Controller
             trans('public.pending'),
             trans('quiz.failed'),
         ];
+
+        $hasData = false;
 
         $data[0] = 0; // passed
         $data[1] = 0; // pending
@@ -318,11 +365,16 @@ class WebinarStatisticController extends Controller
             $data[0] += $passed;
             $data[1] += $pending;
             $data[2] += $failed;
+
+            if (($passed + $pending + $failed) > 0) {
+                $hasData = true;
+            }
         }
 
         return [
             'labels' => $labels,
-            'data' => $data
+            'data' => $data,
+            'hasData' => $hasData,
         ];
     }
 
@@ -333,6 +385,8 @@ class WebinarStatisticController extends Controller
             trans('public.pending'),
             trans('quiz.failed'),
         ];
+
+        $hasData = false;
 
         $data[0] = 0; // passed
         $data[1] = 0; // pending
@@ -348,11 +402,16 @@ class WebinarStatisticController extends Controller
             $data[0] += $passed;
             $data[1] += $pending;
             $data[2] += $failed;
+
+            if (($passed + $pending + $failed) > 0) {
+                $hasData = true;
+            }
         }
 
         return [
             'labels' => $labels,
-            'data' => $data
+            'data' => $data,
+            'hasData' => $hasData,
         ];
     }
 
@@ -360,6 +419,31 @@ class WebinarStatisticController extends Controller
     {
         $labels = [];
         $data = [];
+
+        $salesQuery = Sale::query()->whereNull('refund_at')
+            ->where('webinar_id', $webinarId);
+
+        $time = time();
+        $topStats = [];
+
+        // Total Sales
+        $topStats['total'] = deepClone($salesQuery)->sum('total_amount');
+
+
+        // Current Month Sales
+        $beginOfMonth = strtotime(date('Y-m-01', $time));// First day of the month.
+        $endOfMonth = strtotime(date('Y-m-t', $time));// Last day of the month.
+
+        $topStats['month'] = deepClone($salesQuery)->whereBetween('created_at', [$beginOfMonth, $endOfMonth])
+            ->sum('total_amount');
+
+        // Current Year
+        $beginOfYear = strtotime(date('Y-01-01', $time));// First day of the year.
+        $endOfYear = strtotime(date('Y-m-d', strtotime('12/31'))); // Last day of the year.
+
+        $topStats['year'] = deepClone($salesQuery)->whereBetween('created_at', [$beginOfYear, $endOfYear])
+            ->sum('total_amount');
+
 
         for ($month = 1; $month <= 12; $month++) {
             $date = Carbon::create(date('Y'), $month);
@@ -369,18 +453,20 @@ class WebinarStatisticController extends Controller
 
             $labels[] = trans('panel.month_' . $month);
 
-            $amount = Sale::whereNull('refund_at')
-                ->whereBetween('created_at', [$start_date, $end_date])
-                ->where('webinar_id', $webinarId)
+            $amount = deepClone($salesQuery)->whereBetween('created_at', [$start_date, $end_date])
                 ->sum('total_amount');
 
             $data[] = round($amount, 2);
         }
 
-
-        return [
+        $chart = [
             'labels' => $labels,
             'data' => $data
+        ];
+
+        return [
+            'chart' => $chart,
+            'topStats' => $topStats,
         ];
     }
 
@@ -416,22 +502,31 @@ class WebinarStatisticController extends Controller
         $data[1] = 0; // in_progress
         $data[2] = 0; // not_started
 
+        $hasData = false;
+
         foreach ($studentsIds as $userId) {
 
             $progress = $this->getCourseProgressForStudent($webinar, $userId);
 
             if ($progress > 0 and $progress < 100) {
                 $data[1] += 1;
+
+                $hasData = true;
             } elseif ($progress == 100) {
                 $data[0] += 1;
+
+                $hasData = true;
             } else {
                 $data[2] += 1;
+
+                $hasData = true;
             }
         }
 
         return [
             'labels' => $labels,
-            'data' => $data
+            'data' => $data,
+            'hasData' => $hasData,
         ];
     }
 
@@ -442,8 +537,23 @@ class WebinarStatisticController extends Controller
 
         $progress = [];
 
+        $topStats = [
+            'notStarted' => 0,
+            'pending' => 0,
+            'completed' => 0,
+        ];
+
         foreach ($studentsIds as $userId) {
-            $progress[] = $this->getCourseProgressForStudent($webinar, $userId);
+            $percent = $this->getCourseProgressForStudent($webinar, $userId);
+            $progress[] = $percent;
+
+            if ($percent >= 100) {
+                $topStats['completed'] += 1;
+            } else if ($percent < 100 and $percent > 0) {
+                $topStats['pending'] += 1;
+            } else {
+                $topStats['notStarted'] += 1;
+            }
         }
 
         for ($percent = 0; $percent < 100; $percent += 10) {
@@ -461,9 +571,212 @@ class WebinarStatisticController extends Controller
             $data[] = $count;
         }
 
-        return [
+        $chart = [
             'labels' => $labels,
             'data' => $data
         ];
+
+        return [
+            'chart' => $chart,
+            'topStats' => $topStats,
+        ];
     }
+
+    public function handleVisitorsChart($user)
+    {
+        $query = VisitLog::getQueryByOwner($user);
+
+        $time = time();
+        $topStats = [];
+
+        // Total Sales
+        $topStats['total'] = deepClone($query)->count();
+
+        // Current Month Sales
+        $beginOfMonth = strtotime(date('Y-m-01', $time));// First day of the month.
+        $endOfMonth = strtotime(date('Y-m-t', $time));// Last day of the month.
+
+        $topStats['month'] = deepClone($query)->whereBetween('visited_at', [$beginOfMonth, $endOfMonth])
+            ->count();
+
+        // Current Year
+        $beginOfYear = strtotime(date('Y-01-01', $time));// First day of the year.
+        $endOfYear = strtotime(date('Y-m-d', strtotime('12/31'))); // Last day of the year.
+
+        $topStats['year'] = deepClone($query)->whereBetween('visited_at', [$beginOfYear, $endOfYear])
+            ->count();
+
+
+        $labels = [];
+        $data = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+            $date = Carbon::create(date('Y'), $month);
+
+            $startDate = $date->timestamp;
+            $endDate = $date->copy()->endOfMonth()->timestamp;
+
+            $labels[] = trans('panel.month_' . $month);
+
+            $count = deepClone($query)->whereBetween('visited_at', [$startDate, $endDate])->count();
+
+            $data[] = $count;
+        }
+
+
+        $chart = [
+            'labels' => $labels,
+            'data' => $data
+        ];
+
+        return [
+            'chart' => $chart,
+            'topStats' => $topStats,
+        ];
+    }
+
+
+    private function getStudentsLists(Request $request, $course, $studentsIds, $gifts)
+    {
+        $receiptsGift = [];
+        $unregisteredGift = [];
+
+        foreach ($gifts as $gift) {
+            $receipt = $gift->receipt;
+
+            if (!empty($receipt)) {
+                $receiptsGift[] = $receipt->id;
+            } else {
+                $unregisteredGift[] = $gift;
+            }
+        }
+
+        $studentsIds = array_merge($studentsIds, $receiptsGift);
+
+        $query = User::query()->whereIn('users.id', $studentsIds);
+        $query->join('sales', function ($join) use ($course) {
+            $join->on("users.id", '=', "sales.buyer_id");
+            $join->where('webinar_id', $course->id);
+            $join->whereNull('refund_at');
+        });
+
+        $query->leftJoin('certificates', function ($join) {
+            $join->on("users.id", '=', "certificates.student_id");
+        });
+
+        $query->groupBy('users.id');
+        $query->select('users.*', DB::raw("sales.created_at as purchased_at"), DB::raw('count(certificates.id) as certificatesCount'));
+
+        $query = $this->handleStudentsListsFilters($request, $query);
+
+        return $this->getStudentsItemsData($request, $query, $course);
+    }
+
+    private function handleStudentsListsFilters(Request $request, $query)
+    {
+        $search = $request->get('search');
+        $date_range = $request->get('date_range');
+        $sort = $request->get('sort');
+
+        if (!empty($search)) {
+            $query->where(function ($query) use ($search) {
+                $query->where('users.full_name', 'like', '%' . $search . '%');
+            });
+        }
+
+        if (!empty($date_range)) {
+            $dateRange = explode('-', $date_range);
+            $from = $dateRange[0];
+            $to = $dateRange[1];
+
+            $query = fromAndToDateFilter($from, $to, $query, 'sales.created_at');
+        }
+
+        if (!empty($sort)) {
+            switch ($sort) {
+                case 'certificates_asc':
+                    $query->orderBy('certificatesCount', 'asc');
+                    break;
+                case 'certificates_desc':
+                    $query->orderBy('certificatesCount', 'desc');
+                    break;
+                case 'enrollment_date_asc':
+                    $query->orderBy('purchased_at', 'asc');
+                    break;
+                case 'enrollment_date_desc':
+                    $query->orderBy('purchased_at', 'desc');
+                    break;
+            }
+        } else {
+            $query->orderBy('purchased_at', 'desc');
+        }
+
+        return $query;
+    }
+
+    private function getStudentsItemsData(Request $request, $query, $course)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = 10;
+
+        $cloneQuery = deepClone($query);
+        $total = DB::table(DB::raw("({$cloneQuery->toSql()}) as sub"))
+            ->mergeBindings($cloneQuery->getQuery()) // bind parameters
+            ->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $students = $query->get();
+
+        $quizzesIds = $course->quizzes->pluck('id')->toArray();
+        $assignmentsIds = $course->assignments->pluck('id')->toArray();
+
+        foreach ($students as $user) {
+            $user->learning_activity = $user->getLearningActivity("min");
+
+            $user->course_progress = $this->getCourseProgressForStudent($course, $user->id);
+
+            $user->passed_quizzes = Quiz::whereIn('quizzes.id', $quizzesIds)
+                ->join('quizzes_results', 'quizzes_results.quiz_id', 'quizzes.id')
+                ->select(DB::raw('count(quizzes_results.id) as count'))
+                ->where('quizzes_results.user_id', $user->id)
+                ->where('quizzes_results.status', QuizzesResult::$passed)
+                ->first()->count;
+
+            $assignmentsQuery = WebinarAssignmentHistory::query()->whereIn('assignment_id', $assignmentsIds)
+                ->where('student_id', $user->id);
+
+            $user->total_assignments = deepClone($assignmentsQuery)->count();
+            $user->passed_assignments = deepClone($assignmentsQuery)
+                ->where('status', WebinarAssignmentHistory::$passed)
+                ->count();
+
+        }
+
+        if ($request->ajax()) {
+            return $this->getStudentsListsAjaxResponse($request, $students, $total, $count);
+        }
+
+        return [
+            'students' => $students,
+            'pagination' => $this->makePagination($request, $students, $total, $count, true),
+        ];
+    }
+
+    private function getStudentsListsAjaxResponse(Request $request, $students, $total, $count)
+    {
+        $html = "";
+
+        foreach ($students as $studentRow) {
+            $html .= (string)view()->make('design_1.panel.webinars.course_statistics.students.item_table', ['student' => $studentRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $students, $total, $count, true),
+            'no_result' => (empty($students) or count($students) < 1)
+        ]);
+    }
+
 }

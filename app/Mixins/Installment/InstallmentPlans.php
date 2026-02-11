@@ -28,14 +28,17 @@ class InstallmentPlans
 
         $query = Installment::query();
 
-        if (!empty($groupId)) {
-            $query->where(function ($query) use ($groupId) {
-                $query->whereDoesntHave('userGroups');
+
+        $query->where(function ($query) use ($groupId) {
+            $query->whereDoesntHave('userGroups');
+
+            if (!empty($groupId)) {
                 $query->orWhereHas('userGroups', function ($query) use ($groupId) {
                     $query->where('group_id', $groupId);
                 });
-            });
-        }
+            }
+        });
+
 
         $query->where(function ($query) use ($time) {
             $query->whereNull('start_date');

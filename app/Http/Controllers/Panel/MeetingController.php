@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Mixins\RegistrationPackage\UserPackage;
 use App\Models\Meeting;
+use App\Models\MeetingPackage;
 use App\Models\MeetingTime;
 use \Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -33,8 +34,8 @@ class MeetingController extends Controller
 
         $meetingTimes = [];
         foreach ($meeting->meetingTimes->groupBy('day_label') as $day => $meetingTime) {
-
             $times = 0;
+
             foreach ($meetingTime as $time) {
 
                 $meetingTimes[$day]["times"][] = $time;
@@ -42,17 +43,35 @@ class MeetingController extends Controller
                 $explodetime = explode('-', $time->time);
                 $times += strtotime($explodetime[1]) - strtotime($explodetime[0]);
             }
-            $meetingTimes[$day]["hours_available"] = round($times / 3600, 2);
 
+            $meetingTimes[$day]["hours_available"] = round($times / 3600, 2);
         }
+
+        $locale = $request->get('locale', getDefaultLocale());
+        $meetingPackagesFeatureStatus = !empty(getMeetingPackagesSettings("status"));
 
         $data = [
             'pageTitle' => trans('meeting.meeting_setting_page_title'),
             'meeting' => $meeting,
             'meetingTimes' => $meetingTimes,
+            'meetingPackagesFeatureStatus' => $meetingPackagesFeatureStatus,
+            'locale' => mb_strtolower($locale),
         ];
 
-        return view(getTemplate() . '.panel.meeting.settings', $data);
+        if ($meetingPackagesFeatureStatus) {
+            $meetingPackagesController = (new MeetingPackagesController());
+            $meetingPackagesData = $meetingPackagesController->index($request);
+
+            $data = array_merge($data, $meetingPackagesData);
+
+            // Edit Page
+            $meetingPackageId = $request->get('package');
+            if (!empty($meetingPackageId)) {
+                $data = array_merge($data, $meetingPackagesController->edit($meetingPackageId));
+            }
+        }
+
+        return view("design_1.panel.meeting.settings.index", $data);
     }
 
     public function update(Request $request, $id)
@@ -100,7 +119,8 @@ class MeetingController extends Controller
             $meeting->update([
                 'amount' => convertPriceToDefaultCurrency($data['amount']),
                 'discount' => $data['discount'],
-                'disabled' => !empty($data['disabled']) ? 1 : 0,
+                'disabled' => empty($data['enable']) ? 1 : 0,
+                'enable_meeting_packages' => (!empty($data['enable_meeting_packages']) and $data['enable_meeting_packages'] == 'on'),
                 'in_person' => $inPerson,
                 'in_person_amount' => $inPerson ? convertPriceToDefaultCurrency($data['in_person_amount']) : null,
                 'group_meeting' => $groupMeeting,
@@ -126,6 +146,24 @@ class MeetingController extends Controller
         $meeting = Meeting::where('creator_id', $user->id)->first();
         $data = $request->all();
 
+        $validator = Validator::make($data, [
+            'day' => 'required',
+            'start_time' => 'required',
+            'end_time' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response([
+                'code' => 422,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $checkValidation = $this->checkExtraValidation($data);
+        if ($checkValidation != 'ok') {
+            return $checkValidation;
+        }
+
         if (!empty($meeting)) {
 
             $userPackage = new UserPackage();
@@ -137,46 +175,67 @@ class MeetingController extends Controller
                 ], 200);
             }
 
-            $time = $data['time'];
+            $time = trim($data['start_time']) . '-' . trim($data['end_time']);
             $day = $data['day'];
             $meetingType = $data['meeting_type'];
             $description = $data['description'] ?? null;
 
-            $explodeTime = explode('-', $time);
+            $checkTime = MeetingTime::where('meeting_id', $meeting->id)
+                ->where('day_label', $day)
+                ->where('time', $time)
+                ->first();
 
-            if (!empty($explodeTime[0]) and !empty($explodeTime[1])) {
-                $start_time = date("H:i", strtotime($explodeTime[0]));
-                $end_time = date("H:i", strtotime($explodeTime[1]));
-
-                if (strtotime($end_time) > strtotime($start_time)) {
-                    $checkTime = MeetingTime::where('meeting_id', $meeting->id)
-                        ->where('day_label', $data)
-                        ->where('time', $time)
-                        ->first();
-
-                    if (empty($checkTime)) {
-                        MeetingTime::create([
-                            'meeting_id' => $meeting->id,
-                            'meeting_type' => $meetingType,
-                            'day_label' => $day,
-                            'time' => $time,
-                            'description' => $description,
-                            'created_at' => time(),
-                        ]);
-
-                        return response()->json([
-                            'code' => 200
-                        ], 200);
-                    }
-                } else {
-                    return response()->json([
-                        'error' => 'contradiction'
-                    ], 422);
-                }
+            if (empty($checkTime)) {
+                MeetingTime::create([
+                    'meeting_id' => $meeting->id,
+                    'meeting_type' => $meetingType,
+                    'day_label' => $day,
+                    'time' => $time,
+                    'description' => $description,
+                    'created_at' => time(),
+                ]);
             }
+
+            return response()->json([
+                'code' => 200
+            ], 200);
         }
 
         return response()->json([], 422);
+    }
+
+    private function checkExtraValidation($data)
+    {
+        $errors = [];
+
+        if (!$this->chackTimeFormat($data['start_time'])) {
+            $errors['start_time'] = [trans('update.the_selected_format_is_incorrect')];
+        }
+
+        if (!$this->chackTimeFormat($data['end_time'])) {
+            $errors['end_time'] = [trans('update.the_selected_format_is_incorrect')];
+        }
+
+        $start_time = date("H:i", strtotime($data['start_time']));
+        $end_time = date("H:i", strtotime($data['end_time']));
+
+        if (strtotime($end_time) <= strtotime($start_time) and empty($errors['end_time'])) {
+            $errors['end_time'] = [trans('update.the_end_time_must_be_greater_than_the_start_time')];
+        }
+
+        if (!empty($errors) and count($errors)) {
+            return response([
+                'code' => 422,
+                'errors' => $errors,
+            ], 422);
+        }
+
+        return 'ok';
+    }
+
+    private function chackTimeFormat($time)
+    {
+        return preg_match("/^(?:2[0-3]|[01][0-9]):[0-5][0-9]$/", $time);
     }
 
     public function deleteTime(Request $request)
@@ -223,5 +282,17 @@ class MeetingController extends Controller
         }
 
         return response()->json([], 422);
+    }
+
+    public function getMeetingTimeModal(Request $request)
+    {
+        $user = auth()->user();
+
+        $html = (string)view()->make("design_1.panel.meeting.settings.modals.add_meeting_time_modal");
+
+        return response()->json([
+            'code' => 200,
+            'html' => $html
+        ]);
     }
 }

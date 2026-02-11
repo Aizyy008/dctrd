@@ -62,6 +62,11 @@ class AdvertisingModalController extends Controller
                 }
             });
 
+
+            if (!empty($values['countdown'])) {
+                $values['countdown'] = convertTimeToUTCzone($values['countdown'], null)->getTimestamp();
+            }
+
             $values = json_encode($values);
             $values = str_replace('record', rand(1, 600), $values);
 
@@ -89,5 +94,23 @@ class AdvertisingModalController extends Controller
         removeContentLocale();
 
         return back();
+    }
+
+    public function preview(Request $request)
+    {
+        $this->authorize('admin_advertising_modal_config');
+
+        $settings = Setting::getAdvertisingModalSettings();
+
+        $data = [
+            'advertisingModalSettings' => $settings,
+        ];
+
+        $html = (string)view()->make("design_1.web.includes.advertise_modal.modal", $data);
+
+        return response()->json([
+            'code' => 200,
+            'html' => $html,
+        ]);
     }
 }

@@ -8,6 +8,7 @@ use App\Mixins\Installment\InstallmentPlans;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentChannel;
+use App\Models\OfflineBank;
 use App\Models\Sale;
 use App\Models\Setting;
 use App\Models\Subscribe;
@@ -24,20 +25,14 @@ class SubscribesController extends Controller
 
         $user = auth()->user();
 
-        if (!$user){
+        if (!$user) {
             $user = apiAuth();
         }
 
-        $subscribes = Subscribe::all();
+        $subscribes = Subscribe::query()
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        $installmentPlans = new InstallmentPlans($user);
-        foreach ($subscribes as $subscribe) {
-            if (getInstallmentsSettings('status') and $user->enable_installments and $subscribe->price > 0) {
-                $installments = $installmentPlans->getPlans('subscription_packages', $subscribe->id);
-
-                $subscribe->has_installment = (!empty($installments) and count($installments));
-            }
-        }
 
         $data = [
             'pageTitle' => trans('financial.subscribes'),
@@ -46,7 +41,7 @@ class SubscribesController extends Controller
             'dayOfUse' => Subscribe::getDayOfUse($user->id),
         ];
 
-        return view(getTemplate() . '.panel.financial.subscribes', $data);
+        return view('design_1.panel.financial.subscribes.index', $data);
     }
 
     public function pay(Request $request)
@@ -64,6 +59,8 @@ class SubscribesController extends Controller
         }
 
         $user = auth()->user();
+
+        /*
         $activeSubscribe = Subscribe::getActiveSubscribe($user->id);
 
         if ($activeSubscribe) {
@@ -73,7 +70,7 @@ class SubscribesController extends Controller
                 'status' => 'error'
             ];
             return back()->with(['toast' => $toastData]);
-        }
+        }*/
 
         $financialSettings = getFinancialSettings();
         $tax = $financialSettings['tax'] ?? 0;
@@ -116,17 +113,28 @@ class SubscribesController extends Controller
                 }
             }
 
+            $calculatePrices = [
+                'total' => $order->total_amount,
+                'sub_total' => $order->amount,
+                'total_discount' => 0,
+                'tax' => $tax,
+                'tax_price' => $taxPrice,
+            ];
+
+
             $data = [
                 'pageTitle' => trans('public.checkout_page_title'),
                 'paymentChannels' => $paymentChannels,
                 'total' => $order->total_amount,
                 'order' => $order,
+                'calculatePrices' => $calculatePrices,
                 'count' => 1,
                 'userCharge' => $user->getAccountingCharge(),
-                'razorpay' => $razorpay
+                'razorpay' => $razorpay,
+                'offlineBanks' => OfflineBank::query()->orderBy('created_at', 'desc')->with(['specifications'])->get(),
             ];
 
-            return view(getTemplate() . '.cart.payment', $data);
+            return view('design_1.web.cart.payment.index', $data);
         }
 
         // Handle Free

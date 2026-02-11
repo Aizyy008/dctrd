@@ -104,13 +104,13 @@
 
         <div class="form-group">
             <label class="input-label">{{ trans('public.duration') }} <span class="braces">({{ trans('public.minutes') }})</span></label>
-            <input type="text" name="duration" class="js-ajax-duration form-control" placeholder=""/>
+            <input type="number" name="duration" class="js-ajax-duration form-control" placeholder=""/>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-group">
             <label class="input-label">{{ trans('update.extra_time_to_join') }} <span class="braces">({{ trans('public.minutes') }})</span></label>
-            <input type="text" name="extra_time_to_join" class="js-ajax-extra_time_to_join form-control" placeholder=""/>
+            <input type="number" name="extra_time_to_join" class="js-ajax-extra_time_to_join form-control" placeholder=""/>
             <div class="invalid-feedback"></div>
         </div>
 

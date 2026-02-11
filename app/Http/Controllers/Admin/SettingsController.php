@@ -6,11 +6,8 @@ use App\Http\Controllers\Admin\traits\DeviceLimitSettings;
 use App\Http\Controllers\Admin\traits\FinancialCurrencySettings;
 use App\Http\Controllers\Admin\traits\FinancialOfflineBankSettings;
 use App\Http\Controllers\Admin\traits\FinancialUserBankSettings;
-use App\Http\Controllers\Admin\traits\NavbarButtonSettings;
 use App\Http\Controllers\Controller;
 use App\Models\Currency;
-use App\Models\LanguageOverIpCountryMappingSetting;
-use App\Models\LanguageOverIpPopupSetting;
 use App\Models\NotificationTemplate;
 use App\Models\OfflineBank;
 use App\Models\PaymentChannel;
@@ -22,7 +19,6 @@ use Illuminate\Support\Facades\Validator;
 
 class SettingsController extends Controller
 {
-    use NavbarButtonSettings;
     use FinancialCurrencySettings;
     use FinancialOfflineBankSettings;
     use FinancialUserBankSettings;
@@ -35,7 +31,7 @@ class SettingsController extends Controller
         $this->authorize('admin_settings');
 
         $data = [
-            'pageTitle' => trans('admin/main.settings_title'),
+            'pageTitle' => trans("admin/main.settings"),
         ];
 
         return view('admin.settings.index', $data);
@@ -56,7 +52,7 @@ class SettingsController extends Controller
         }
 
         $data = [
-            'pageTitle' => trans('admin/main.settings_title'),
+            'pageTitle' => trans("admin/main.{$page}_settings"),
             'settings' => $settings
         ];
 
@@ -103,7 +99,7 @@ class SettingsController extends Controller
         if (!empty($settings)) {
             $defaultLocal = getDefaultLocale();
 
-            if (in_array($name, [Setting::$pageBackgroundName, Setting::$homeSectionsName, Setting::$themeFontsName, Setting::$themeColorsName, Setting::$othersPersonalizationName])) {
+            if (in_array($name, [Setting::$othersPersonalizationName])) {
                 $defaultLocal = Setting::$defaultSettingsLocale;
             }
 
@@ -119,7 +115,7 @@ class SettingsController extends Controller
         }
 
         $data = [
-            'pageTitle' => trans('admin/main.settings_title'),
+            'pageTitle' => trans("{$name}_settings"),
             'values' => $values,
             'name' => $name
         ];
@@ -382,61 +378,6 @@ class SettingsController extends Controller
         return redirect(getAdminPanelUrl() . '/settings/general');
     }
 
-    public function storeCustomCssJs(Request $request)
-    {
-        $this->authorize('admin_settings_customization');
-
-        $newValues = $request->get('value', null);
-        $locale = $request->get('locale', Setting::$defaultSettingsLocale);
-        $values = [];
-        $settings = Setting::where('name', Setting::$customCssJsName)->first();
-
-        if (!empty($settings) and !empty($settings->value)) {
-            $values = json_decode($settings->value);
-        }
-
-        if (!empty($newValues) and !empty($values)) {
-            foreach ($newValues as $newKey => $newValue) {
-                foreach ($values as $key => $value) {
-                    if ($key == $newKey) {
-                        $values->$key = $newValue;
-                        unset($newValues[$key]);
-                    }
-                }
-            }
-        }
-
-        if (!empty($newValues)) {
-            $values = array_merge((array)$values, $newValues);
-        }
-
-        if (!empty($values)) {
-            $values = json_encode($values);
-
-            $settings = Setting::updateOrCreate(
-                ['name' => Setting::$customCssJsName],
-                [
-                    'page' => 'customization',
-                    'updated_at' => time(),
-                ]
-            );
-
-            SettingTranslation::updateOrCreate(
-                [
-                    'setting_id' => $settings->id,
-                    'locale' => mb_strtolower($locale)
-                ],
-                [
-                    'value' => $values,
-                ]
-            );
-
-            cache()->forget('settings.' . Setting::$customCssJsName);
-
-            return back();
-        }
-    }
-
     public function notificationsMetas(Request $request)
     {
         $this->authorize('admin_settings_notifications');
@@ -479,105 +420,4 @@ class SettingsController extends Controller
 
         return back();
     }
-    // +++++++++++++++++++++++ start : "LanguageOverIp" Tab +++++++++++++++++++++++
-    // //////////////////// general settings ////////////////////
-    // ========== storeLanguageOverIp() : store in "settings" table ==========
-    public function storeLanguageOverIp(Request $request)
-    {
-        $this->validate($request, [
-            'value.enable_language_over_ip' => 'nullable|boolean',
-        ]);
-        $data = $request->all();
-        // Update settings table for enable_language_over_ip
-        $settings = Setting::updateOrCreate(
-            ['name' => 'language_over_ip'],
-            [
-                'page' => 'general',
-                'value' => json_encode(['enable_language_over_ip' => $data['value']['enable_language_over_ip'] ?? 0]),
-                'updated_at' => time(),
-            ]
-        );
-        cache()->forget('settings.language_over_ip');
-        return redirect(getAdminPanelUrl() . '/settings/general')->with('success', trans('admin/main.settings_saved'));
-    }
-    // //////////////////// country_mapping_settings ////////////////////
-     // ============ storeMapping() : store in 'language_over_ip_country_mapping_settings" table : Ajax Request ============
-     public function storeMapping(Request $request)
-     {
-         $userLanguages = getUserLanguagesLists();
-         $this->validate($request, [
-             'country_id' => 'required|exists:regions,id',
-             'language' => 'required|in:' . implode(',', array_values($userLanguages)),
-             'language_code' => 'required|in:' . implode(',', array_keys($userLanguages)),
-         ]);
- 
-         // Check for existing mapping and update or create
-         $mapping = LanguageOverIpCountryMappingSetting::updateOrCreate(
-             ['country_id' => $request->country_id],
-             [
-                 'language' => $request->language,
-                 'language_code' => $request->language_code,
-             ]
-         );
- 
-         // Return mapping data for UI update
-         return response()->json([
-             'success' => true,
-             'message' => "Mapping Saved",
-             'mapping' => [
-                 'id' => $mapping->id,
-                 'country' => $mapping->country->title ?? 'Unknown',
-                 'language' => $mapping->language,
-                 'language_code' => $mapping->language_code,
-             ],
-         ]);
-     }
-    // ============ deleteMapping() : delete from 'language_over_ip_country_mapping_settings" table : Ajax Request ============
-    public function deleteMapping($mappingId)
-    {
-        $mapping = LanguageOverIpCountryMappingSetting::find($mappingId);
-        if ($mapping)
-        {
-            $mapping->delete();
-            return response()->json([
-                'success' => true,
-                'message' => trans('admin/main.mapping_deleted'),
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Mapping not found.',
-        ], 404);
-    }
-    // //////////////////// popup_settings ////////////////////
-    // ============ storePopupSetting() ============
-    public function storePopupSetting(Request $request)
-    {
-        // dd($request);
-        $this->validate($request, [
-            'language' => 'required|in:' . implode(',', array_values(getUserLanguagesLists())),
-            'notification_title' => 'nullable|string|max:255',
-            'notification_text' => 'nullable|string|max:255',
-            'confirm_button_text' => 'nullable|string|max:255',
-            'cancel_button_text' => 'nullable|string|max:255',
-            'action_type' => 'required|boolean',
-        ]);
-
-        $setting = LanguageOverIpPopupSetting::updateOrCreate(
-            ['language' => $request->language],
-            [
-                'notification_title' => $request->notification_title,
-                'notification_text' => $request->notification_text,
-                'confirm_button_text' => $request->confirm_button_text,
-                'cancel_button_text' => $request->cancel_button_text,
-                'action_type' => $request->action_type,
-            ]
-        );
-        return response()->json([
-            'success' => true,
-            'message' => "Popup Settings Saved Successfully",
-        ]);
-    }
-    // +++++++++++++++++++++++ end : "LanguageOverIp" Tab +++++++++++++++++++++++
 }

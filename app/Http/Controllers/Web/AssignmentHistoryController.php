@@ -39,15 +39,12 @@ class AssignmentHistoryController extends Controller
                         $deadline = $this->getAssignmentDeadline($assignment, $user);
 
                         if (!$deadline or (!empty($assignment->attempts) and $submissionTimes >= $assignment->attempts)) {
-                            $toastData = [
-                                'title' => !$deadline ? trans('update.assignment_deadline_error_title') : trans('update.assignment_submission_error_title'),
-                                'msg' => !$deadline ? trans('update.assignment_deadline_error_desc') : trans('update.assignment_submission_error_desc'),
-                            ];
-
-                            return response([
-                                'code' => 401,
-                                'errors' => $toastData,
-                            ]);
+                            return response()->json([
+                                'toast_alert' => [
+                                    'title' => !$deadline ? trans('update.assignment_deadline_error_title') : trans('update.assignment_submission_error_title'),
+                                    'msg' => !$deadline ? trans('update.assignment_deadline_error_desc') : trans('update.assignment_submission_error_desc'),
+                                ]
+                            ], 422);
                         }
                     }
 
@@ -56,7 +53,7 @@ class AssignmentHistoryController extends Controller
                     $rules = [
                         'description' => 'required',
                         'file_title' => 'nullable|max:255',
-                        'file_path' => 'nullable|max:255',
+                        'attachment' => 'nullable|file',
                     ];
 
                     $validator = Validator::make($data, $rules);
@@ -68,12 +65,19 @@ class AssignmentHistoryController extends Controller
                         ], 422);
                     }
 
+                    $filePath = null;
+                    $attachmentFile = $request->file('attachment');
+                    if (!empty($attachmentFile)) {
+                        $destination = "webinars/assignment_histories/attachments";
+                        $filePath = $this->uploadFile($attachmentFile, $destination, 'attachment', $user->id);
+                    }
+
                     WebinarAssignmentHistoryMessage::create([
                         'assignment_history_id' => $assignmentHistory->id,
                         'sender_id' => $user->id,
                         'message' => $data['description'],
                         'file_title' => $data['file_title'] ?? null,
-                        'file_path' => $data['file_path'] ?? null,
+                        'file_path' => $filePath,
                         'created_at' => time(),
                     ]);
 
@@ -98,12 +102,51 @@ class AssignmentHistoryController extends Controller
 
                     return response()->json([
                         'code' => 200,
+                        'title' => trans('public.request_success'),
+                        'msg' => trans('update.send_assignment_success_msg'),
                     ]);
                 }
             }
         }
 
-        abort(403);
+        return response()->json([], 403);
+    }
+
+    public function getGradeModal(Request $request, $assignmentId, $historyId)
+    {
+        $user = auth()->user();
+
+        $assignment = WebinarAssignment::where('id', $assignmentId)
+            ->where('creator_id', $user->id)
+            ->first();
+
+        if (!empty($assignment)) {
+            $webinar = $assignment->webinar;
+
+            if (!empty($webinar) and $webinar->isOwner($user->id)) {
+                $studentId = $request->get('student');
+                $assignmentHistory = $this->getAssignmentHistory($webinar, $assignment, $user, $studentId);
+
+                if (!empty($assignmentHistory) and $historyId == $assignmentHistory->id and $assignmentHistory->instructor_id == $user->id) {
+                    $data = [
+                        'assignmentHistory' => $assignmentHistory,
+                        'assignment' => $assignment,
+                        'studentId' => $studentId,
+                    ];
+                    $html = (string)view()->make("design_1.web.courses.learning_page.includes.contents.assignment.instructor_rate_modal", $data);
+
+                    $yourGrade = $assignmentHistory->grade ?? 0;
+
+                    return response()->json([
+                        'code' => 200,
+                        'pass_grade' => "{$assignment->pass_grade}/{$assignment->grade}",
+                        'html' => $html,
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([], 403);
     }
 
     public function setGrade(Request $request, $assignmentId, $historyId)
@@ -118,7 +161,7 @@ class AssignmentHistoryController extends Controller
             $webinar = $assignment->webinar;
 
             if (!empty($webinar) and $webinar->isOwner($user->id)) {
-                $studentId = $request->get('student_id');
+                $studentId = $request->get('student');
                 $assignmentHistory = $this->getAssignmentHistory($webinar, $assignment, $user, $studentId);
 
                 if (!empty($assignmentHistory) and $historyId == $assignmentHistory->id and $assignmentHistory->instructor_id == $user->id) {
@@ -126,6 +169,7 @@ class AssignmentHistoryController extends Controller
 
                     $rules = [
                         'grade' => 'required|integer',
+                        'student' => 'required',
                     ];
 
                     $validator = Validator::make($data, $rules);
@@ -166,12 +210,14 @@ class AssignmentHistoryController extends Controller
 
                     return response()->json([
                         'code' => 200,
+                        'title' => trans('public.request_success'),
+                        'msg' => trans('update.save_assignment_grade_success')
                     ]);
                 }
             }
         }
 
-        abort(403);
+        return response()->json([],403);
     }
 
     public function downloadAttach($assignmentId, $historyId, $messageId)

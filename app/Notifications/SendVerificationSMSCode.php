@@ -44,8 +44,10 @@ class SendVerificationSMSCode extends Notification
         $content .= PHP_EOL;
         $content .= trans('update.your_validation_code_on_the_site', ['site' => $siteName]);
 
+        $mobile = ltrim($notifiable->mobile, '+');
+
         return [
-            'to' => $notifiable->mobile,
+            'to' => "+{$mobile}",
             'content' => $content,
         ];
     }

@@ -16,6 +16,7 @@ class QuizResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'content_type' => 'quiz',
             'title' => $this->title,
             'auth_status' => $this->auth_status,
             'can_view_error' => $this->canViewError(),

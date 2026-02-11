@@ -16,6 +16,7 @@ class TextLessonResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'content_type' => 'text_lesson',
             'index' => $this->index,
             'title' => $this->title,
             'image' => $this->image,

@@ -8,15 +8,16 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'all_notifications' => 'All notifications',
+    'all_notifications' => 'All Notifications',
     'sender' => 'Sender',
-    'notifications_page_lists_lead' => 'List of notifications. You can edit or delete...',
-    'send_notification' => 'Send notification',
-    'edit_notification' => 'Edit notification',
-    'empty_notifications' => 'Empty notifications',
-    'email_ignore_msg' => 'If you didnt submit this request, please ignore it.',
-    'send_noticeboard' => 'Send a new notice',
-    'edit_noticeboard' => 'Edit a notice',
-    'post_notice' => 'Send notice',
-	'receiver' => 'Receiver',
+    'receiver' => 'Receiver',
+    'notifications_page_lists_lead' => 'List of notifications. You can edit or delete them as needed.',
+    'send_notification' => 'Send Notification',
+    'edit_notification' => 'Edit Notification',
+    'empty_notifications' => 'No Notifications',
+    'email_ignore_msg' => 'If you did not request this, please ignore this email.',
+    'send_noticeboard' => 'Post a New Notice',
+    'edit_noticeboard' => 'Edit Notice',
+    'post_notice' => 'Post Notice',
+
 ];

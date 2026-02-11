@@ -44,51 +44,41 @@
                     </div>
 
                     <div class="form-group custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[agora_live_streaming]" value="0">
-                            <input type="checkbox" name="value[agora_live_streaming]" id="agoraStreamSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['agora_live_streaming']) and $itemValue['agora_live_streaming']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="agoraStreamSwitch">{{ trans('update.agora_live_streaming') }}</label>
-                        </label>
-                    </div>
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.agora_live_streaming') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
-                    <div class="form-group custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[agora_chat]" value="0">
-                            <input type="checkbox" name="value[agora_chat]" id="agoraChatSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['agora_chat']) and $itemValue['agora_chat']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="agoraChatSwitch">{{ trans('update.agora_chat') }}</label>
-                        </label>
-                    </div>
-                    {{--
-                                        <div class="form-group custom-switches-stacked">
-                                            <label class="custom-switch pl-0">
-                                                <input type="hidden" name="value[agora_cloud_rec]" value="0">
-                                                <input type="checkbox" name="value[agora_cloud_rec]" id="agoraRecordingSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['agora_cloud_rec']) and $itemValue['agora_cloud_rec']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                                                <span class="custom-switch-indicator"></span>
-                                                <label class="custom-switch-description mb-0 cursor-pointer" for="agoraRecordingSwitch">{{ trans('update.agora_recording') }}</label>
-                                            </label>
-                                        </div>
-                    --}}
+                <div class="form-group custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.agora_chat') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
-                    <div class="form-group custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[agora_in_free_courses]" value="0">
-                            <input type="checkbox" name="value[agora_in_free_courses]" id="agoraInFreeCoursesSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['agora_in_free_courses']) and $itemValue['agora_in_free_courses']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="agoraInFreeCoursesSwitch">{{ trans('update.agora_in_free_courses') }}</label>
-                        </label>
-                    </div>
 
-                    <div class="form-group custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[agora_for_meeting]" value="0">
-                            <input type="checkbox" name="value[agora_for_meeting]" id="agoraForMeetingSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['agora_for_meeting']) and $itemValue['agora_for_meeting']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="agoraForMeetingSwitch">{{ trans('update.agora_for_meeting') }}</label>
-                        </label>
-                        <div class="text-muted text-small mt-1">{{ trans('update.agora_meeting_hint') }}</div>
-                    </div>
+                     <div class="form-group custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.agora_in_free_courses') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+
+                <div class="form-group custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.agora_for_meeting') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
                     <div class="form-group">
                         <label class="input-label">{{ trans('update.meeting_live_stream_type') }}</label>
@@ -105,28 +95,31 @@
                             <option value="multiple" {{ (!empty($itemValue) and !empty($itemValue['course_live_stream_type']) and $itemValue['course_live_stream_type'] == 'multiple') ? 'selected="selected"' : '' }}>{{ trans('update.meeting_multiple') }}</option>
                         </select><label class="label"></label>
                     </div>
+                    
+                <div class="form-group custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.agora_for_events') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+                
 
-
-                    @foreach(['agora_app_id', 'agora_app_certificate'] as $agoraConf)
-                        <div class="form-group">
-                            <label>{{ trans("update.{$agoraConf}") }}</label>
-                            <input type="text" name="value[{{ $agoraConf }}]" value="{{ (!empty($itemValue) and !empty($itemValue["{$agoraConf}"])) ? $itemValue["{$agoraConf}"] : old("{$agoraConf}") }}" class="form-control "/>
-                        </div>
-                    @endforeach
+            
 
                 </div>
 
                 <div class="mb-5">
                     <h5>{{ trans('update.new_interactive_file') }} {{ trans('admin/main.settings') }}</h5>
-
                     <div class="form-group mt-3 custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[new_interactive_file]" value="0">
-                            <input type="checkbox" name="value[new_interactive_file]" id="newInteractiveFileSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['new_interactive_file']) and $itemValue['new_interactive_file']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="newInteractiveFileSwitch">{{ trans('update.interactive_feature_toggle') }}</label>
-                        </label>
-                    </div>
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.interactive_feature_toggle') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
                 </div>
 
                 <div class="mb-5">
@@ -155,15 +148,15 @@
                 <div class="mb-5">
                     <h5>{{ trans('update.sequence_content_settings') }}</h5>
 
-                    <div class="form-group mt-3 custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[sequence_content_status]" value="0">
-                            <input type="checkbox" name="value[sequence_content_status]" id="sequenceContentSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['sequence_content_status']) and $itemValue['sequence_content_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="sequenceContentSwitch">{{ trans('admin/main.active') }}</label>
-                        </label>
-                    </div>
+                      <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+
                 </div>
 
 
@@ -171,13 +164,44 @@
                     <h5>{{ trans('update.assignment_settings') }}</h5>
 
                     <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+
+                 <div class="mb-5">
+                    <h5>{{ trans('admin/main.free_mode') }}</h5>
+                    
+                 <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+
+                    <div class="form-group mt-3 custom-switches-stacked">
                         <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[webinar_assignment_status]" value="0">
-                            <input type="checkbox" name="value[webinar_assignment_status]" id="webinarAssignmentSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['webinar_assignment_status']) and $itemValue['webinar_assignment_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                            <input type="hidden" name="value[free_mode_show_price]" value="0">
+                            <input type="checkbox" name="value[free_mode_show_price]" id="freeModeShowPriceSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['free_mode_show_price']) and $itemValue['free_mode_show_price']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
                             <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="webinarAssignmentSwitch">{{ trans('admin/main.active') }}</label>
+                            <label class="custom-switch-description mb-0 cursor-pointer" for="freeModeShowPriceSwitch">{{ trans('admin/main.display_prices') }}</label>
                         </label>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('admin/main.display_prices_hint') }}</p>
+                    </div>
+
+                    <div class="form-group mt-3 custom-switches-stacked">
+                        <label class="custom-switch pl-0">
+                            <input type="hidden" name="value[free_mode_show_cart]" value="0">
+                            <input type="checkbox" name="value[free_mode_show_cart]" id="freeModeShowCartSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['free_mode_show_cart']) and $itemValue['free_mode_show_cart']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                            <span class="custom-switch-indicator"></span>
+                            <label class="custom-switch-description mb-0 cursor-pointer" for="freeModeShowCartSwitch">{{ trans('admin/main.display_cart') }}</label>
+                        </label>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('admin/main.display_cart_hint') }}</p>
                     </div>
                 </div>
 
@@ -185,58 +209,39 @@
                     <h5>{{ trans('update.private_content_settings') }}</h5>
 
                     <div class="form-group mt-3 custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[webinar_private_content_status]" value="0">
-                            <input type="checkbox" name="value[webinar_private_content_status]" id="webinarPrivateContentSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['webinar_private_content_status']) and $itemValue['webinar_private_content_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="webinarPrivateContentSwitch">{{ trans('admin/main.active') }}</label>
-                        </label>
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
-                        <p class="font-12 text-gray mb-0">{{ trans('update.private_content_settings_hint') }}</p>
-                    </div>
 
-                    <div class="form-group custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[disable_view_content_after_user_register]" value="0">
-                            <input type="checkbox" name="value[disable_view_content_after_user_register]" id="disableViewContentAfterUserRegisterSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['disable_view_content_after_user_register']) and $itemValue['disable_view_content_after_user_register']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="disableViewContentAfterUserRegisterSwitch">{{ trans('update.disable_view_content_after_user_register') }}</label>
-                        </label>
+                <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.disable_view_content_after_user_register') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
-                        <p class="font-12 text-gray mb-0">{{ trans('update.disable_view_content_after_user_register_hint') }}</p>
-                    </div>
                 </div>
 
                 <div class="mb-5">
                     <h5>{{ trans('update.course_forum_settings') }}</h5>
 
                     <div class="form-group mt-3 custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[course_forum_status]" value="0">
-                            <input type="checkbox" name="value[course_forum_status]" id="courseForumSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['course_forum_status']) and $itemValue['course_forum_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="courseForumSwitch">{{ trans('admin/main.active') }}</label>
-                        </label>
-
-                        <p class="font-12 text-gray mb-0">{{ trans('update.course_forum_settings_status_hint') }}</p>
-                    </div>
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
 
-                <div class="mb-5">
-                    <h5>{{ trans('update.forum_settings') }}</h5>
 
-                    <div class="form-group mt-3 custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[forums_status]" value="0">
-                            <input type="checkbox" name="value[forums_status]" id="forumStatusSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['forums_status']) and $itemValue['forums_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="forumStatusSwitch">{{ trans('admin/main.active') }}</label>
-                        </label>
-
-                        <p class="font-12 text-gray mb-0">{{ trans('update.forum_settings_status_hint') }}</p>
-                    </div>
                 </div>
 
                 <div class="mb-5">
@@ -251,7 +256,7 @@
                             <label class="custom-switch-description mb-0 cursor-pointer" for="directClassesPaymentButtonStatusSwitch">{{ trans('admin/main.classes') }}</label>
                         </label>
 
-                        <p class="font-12 text-gray mb-0">{{ trans('update.direct_classes_payment_button_status_hint') }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('update.direct_classes_payment_button_status_hint') }}</p>
                     </div>
 
                     <div class="form-group mt-3 custom-switches-stacked">
@@ -263,7 +268,7 @@
                             <label class="custom-switch-description mb-0 cursor-pointer" for="directBundlesPaymentButtonStatusSwitch">{{ trans('update.bundles') }}</label>
                         </label>
 
-                        <p class="font-12 text-gray mb-0">{{ trans('update.direct_bundles_payment_button_status_hint') }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('update.direct_bundles_payment_button_status_hint') }}</p>
                     </div>
 
                     <div class="form-group mt-3 custom-switches-stacked">
@@ -275,7 +280,7 @@
                             <label class="custom-switch-description mb-0 cursor-pointer" for="directProductsPaymentButtonStatusSwitch">{{ trans('update.products') }}</label>
                         </label>
 
-                        <p class="font-12 text-gray mb-0">{{ trans('update.direct_products_payment_button_status_hint') }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('update.direct_products_payment_button_status_hint') }}</p>
                     </div>
 
                 </div>
@@ -303,7 +308,7 @@
                             <span class="custom-switch-indicator"></span>
                             <label class="custom-switch-description mb-0 cursor-pointer" for="mobileAppSwitch">{{ trans('admin/main.active') }}</label>
                         </label>
-                        <p class="font-12 text-gray mb-0">{{ trans('update.mobile_app_only_hint') }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('update.mobile_app_only_hint') }}</p>
                     </div>
                 </div>
 
@@ -317,13 +322,13 @@
                             <span class="custom-switch-indicator"></span>
                             <label class="custom-switch-description mb-0 cursor-pointer" for="maintenance_statusSwitch">{{ trans('admin/main.active') }}</label>
                         </label>
-                        <p class="font-12 text-gray mb-0">{{ trans('update.maintenance_status_hint') }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('update.maintenance_status_hint') }}</p>
                     </div>
 
                     <div class="form-group">
                         <label>{{ trans('update.maintenance_access_key') }}</label>
                         <input type="text" name="value[maintenance_access_key]" value="{{ (!empty($itemValue) and !empty($itemValue['maintenance_access_key'])) ? $itemValue['maintenance_access_key'] : old('maintenance_access_key') }}" class="form-control "/>
-                        <p class="text-muted font-12 mt-1">{{ trans('update.maintenance_access_key_hint') }}</p>
+                        <p class="text-gray-500 font-12 mt-1">{{ trans('update.maintenance_access_key_hint') }}</p>
                     </div>
                 </div>
 
@@ -343,7 +348,7 @@
                     <div class="form-group">
                         <label class="input-label" for="">{{ trans('update.default_time') }}</label>
                         <input type="text" name="value[extra_time_to_join_default_value]" value="{{ (!empty($itemValue) and !empty($itemValue['extra_time_to_join_default_value'])) ? $itemValue['extra_time_to_join_default_value'] : '' }}" class="form-control"/>
-                        <p class="text-muted font-12 mt-1">{{ trans('update.extra_time_hint') }}</p>
+                        <p class="text-gray-500 font-12 mt-1">{{ trans('update.extra_time_hint') }}</p>
                     </div>
                 </div>
 
@@ -426,40 +431,35 @@
                 </div>
 
 
-                <div class="mb-5">
+                 <div class="mb-5">
                     <h5>{{ trans('update.cashback') }}</h5>
 
-                    <div class="form-group custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[cashback_active]" value="0">
-                            <input type="checkbox" name="value[cashback_active]" id="cashback_activeSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['cashback_active']) and $itemValue['cashback_active']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="cashback_activeSwitch">{{ trans('update.cashback_active') }}</label>
-                        </label>
-                        <p class="font-14">{{ trans('update.cashback_active_hint') }}</p>
-                    </div>
+                    <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.cashback_active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
-                    <div class="form-group custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[display_cashback_notice_in_the_product_page]" value="0">
-                            <input type="checkbox" name="value[display_cashback_notice_in_the_product_page]" id="display_cashback_notice_in_the_product_pageSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['display_cashback_notice_in_the_product_page']) and $itemValue['display_cashback_notice_in_the_product_page']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="display_cashback_notice_in_the_product_pageSwitch">{{ trans('update.display_cashback_notice_in_the_product_page') }}</label>
-                        </label>
-                        <p class="font-14">{{ trans('update.display_cashback_notice_in_the_product_page_hint') }}</p>
-                    </div>
+                <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.display_cashback_notice_in_the_product_page') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
-                    <div class="form-group custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[display_minimum_amount_cashback_notices]" value="0">
-                            <input type="checkbox" name="value[display_minimum_amount_cashback_notices]" id="display_minimum_amount_cashback_noticesSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['display_minimum_amount_cashback_notices']) and $itemValue['display_minimum_amount_cashback_notices']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="display_minimum_amount_cashback_noticesSwitch">{{ trans('update.display_minimum_amount_cashback_notices') }}</label>
-                        </label>
-                        <p class="font-14">{{ trans('update.display_minimum_amount_cashback_notices_hint') }}</p>
-                    </div>
+                <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.display_minimum_amount_cashback_notices') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
                 </div>
 
                 <div class="mb-5">
@@ -475,7 +475,7 @@
                                 <option value="{{ $sessionApi }}" @if(in_array($sessionApi, $selectedApi)) selected @endif>{{ trans('update.session_api_'.$sessionApi) }}</option>
                             @endforeach
                         </select>
-                        <p class="text-muted font-12 mt-1">{{ trans('update.session_api_hint') }}</p>
+                        <p class="text-gray-500 font-12 mt-1">{{ trans('update.session_api_hint') }}</p>
                     </div>
                 </div>
 
@@ -493,25 +493,12 @@
                                 <option value="{{ $source }}" @if(in_array($source, $selectedSources)) selected @endif>{{ trans('update.file_source_'.$source) }}</option>
                             @endforeach
                         </select>
-                        <p class="text-muted font-12 mt-1">{{ trans('update.upload_sources_hint') }}</p>
+                        <p class="text-gray-500 font-12 mt-1">{{ trans('update.upload_sources_hint') }}</p>
                     </div>
                 </div>
 
 
-                <div class="mb-5">
-                    <h5>{{ trans('update.bunny_stream_settings') }} ({{ trans('update.secure_host') }})</h5>
 
-                    @php
-                        $bunnyConfs = ['library_id', 'hostname', 'access_key']; // token_authentication_key => deleted
-                    @endphp
-
-                    @foreach($bunnyConfs as $bunnyConf)
-                        <div class="form-group">
-                            <label class="input-label">{{ trans('update.'.$bunnyConf) }}</label>
-                            <input name="value[bunny_configs][{{ $bunnyConf }}]" class="form-control" value="{{ (!empty($itemValue) and !empty($itemValue['bunny_configs']) and !empty($itemValue['bunny_configs'][$bunnyConf])) ? $itemValue['bunny_configs'][$bunnyConf] : null }}">
-                        </div>
-                    @endforeach
-                </div>
 
                 <div class="mb-5">
                     <h5>{{ trans('update.select_the_role_during_registration') }}</h5>
@@ -528,7 +515,7 @@
                                 <option value="{{ $roleItem }}" @if(in_array($roleItem, $selectedRoleItems)) selected @endif>{{ trans('update.role_'.$roleItem) }}</option>
                             @endforeach
                         </select>
-                        <p class="text-muted font-12 mt-1">{{ trans('update.select_rules_hint') }}</p>
+                        <p class="text-gray-500 font-12 mt-1">{{ trans('update.select_rules_hint') }}</p>
                     </div>
 
                 </div>
@@ -536,15 +523,15 @@
                 <div class="mb-5">
                     <h5>{{ trans('update.enable_waitlist') }}</h5>
 
+
                     <div class="form-group mt-3 custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[waitlist_status]" value="0">
-                            <input type="checkbox" name="value[waitlist_status]" id="waitlist_statusSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['waitlist_status']) and $itemValue['waitlist_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="waitlist_statusSwitch">{{ trans('admin/main.active') }}</label>
-                        </label>
-                        <p class="font-12 text-gray mb-0">{{ trans('update.waitlist_status_hint') }}</p>
-                    </div>
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
                 </div>
 
@@ -552,15 +539,13 @@
                     <h5>{{ trans('update.enable_upcoming_courses') }}</h5>
 
                     <div class="form-group mt-3 custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[upcoming_courses_status]" value="0">
-                            <input type="checkbox" name="value[upcoming_courses_status]" id="upcoming_courses_statusSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['upcoming_courses_status']) and $itemValue['upcoming_courses_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="upcoming_courses_statusSwitch">{{ trans('admin/main.active') }}</label>
-                        </label>
-                        <p class="font-12 text-gray mb-0">{{ trans('update.upcoming_courses_status_hint') }}</p>
-                    </div>
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
 
                 </div>
 
@@ -597,7 +582,7 @@
                             <span class="custom-switch-indicator"></span>
                             <label class="custom-switch-description mb-0 cursor-pointer" for="frontend_coupons_statusSwitch">{{ trans('admin/main.active') }}</label>
                         </label>
-                        <p class="font-12 text-gray mb-0">{{ trans('update.frontend_coupons_status_hint') }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('update.frontend_coupons_status_hint') }}</p>
                     </div>
 
 
@@ -613,29 +598,40 @@
                 </div>
 
                 <div class="mb-5">
-                    <h5>{{ trans('update.course_notes') }}</h5>
+                <h5>{{ trans('update.course_notes') }}</h5>
+
+                    <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+
+                <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.attachment') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+
+                <div class="mb-5">
+                    <h5>{{ trans('update.course_recent_reviews') }}</h5>
 
                     <div class="form-group mt-3 custom-switches-stacked">
                         <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[course_notes_status]" value="0">
-                            <input type="checkbox" name="value[course_notes_status]" id="course_notes_statusSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['course_notes_status']) and $itemValue['course_notes_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                            <input type="hidden" name="value[course_recent_reviews_status]" value="0">
+                            <input type="checkbox" name="value[course_recent_reviews_status]" id="course_recent_reviews_statusSwitch" value="1"
+                                   {{ (!empty($itemValue) and !empty($itemValue['course_recent_reviews_status']) and $itemValue['course_recent_reviews_status']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
                             <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="course_notes_statusSwitch">{{ trans('admin/main.active') }}</label>
+                            <label class="custom-switch-description mb-0 cursor-pointer" for="course_recent_reviews_statusSwitch">{{ trans('admin/main.active') }}</label>
                         </label>
-                        <p class="font-12 text-gray mb-0">{{ trans('update.course_notes_status_hint') }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('update.course_recent_reviews_status_hint') }}</p>
                     </div>
 
-                    <div class="form-group mt-3 custom-switches-stacked">
-                        <label class="custom-switch pl-0">
-                            <input type="hidden" name="value[course_notes_attachment]" value="0">
-                            <input type="checkbox" name="value[course_notes_attachment]" id="course_notes_attachmentSwitch" value="1"
-                                   {{ (!empty($itemValue) and !empty($itemValue['course_notes_attachment']) and $itemValue['course_notes_attachment']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                            <span class="custom-switch-indicator"></span>
-                            <label class="custom-switch-description mb-0 cursor-pointer" for="course_notes_attachmentSwitch">{{ trans('update.attachment') }}</label>
-                        </label>
-                        <p class="font-12 text-gray mb-0">{{ trans('update.course_notes_attachment_hint') }}</p>
-                    </div>
                 </div>
 
 
@@ -651,34 +647,11 @@
 
                 </div>
 
-                <div class="mb-5">
-                    <h5>{{ trans('update.bigbluebutton_api_settings') }}</h5>
-
-                    @foreach(['server_base_url', 'security_salt'] as $bbbConf)
-                        <div class="form-group">
-                            <label>{{ trans("update.bigbluebutton_{$bbbConf}") }}</label>
-                            <input type="text" name="value[bigbluebutton_{{ $bbbConf }}]" value="{{ (!empty($itemValue) and !empty($itemValue["bigbluebutton_{$bbbConf}"])) ? $itemValue["bigbluebutton_{$bbbConf}"] : old("bigbluebutton_{$bbbConf}") }}" class="form-control "/>
-                        </div>
-                    @endforeach
-
-                </div>
-
-
-                <div class="mb-5">
-                    <h5>{{ trans('update.jitsi_api_settings') }}</h5>
-
-                    @foreach(['jitsi_live_url'] as $jitsiConf)
-                        <div class="form-group">
-                            <label>{{ trans("update.{$jitsiConf}") }}</label>
-                            <input type="text" name="value[{{ $jitsiConf }}]" value="{{ (!empty($itemValue) and !empty($itemValue["{$jitsiConf}"])) ? $itemValue["{$jitsiConf}"] : old("{$jitsiConf}") }}" class="form-control "/>
-                        </div>
-                    @endforeach
-
-                </div>
-
 
                 <button type="submit" class="btn btn-primary">{{ trans('admin/main.save_change') }}</button>
             </form>
         </div>
     </div>
+</div>
+</div>
 </div>

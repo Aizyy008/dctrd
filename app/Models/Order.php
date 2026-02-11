@@ -24,6 +24,8 @@ class Order extends Model
     public static $bundle = 'bundle';
     public static $installmentPayment = 'installment_payment';
     public static $gift = 'gift';
+    public static $eventTicket = 'event_ticket';
+    public static $meetingPackage = 'meeting_package';
 
     public static $addiction = 'addiction';
     public static $deduction = 'deduction';

@@ -29,9 +29,7 @@ class TrendCategoriesController extends Controller
     {
         $this->authorize('admin_create_trending_categories');
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('admin/pages/categories.new_trend'),
@@ -69,9 +67,7 @@ class TrendCategoriesController extends Controller
 
         $trend = TrendCategory::findOrFail($trend_id);
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('admin/pages/categories.new_trend'),

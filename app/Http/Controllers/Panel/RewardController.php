@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Accounting;
 use App\Models\RewardAccounting;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class RewardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize("panel_rewards_lists");
 
@@ -21,18 +22,25 @@ class RewardController extends Controller
 
         $user = auth()->user();
 
-        $query = RewardAccounting::where('user_id', $user->id);
+        $query = RewardAccounting::query()->where('user_id', $user->id);
 
-        $addictionPoints = deepClone($query)->where('status', RewardAccounting::ADDICTION)
+        $copyQuery = deepClone($query);
+        $query = $this->handleFilters($request, $query);
+        $getListData = $this->getListsData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
+        $totalTransactions = deepClone($copyQuery)->count();
+
+        $addictionPoints = deepClone($copyQuery)->where('status', RewardAccounting::ADDICTION)
             ->sum('score');
 
-        $spentPoints = deepClone($query)->where('status', RewardAccounting::DEDUCTION)
+        $spentPoints = deepClone($copyQuery)->where('status', RewardAccounting::DEDUCTION)
             ->sum('score');
 
         $availablePoints = $addictionPoints - $spentPoints;
-
-        $rewards = $query->orderBy('created_at', 'desc')
-            ->paginate(10);
 
         $mostPointsUsers = RewardAccounting::selectRaw('*, SUM(CASE WHEN status = "addiction" THEN score ELSE 0 END) as total_points')
             ->groupBy('user_id')
@@ -40,8 +48,8 @@ class RewardController extends Controller
             ->with([
                 'user'
             ])
-            ->orderBy('total_points','desc')
-            ->limit(4)
+            ->orderBy('total_points', 'desc')
+            ->limit(10)
             ->get();
 
         $earnByExchange = 0;
@@ -54,13 +62,68 @@ class RewardController extends Controller
             'availablePoints' => $availablePoints,
             'totalPoints' => $addictionPoints,
             'spentPoints' => $spentPoints,
-            'rewards' => $rewards,
+            'totalTransactions' => $totalTransactions,
             'rewardsSettings' => $rewardsSettings,
             'earnByExchange' => $earnByExchange,
             'mostPointsUsers' => $mostPointsUsers,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view('web.default.panel.rewards.index', $data);
+        return view('design_1.panel.rewards.index', $data);
+    }
+
+
+    private function handleFilters(Request $request, Builder $query): Builder
+    {
+        $from = $request->get('from');
+        $to = $request->get('to');
+        $status = $request->get('status');
+
+        $query = fromAndToDateFilter($from, $to, $query, 'created_at');
+
+        if (!empty($status) and in_array($status, ['addiction', 'deduction'])) {
+            $query->where('status', $status);
+        }
+
+        return $query;
+    }
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $rewards = $query
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $rewards, $total, $count);
+        }
+
+        return [
+            'rewards' => $rewards,
+            'pagination' => $this->makePagination($request, $rewards, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $rewards, $total, $count)
+    {
+        $html = "";
+
+        foreach ($rewards as $rewardRow) {
+            $html .= (string)view()->make('design_1.panel.rewards.table_items', ['reward' => $rewardRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $rewards, $total, $count, true)
+        ]);
     }
 
     public function exchange(Request $request)

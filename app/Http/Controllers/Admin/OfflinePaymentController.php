@@ -148,6 +148,34 @@ class OfflinePaymentController extends Controller
 
         $offlinePayment = OfflinePayment::findOrFail($id);
 
+        // If type is cart checkout: complete order instead of charging wallet
+        if ($offlinePayment->type === OfflinePayment::$typeCart && !empty($offlinePayment->order_id)) {
+            $order = Order::query()->where('id', $offlinePayment->order_id)->where('user_id', $offlinePayment->user_id)->first();
+
+            if ($order) {
+                // Mark paying if not already, then finalize as paid and set accounting/sales
+                if ($order->status !== Order::$paid) {
+                    $order->update([
+                        'payment_method' => Order::$paymentChannel,
+                    ]);
+
+                    // Finalize order: reuse web controller logic
+                    (new \App\Http\Controllers\Web\PaymentController())->setPaymentAccounting($order);
+                    $order->update(['status' => Order::$paid]);
+                }
+            }
+
+            $offlinePayment->update(['status' => OfflinePayment::$approved]);
+
+            $notifyOptions = [
+                '[amount]' => handlePrice($offlinePayment->amount),
+            ];
+            sendNotification('offline_payment_approved', $notifyOptions, $offlinePayment->user_id);
+
+            return back();
+        }
+
+        // Default (charge wallet)
         Accounting::create([
             'creator_id' => auth()->user()->id,
             'user_id' => $offlinePayment->user_id,
@@ -181,6 +209,26 @@ class OfflinePaymentController extends Controller
         }
 
         return back();
+    }
+
+    public function cartItems($id)
+    {
+        $this->authorize('admin_offline_payments_list');
+
+        $offlinePayment = OfflinePayment::query()->with(['order.orderItems' => function ($q) {
+            $q->with(['webinar', 'product', 'bundle', 'subscribe', 'promotion', 'registrationPackage']);
+        }])->findOrFail($id);
+
+        if (!$offlinePayment->order) {
+            return back();
+        }
+
+        return view('admin.financial.offline_payments.cart_items', [
+            'pageTitle' => trans('update.cart_items'),
+            'offlinePayment' => $offlinePayment,
+            'order' => $offlinePayment->order,
+            'orderItems' => $offlinePayment->order->orderItems,
+        ]);
     }
 
     public function exportExcel(Request $request)

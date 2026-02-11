@@ -35,7 +35,7 @@
                         </div>
                         @enderror
                     </div>
-                    <div class="text-muted text-small mt-1">{{ trans('admin/main.user_group_discount_rate_hint') }}</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.user_group_discount_rate_hint') }}</div>
                 </div>
 
 
@@ -69,7 +69,7 @@
 
                 <div class="mb-2">
                     <h5 class="font-16 text-dark">{{ trans('admin/main.user_group_commission_rate') }}</h5>
-                    <div class="text-muted text-small mt-1">{{ trans('admin/main.user_group_commission_rate_hint') }}</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.user_group_commission_rate_hint') }}</div>
                 </div>
 
                 @foreach(\App\Models\UserCommission::$sources as $commissionSource)
@@ -111,7 +111,7 @@
                             </div>
                         </div>
 
-                        <div class="text-muted text-small mt-1">{{ trans("update.{$commissionSource}_commission_hint") }}</div>
+                        <div class="text-gray-500 text-small mt-1">{{ trans("update.{$commissionSource}_commission_hint") }}</div>
                     </div>
                 @endforeach
 

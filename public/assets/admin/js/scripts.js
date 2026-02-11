@@ -720,3 +720,76 @@ window.makeSummernote = function ($content, cardHeight = null, onChange = undefi
         }
     });
 }
+
+
+function handleAccordionArrow($accordion, show, target) {
+    const $arrow = $accordion.find('.collapse-arrow-icon[href="' + target + '"]')
+
+    if ($arrow.hasClass('arrow-right')) {
+        if (show) {
+            $arrow.addClass('arrow-down')
+        } else {
+            $arrow.removeClass('arrow-down')
+        }
+    } else {
+        if (show) {
+            $arrow.removeClass('arrow-down')
+        } else {
+            $arrow.addClass('arrow-down')
+        }
+    }
+}
+
+window.handleAccordionCollapse = function () {
+    $("[data-toggle='collapse']").each(function () {
+        const $this = $(this);
+        const target = $this.attr('href');
+        const $accordion = $this.closest('.accordion');
+        const $target = $(target);
+
+        if ($target.hasClass('show')) {
+            $target.slideDown();
+            handleAccordionArrow($accordion, true, target);
+        } else {
+            $target.slideUp();
+            handleAccordionArrow($accordion, false, target);
+        }
+
+        // $this.off('click') => Prevent multiple click events from being recorded
+        // Resolving the issue of accordions opening and closing multiple times
+
+        $this.off('click').on('click', function () {
+
+            const parent = $this.attr('data-parent')
+            const $parent = $(`${parent}`);
+            const collapseJustOne = ($this.attr("data-collapse") === "one")
+
+            if ($parent.length && collapseJustOne) {
+                $parent.find('.accordion__collapse.show').each(function () {
+                    const $openTarget = $(this);
+                    const $openTargetAccordion = $openTarget.closest('.accordion')
+
+                    $openTarget.slideUp().removeClass('show');
+                    handleAccordionArrow($openTargetAccordion, false, target);
+                });
+            }
+
+
+            if ($target.hasClass('show')) {
+                $target.slideUp().removeClass('show');
+                handleAccordionArrow($accordion, false, target);
+            } else {
+                $target.addClass('show').slideDown();
+                handleAccordionArrow($accordion, true, target);
+            }
+
+            return false;
+        });
+    });
+};
+handleAccordionCollapse();
+
+$('body').on('click', '.cancel-accordion', function () {
+    $(this).closest('.accordion').remove();
+    $(this).closest('.accordion-row').remove();
+})

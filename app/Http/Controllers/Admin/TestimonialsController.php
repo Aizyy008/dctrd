@@ -2,17 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Exports\TestimonialsExport;
 use App\Http\Controllers\Controller;
 use App\Models\Testimonial;
 use App\Models\Translation\TestimonialTranslation;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class TestimonialsController extends Controller
 {
@@ -144,110 +137,4 @@ class TestimonialsController extends Controller
 
         return redirect(getAdminPanelUrl().'/testimonials');
     }
-        public function downloadTemplate()
-    {
-        // Define the headers for the Excel sheet
-        $headers = [
-            'User Avatar', 'User Name', 'Job Title', 'Rate', 'Comment', 'Status'
-        ];
-
-        // Create a new spreadsheet
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Set headers in the first row
-        $columnIndex = 'A';
-        foreach ($headers as $header) {
-            $sheet->setCellValue($columnIndex . '1', $header);
-            $columnIndex++;
-        }
-
-        // Set header styling (Bold)
-        $styleArray = [
-            'font' => ['bold' => true],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-        ];
-        $sheet->getStyle('A1:F1')->applyFromArray($styleArray);
-
-        // Auto-size columns
-        foreach (range('A', 'F') as $column) {
-            $sheet->getColumnDimension($column)->setAutoSize(true);
-        }
-
-        // Generate Excel file
-        $writer = new Xlsx($spreadsheet);
-        $fileName = 'testimonials_template.xlsx';
-        $tempFilePath = storage_path('app/' . $fileName);
-        $writer->save($tempFilePath);
-
-        // Return the file as a response for download
-        return response()->download($tempFilePath)->deleteFileAfterSend(true);
-    }
-    public function import(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls,csv'
-        ]);
-
-        if (!$request->hasFile('excel_file')) {
-            return back()->with('error', 'No file was uploaded.');
-        }
-
-        $file = $request->file('excel_file');
-
-        try {
-            $data = Excel::toArray([], $file)[0];
-            if (empty($data) || count($data) < 2) {
-                return back()->with('error', 'The uploaded file is empty or has incorrect format.');
-            }
-
-            // Remove the header row
-            array_shift($data);
-
-            foreach ($data as $row) {
-                // Ensure all required fields exist
-                if (count($row) < 6) {
-                    continue;
-                }
-
-                 // Validate rate column (should be between 0 and 5)
-                $validator = Validator::make(['rate' => $row[3]], [
-                    'rate' => 'required|numeric|min:0|max:5',
-                ]);
-
-                if ($validator->fails()) {
-                    return back()->withErrors(['rate' => 'The rate must be between 0 and 5. Found: ' . $row[3]]);
-                }
-
-                // Store in testimonials table
-                $testimonial = Testimonial::create([
-                    'user_avatar' => $row[0] ?? null, // User Avatar
-                    'rate' => $row[3] ?? 0, // Rate
-                    'status' => $row[5] ?? 'disable', // Status
-                    'created_at' => now()->timestamp, // Store current timestamp
-                ]);
-
-                // Store in testimonial_translations table
-                if ($testimonial) {
-                    TestimonialTranslation::create([
-                        'testimonial_id' => $testimonial->id,
-                        'locale' => app()->getLocale(),
-                        'user_name' => $row[1] ?? '', // User Name
-                        'user_bio' => $row[2] ?? '', // Job Title (Bio)
-                        'comment' => $row[4] ?? '', // Comment
-                    ]);
-                }
-            }
-
-            return back()->with('success', 'Testimonials imported successfully!');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error importing testimonials: ' . $e->getMessage());
-        }
-    }
-        public function export()
-    {
-        return Excel::download(new TestimonialsExport, 'testimonials.xlsx');
-    }
-
-
 }

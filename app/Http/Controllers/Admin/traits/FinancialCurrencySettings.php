@@ -3,9 +3,6 @@
 namespace App\Http\Controllers\Admin\traits;
 
 use App\Models\Currency;
-use App\Models\NavbarButton;
-use App\Models\Role;
-use App\Models\Translation\NavbarButtonTranslation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 

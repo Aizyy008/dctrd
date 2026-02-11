@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Mixins\Certificate\MakeCertificate;
+use App\Mixins\RegistrationPackage\SubscribeMixins;
 use App\Models\Traits\CascadeDeletes;
 use App\User;
 use Cviebrock\EloquentSluggable\Sluggable;
@@ -37,7 +38,7 @@ class Bundle extends Model implements TranslatableContract
 
     static $videoDemoSource = ['upload', 'youtube', 'vimeo', 'external_link'];
 
-    public $translatedAttributes = ['title', 'description', 'seo_description'];
+    public $translatedAttributes = ['title', 'description', 'seo_description', 'summary'];
 
     public function getTitleAttribute()
     {
@@ -52,6 +53,11 @@ class Bundle extends Model implements TranslatableContract
     public function getSeoDescriptionAttribute()
     {
         return getTranslateAttributeValue($this, 'seo_description');
+    }
+
+    public function getSummaryAttribute()
+    {
+        return getTranslateAttributeValue($this, 'summary');
     }
 
     public function getDurationAttribute()
@@ -107,6 +113,11 @@ class Bundle extends Model implements TranslatableContract
     public function reviews()
     {
         return $this->hasMany('App\Models\WebinarReview', 'bundle_id', 'id');
+    }
+
+    public function visits()
+    {
+        return $this->morphMany(VisitLog::class, 'targetable');
     }
 
     public function sales()
@@ -201,6 +212,13 @@ class Bundle extends Model implements TranslatableContract
         }
 
         return $rate > 0 ? number_format($rate, 2) : 0;
+    }
+
+    public function getRateCount()
+    {
+        return $this->reviews()
+            ->where('status', 'active')
+            ->count();
     }
 
     public function bestTicket($with_percent = false)
@@ -468,7 +486,7 @@ class Bundle extends Model implements TranslatableContract
         $sale = null;
 
         if (!empty($user)) {
-            $sale =  Sale::query()->where('buyer_id', $user->id)
+            $sale = Sale::query()->where('buyer_id', $user->id)
                 ->where('bundle_id', $this->id)
                 ->where('type', 'bundle')
                 ->whereNull('refund_at')
@@ -487,6 +505,7 @@ class Bundle extends Model implements TranslatableContract
             ->twitter()
             ->whatsapp()
             ->telegram()
+            ->linkedin()
             ->getRawLinks();
 
         return !empty($link[$social]) ? $link[$social] : '';
@@ -605,6 +624,83 @@ class Bundle extends Model implements TranslatableContract
                 RewardAccounting::makeRewardAccounting($userCertificate->student_id, $certificateReward, Reward::CERTIFICATE, $userCertificate->id, true);
             }
         }
+    }
+
+    public function getAllChaptersCount()
+    {
+        $count = 0;
+
+        foreach ($this->bundleWebinars as $bundleWebinar) {
+            $webinar = $bundleWebinar->webinar;
+
+            if (!empty($webinar)) {
+                $count += $webinar->chapters()->count();
+            }
+        }
+
+        return $count;
+    }
+
+    public function getAllLessonsCount()
+    {
+        $count = 0;
+
+        foreach ($this->bundleWebinars as $bundleWebinar) {
+            $webinar = $bundleWebinar->webinar;
+
+            if (!empty($webinar)) {
+                $count += $webinar->getAllLessonsCount();
+            }
+        }
+
+        return $count;
+    }
+
+    public function getTimeSpentOnCourse($returnType = null)
+    {
+        $seconds = 0;
+
+        foreach ($this->bundleWebinars as $bundleWebinar) {
+            $webinar = $bundleWebinar->webinar;
+
+            if (!empty($webinar)) {
+                $seconds += $webinar->getTimeSpentOnCourse($returnType);
+            }
+
+        }
+
+        return $seconds;
+    }
+
+    public function getAllAssignmentsCount()
+    {
+        $count = 0;
+
+        foreach ($this->bundleWebinars as $bundleWebinar) {
+            $webinar = $bundleWebinar->webinar;
+
+            if (!empty($webinar)) {
+                $count += $webinar->getAllAssignmentsCount();
+            }
+
+        }
+
+        return $count;
+    }
+
+
+    public function canUseSubscribe()
+    {
+        $result = false;
+
+        if ($this->subscribe) {
+            $subscribeMixins = (new SubscribeMixins());
+            $subscribes = $subscribeMixins->getSubscribesByTargetProducts("bundles", $this->category_id, $this->creator_id, $this->id);
+
+            $result = (count($subscribes) > 0);
+        }
+
+        return $result;
     }
 
 }

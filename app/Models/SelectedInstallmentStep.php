@@ -11,6 +11,22 @@ class SelectedInstallmentStep extends Model
     public $timestamps = false;
     protected $guarded = ['id'];
 
+
+    public function getTitleAttribute()
+    {
+        $title = null;
+
+        if (!empty($this->installmentStep)) {
+            $title = $this->installmentStep->title;
+        }
+
+        return $title;
+    }
+
+    /********
+     * Relations
+     * */
+
     public function selectedInstallment()
     {
         return $this->belongsTo(SelectedInstallment::class, 'selected_installment_id', 'id');

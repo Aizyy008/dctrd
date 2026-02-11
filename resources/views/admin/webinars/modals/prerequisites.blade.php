@@ -1,8 +1,8 @@
 <!-- Modal -->
 <div class="d-none" id="webinarPrerequisitesModal">
-    <h3 class="section-title after-line font-20 text-dark-blue mb-25">{{ trans('public.add_prerequisites') }}</h3>
+    <h3 class="section-title after-line font-20 text-dark-blue mb-25 p-16">{{ trans('public.add_prerequisites') }}</h3>
 
-    <div class="js-prerequisites-form" data-action="{{ getAdminPanelUrl() }}/prerequisites/store" >
+    <div class="js-prerequisites-form p-16" data-action="{{ getAdminPanelUrl() }}/prerequisites/store" >
         <input type="hidden" name="webinar_id" value="{{  !empty($webinar) ? $webinar->id :''  }}">
 
         <div class="form-group mt-15">

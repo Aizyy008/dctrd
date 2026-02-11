@@ -8,9 +8,10 @@ use App\Models\DiscountBundle;
 use App\Models\DiscountCategory;
 use App\Models\DiscountCourse;
 use App\Models\DiscountGroup;
+use App\Models\DiscountEvent;
+use App\Models\DiscountMeetingPackage;
 use App\Models\DiscountUser;
 use App\Models\Group;
-use App\Models\Product;
 use App\Models\Role;
 use App\User;
 use Illuminate\Http\Request;
@@ -64,6 +65,7 @@ class DiscountController extends Controller
         $to = $request->get('to');
         $search = $request->get('search');
         $user_ids = $request->get('user_ids', []);
+        $status = $request->get('status');
         $sort = $request->get('sort');
 
 
@@ -77,7 +79,20 @@ class DiscountController extends Controller
         }
 
         if (isset($search)) {
-            $query = $query->where('name', 'like', '%' . $search . '%');
+            $query->where(function ($query) use ($search) {
+                $query->where('title', 'like', '%' . $search . '%');
+            });
+        }
+
+        if (!empty($status)) {
+            $time = time();
+
+            if ($status == 'expired') {
+                $query->where('expired_at', '<', $time);
+            } else if ($status == 'active') {
+                $query->where('status', 'active');
+                $query->where('expired_at', '>', $time);
+            }
         }
 
         if (!empty($sort)) {
@@ -145,14 +160,12 @@ class DiscountController extends Controller
         $this->authorize('admin_discount_codes_create');
 
         $userGroups = Group::orderBy('created_at', 'desc')->where('status', 'active')->get();
-        // +++++++++++++++++++ products ++++++++++++++++++
-        $productsGroups = Product::with('translations')->orderBy('created_at', 'desc')->where('status', 'active')->get();
+
         $data = [
             'pageTitle' => trans('admin/main.new_discount_title'),
             'userGroups' => $userGroups,
-            'selectedProductIds' => [], // No selected products
-            'productsGroups' => $productsGroups,
         ];
+
         return view('admin.financial.discount.new', $data);
     }
 
@@ -170,8 +183,6 @@ class DiscountController extends Controller
             'amount' => 'nullable',
             'count' => 'nullable',
             'expired_at' => 'required',
-            'products_ids' => 'nullable|array',
-            'products_ids.*' => 'exists:products,id',
         ]);
 
         $data = $request->all();
@@ -203,15 +214,15 @@ class DiscountController extends Controller
             'expired_at' => $expiredAt->getTimestamp(),
             'created_at' => time(),
         ]);
-        // ======== products discount : Attach products to discount ========
-        if ($request->source == 'product' && $request->has('products_ids'))
-        {
-            $discount->discount_coupon_product()->sync($request->products_ids);
-        }
 
         $this->handleRelationItems($discount, $data);
 
-        return redirect(getAdminPanelUrl() . '/financial/discounts');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.discount_created_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/discounts/{$discount->id}/edit"))->with(['toast' => $toastData]);
     }
 
     private function handleRelationItems($discount, $data)
@@ -219,6 +230,8 @@ class DiscountController extends Controller
         $user_id = $data['user_id'] ?? [];
         $coursesIds = $data['webinar_ids'] ?? [];
         $bundlesIds = $data['bundle_ids'] ?? [];
+        $eventsIds = $data['event_ids'] ?? [];
+        $meetingPackageIds = $data['meeting_package_ids'] ?? [];
         $categoriesIds = $data['category_ids'] ?? [];
         $groupsIds = $data['group_ids'] ?? [];
 
@@ -245,6 +258,26 @@ class DiscountController extends Controller
                 DiscountBundle::create([
                     'discount_id' => $discount->id,
                     'bundle_id' => $bundlesId,
+                    'created_at' => time(),
+                ]);
+            }
+        }
+
+        if (!empty($eventsIds) and count($eventsIds)) {
+            foreach ($eventsIds as $eventId) {
+                DiscountEvent::create([
+                    'discount_id' => $discount->id,
+                    'event_id' => $eventId,
+                    'created_at' => time(),
+                ]);
+            }
+        }
+
+        if (!empty($meetingPackageIds) and count($meetingPackageIds)) {
+            foreach ($meetingPackageIds as $meetingPackageId) {
+                DiscountMeetingPackage::create([
+                    'discount_id' => $discount->id,
+                    'meeting_package_id' => $meetingPackageId,
                     'created_at' => time(),
                 ]);
             }
@@ -283,10 +316,6 @@ class DiscountController extends Controller
         if (!empty($discount->discountGroups)) {
             $discountGroupIds = $discount->discountGroups->pluck('group_id')->toArray();
         }
-        // ++++++++++++++ discount coupon products ++++++++++++++
-        $selectedProductIds = $discount->discount_coupon_product->pluck('id')->toArray(); // Get associated products
-        // +++++++++++++++++++ products ++++++++++++++++++
-        $productsGroups = Product::with('translations')->orderBy('created_at', 'desc')->where('status', 'active')->get();
 
 
         $data = [
@@ -295,10 +324,6 @@ class DiscountController extends Controller
             'userDiscounts' => $userDiscounts,
             'userGroups' => $userGroups,
             'discountGroupIds' => $discountGroupIds,
-            // ======== discount coupon products ========
-            'selectedProductIds' => $selectedProductIds,
-            // ======== products ========
-            'productsGroups' => $productsGroups,
         ];
 
         return view('admin.financial.discount.new', $data);
@@ -355,29 +380,35 @@ class DiscountController extends Controller
 
         DiscountBundle::where('discount_id', $discount->id)->delete();
 
+        DiscountEvent::where('discount_id', $discount->id)->delete();
+
+        DiscountMeetingPackage::where('discount_id', $discount->id)->delete();
+
         DiscountCategory::where('discount_id', $discount->id)->delete();
 
         DiscountGroup::where('discount_id', $discount->id)->delete();
 
         $this->handleRelationItems($discount, $data);
-        // ======== products discount coupons : Attach products to discount ========
-        if ($request->source == 'product' && $request->has('products_ids'))
-        {
-            $discount->discount_coupon_product()->sync($request->products_ids);
-        }
-        return redirect(getAdminPanelUrl() . '/financial/discounts');
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.discount_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/discounts/{$discount->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function destroy(Request $request, $id)
     {
         $this->authorize('admin_discount_codes_delete');
 
-        $discount = Discount::find($id);
-        // =========== products discount coupons : Detach all related products before deleting the discount
-        $discount->discount_coupon_product()->detach();
-        // =========== delete "discount" ===========
-        $discount->delete();
+        Discount::find($id)->delete();
 
-        return redirect(getAdminPanelUrl() . '/financial/discounts');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.discount_deleted_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/discount"))->with(['toast' => $toastData]);
     }
 }

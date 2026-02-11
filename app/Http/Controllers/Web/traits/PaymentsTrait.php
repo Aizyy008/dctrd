@@ -94,7 +94,8 @@ trait PaymentsTrait
             $status = ProductOrder::$success;
         }
 
-        ProductOrder::where('product_id', $orderItem->product_id)
+        ProductOrder::query()->where('product_id', $orderItem->product_id)
+            ->where('id', $orderItem->product_order_id)
             ->where(function ($query) use ($orderItem) {
                 $query->where(function ($query) use ($orderItem) {
                     $query->whereNotNull('buyer_id');

@@ -51,7 +51,7 @@ class LoginController extends Controller
         ];
 
 
-        return view('admin.auth.login', $data);
+        return view('admin.auth.new.login', $data);
     }
 
     /**
@@ -104,7 +104,9 @@ class LoginController extends Controller
         // validate the form data
         $this->validate($request, $rules);
 
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $request->remember)) {
+        $remember = ($request->get('remember') == 'on');
+
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password], $remember)) {
             $user = auth()->user();
 
             if (!empty($user)) {

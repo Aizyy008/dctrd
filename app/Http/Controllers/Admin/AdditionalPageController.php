@@ -13,7 +13,15 @@ class AdditionalPageController extends Controller
 {
     public function index(Request $request, $name)
     {
-        $this->authorize('admin_additional_pages_' . $name);
+        $pageName = $name;
+
+        if (in_array($name, ['404', '500', '419', '403'])) {
+            $this->authorize('admin_additional_pages_errors');
+
+            $pageName = "404";
+        } else {
+            $this->authorize('admin_additional_pages_' . $name);
+        }
 
         $value = [];
 
@@ -27,19 +35,23 @@ class AdditionalPageController extends Controller
         }
 
         $locale = $request->get('locale', $defaultLocale);
-        storeContentLocale($locale, $settings->getTable(), $settings->id);
 
-        if (!empty($settings) and !empty($settings->value)) {
-            $value = json_decode($settings->value, true);
+        if (!empty($settings)) {
+            storeContentLocale($locale, $settings->getTable(), $settings->id);
+
+            if (!empty($settings->value)) {
+                $value = json_decode($settings->value, true);
+            }
         }
 
         $data = [
             'pageTitle' => trans('admin/main.additional_pages_title'),
             'value' => $value,
+            'name' => $name,
             'selectedLocal' => $locale
         ];
 
-        return view('admin.additional_pages.' . $name, $data);
+        return view('admin.additional_pages.' . $pageName, $data);
     }
 
     public function store(Request $request, $name)
@@ -96,53 +108,4 @@ class AdditionalPageController extends Controller
         return back();
     }
 
-    public function storeFooter(Request $request)
-    {
-        $this->authorize('admin_additional_pages_footer');
-
-        $newValues = $request->get('value', null);
-        $locale = $request->get('locale', getDefaultLocale());
-        $values = [];
-        $settings = Setting::where('name', Setting::$footerName)->first();
-
-        if (!empty($settings) and !empty($settings->value)) {
-            $values = json_decode($settings->value);
-        }
-
-        if (!empty($newValues) and !empty($values)) {
-            foreach ($newValues as $newKey => $newValue) {
-                foreach ($values as $key => $value) {
-                    if ($key == $newKey) {
-                        $values->$key = $newValue;
-                        unset($newValues[$key]);
-                    }
-                }
-            }
-        }
-
-        if (!empty($newValues)) {
-            $values = array_merge((array)$values, $newValues);
-        }
-
-        if (!empty($values)) {
-            $values = json_encode($values);
-            $values = str_replace('record', Str::random(8), $values);
-
-            SettingTranslation::updateOrCreate(
-                [
-                    'setting_id' => $settings->id,
-                    'locale' => mb_strtolower($locale)
-                ],
-                [
-                    'value' => $values,
-                ]
-            );
-
-            cache()->forget('settings.' . Setting::$footerName);
-
-            removeContentLocale();
-
-            return redirect(getAdminPanelUrl().'/additional_page/footer');
-        }
-    }
 }

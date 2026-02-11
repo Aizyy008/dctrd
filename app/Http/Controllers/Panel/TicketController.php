@@ -60,12 +60,16 @@ class TicketController extends Controller
         }
 
         if ($canStore) {
+            $locale = $request->get("locale", getDefaultLocale());
+            $startDate = !empty($data['start_date']) ? convertTimeToUTCzone($data['start_date'], getTimezone())->getTimestamp() : null;
+            $endDate = !empty($data['end_date']) ? convertTimeToUTCzone($data['end_date'], getTimezone())->getTimestamp() : null;
+
             $ticket = Ticket::create([
                 'creator_id' => $user->id,
                 'webinar_id' => !empty($data['webinar_id']) ? $data['webinar_id'] : null,
                 'bundle_id' => !empty($data['bundle_id']) ? $data['bundle_id'] : null,
-                'start_date' => strtotime($data['start_date']),
-                'end_date' => strtotime($data['end_date']),
+                'start_date' => $startDate,
+                'end_date' => $endDate,
                 'discount' => $data['discount'],
                 'capacity' => $data['capacity'] ?? null,
                 'created_at' => time()
@@ -74,7 +78,7 @@ class TicketController extends Controller
             if (!empty($ticket)) {
                 TicketTranslation::updateOrCreate([
                     'ticket_id' => $ticket->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                 ]);
@@ -103,54 +107,59 @@ class TicketController extends Controller
             'discount' => 'required|integer|between:1,100',
         ];
 
-        if (!empty($data['webinar_id'])) {
-            $webinar = Webinar::find($data['webinar_id']);
+        $columnName = !empty($data['webinar_id']) ? 'webinar_id' : 'bundle_id';
+        $columnValue = !empty($data['webinar_id']) ? $data['webinar_id'] : $data['bundle_id'];
 
-            if (!empty($webinar) and $webinar->canAccess($user)) {
-                $canStore = true;
+        $ticket = Ticket::where('id', $id)
+            ->where(function ($query) use ($user, $columnName, $columnValue) {
+                $query->where('creator_id', $user->id);
+                $query->orWhere($columnName, $columnValue);
+            })
+            ->first();
 
-                $rules ['webinar_id'] = 'required';
+        if (!empty($ticket)) {
+            if (!empty($data['webinar_id'])) {
+                $webinar = Webinar::find($data['webinar_id']);
 
-                if (!empty($webinar->capacity)) {
-                    $sumTicketsCapacities = $webinar->tickets->sum('capacity');
-                    $capacity = $webinar->capacity - $sumTicketsCapacities;
+                if (!empty($webinar) and $webinar->canAccess($user)) {
+                    $canStore = true;
 
-                    $rules ['capacity'] = 'nullable|numeric|min:1|max:' . $capacity;
+                    $rules ['webinar_id'] = 'required';
+
+                    if (!empty($webinar->capacity)) {
+                        $sumTicketsCapacities = $webinar->tickets()->where('id', '!=', $ticket->id)->sum('capacity');
+                        $capacity = $webinar->capacity - $sumTicketsCapacities;
+
+                        $rules ['capacity'] = 'nullable|numeric|min:1|max:' . $capacity;
+                    }
+                }
+            } else if (!empty($data['bundle_id'])) {
+                $bundle = Bundle::find($data['bundle_id']);
+
+                if (!empty($bundle) and $bundle->canAccess($user)) {
+                    $canStore = true;
+                    $rules ['bundle_id'] = 'required';
                 }
             }
-        } else if (!empty($data['bundle_id'])) {
-            $bundle = Bundle::find($data['bundle_id']);
 
-            if (!empty($bundle) and $bundle->canAccess($user)) {
-                $canStore = true;
-                $rules ['bundle_id'] = 'required';
+            $validator = Validator::make($data, $rules);
+
+            if ($validator->fails()) {
+                return response([
+                    'code' => 422,
+                    'errors' => $validator->errors(),
+                ], 422);
             }
-        }
 
-        $validator = Validator::make($data, $rules);
+            if ($canStore) {
 
-        if ($validator->fails()) {
-            return response([
-                'code' => 422,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
+                $locale = $request->get("locale", getDefaultLocale());
+                $startDate = !empty($data['start_date']) ? convertTimeToUTCzone($data['start_date'], getTimezone())->getTimestamp() : null;
+                $endDate = !empty($data['end_date']) ? convertTimeToUTCzone($data['end_date'], getTimezone())->getTimestamp() : null;
 
-        if ($canStore) {
-            $columnName = !empty($data['webinar_id']) ? 'webinar_id' : 'bundle_id';
-            $columnValue = !empty($data['webinar_id']) ? $data['webinar_id'] : $data['bundle_id'];
-
-            $ticket = Ticket::where('id', $id)
-                ->where(function ($query) use ($user, $columnName, $columnValue) {
-                    $query->where('creator_id', $user->id);
-                    $query->orWhere($columnName, $columnValue);
-                })
-                ->first();
-
-            if (!empty($ticket)) {
                 $ticket->update([
-                    'start_date' => strtotime($data['start_date']),
-                    'end_date' => strtotime($data['end_date']),
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
                     'discount' => $data['discount'],
                     'capacity' => $data['capacity'] ?? null,
                     'updated_at' => time()
@@ -158,7 +167,7 @@ class TicketController extends Controller
 
                 TicketTranslation::updateOrCreate([
                     'ticket_id' => $ticket->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                 ]);

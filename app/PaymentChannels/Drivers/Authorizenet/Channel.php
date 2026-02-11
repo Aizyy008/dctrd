@@ -44,7 +44,7 @@ class Channel extends BasePaymentChannel implements IChannel
             'paymentChannel' => $paymentChannel
         ];
 
-        return view('web.default.cart.channels.authorizenet', $data);
+        return view('design_1.web.cart.payment.channels.authorizenet', $data);
     }
 
 

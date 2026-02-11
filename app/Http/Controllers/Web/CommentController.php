@@ -9,25 +9,92 @@ use App\Models\Reward;
 use App\Models\RewardAccounting;
 use App\Models\Webinar;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
+
+    public function getComments(Request $request, $itemType, $itemId)
+    {
+        $itemName = "{$itemType}_id";
+
+        $page = $request->get('page', 1);
+        $count = 10;
+
+        $query = Comment::query()->where($itemName, $itemId);
+        $query->where('status', 'active');
+        $query->whereNull('reply_id');
+        $query->whereNull('review_id');
+
+        $query->with([
+            'user' => function ($query) {
+                $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings');
+            },
+            'replies' => function ($query) {
+                $query->where('status', 'active');
+                $query->with([
+                    'user' => function ($query) {
+                        $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings');
+                    }
+                ]);
+            }
+        ]);
+        $query->orderBy('created_at', 'desc');
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $comments = $query->get();
+        $hasMore = $total > ($page * $count);
+
+        if ($request->ajax()) {
+            $html = (string)view()->make('design_1.web.components.comments.all_cards', [
+                'comments' => $comments,
+                'commentForItemId' => $itemId,
+                'commentForItemName' => $itemName,
+            ]);
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html,
+                'has_more' => $hasMore,
+            ]);
+        }
+
+        return [
+            'comments' => $comments,
+            'comments_count' => $total,
+            'has_more' => $hasMore,
+        ];
+    }
+
     public function store(Request $request)
     {
-        $this->validate($request, [
+        $data = $request->all();
+        $user = auth()->user();
+
+        $validator = Validator::make($data, [
             'item_id' => 'required',
             'comment' => 'required|string',
         ]);
 
-        $user = auth()->user();
-        $item_name = $request->get('item_name');
-        $item_id = $request->get('item_id');
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $item_name = $data['item_name'] ?? 'webinar_id';
+        $item_id = $data['item_id'];
 
         $comment = Comment::create([
             $item_name => $item_id,
             'user_id' => $user->id,
-            'comment' => $request->input('comment'),
-            'reply_id' => $request->input('reply_id'),
+            'comment' => $data['comment'],
+            'reply_id' => $data['reply_id'] ?? null,
             'status' => $this->getStatus(),
             'created_at' => time()
         ]);
@@ -62,15 +129,14 @@ class CommentController extends Controller
             }
         }
 
-        $toastData = [
+        return response()->json([
+            'code' => 200,
             'title' => trans('product.comment_success_store'),
             'msg' => trans('product.comment_success_store_msg'),
-            'status' => 'success'
-        ];
-        return redirect()->back()->with(['toast' => $toastData]);
+        ]);
     }
 
-    public function storeReply(Request $request)
+    public function storeReply(Request $request, $commentId)
     {
         $this->validate($request, [
             'item_id' => 'required',
@@ -84,17 +150,16 @@ class CommentController extends Controller
             $item_name => $item_id,
             'user_id' => auth()->user()->id,
             'comment' => $request->input('reply'),
-            'reply_id' => $request->input('comment_id'),
+            'reply_id' => $commentId,
             'status' => $this->getStatus(),
             'created_at' => time()
         ]);
 
-        $toastData = [
+        return response()->json([
+            'code' => 200,
             'title' => trans('product.comment_success_store'),
             'msg' => trans('product.comment_success_store_msg'),
-            'status' => 'success'
-        ];
-        return back()->with(['toast' => $toastData]);
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -146,42 +211,101 @@ class CommentController extends Controller
             $comment->delete();
         }
 
+        if ($request->ajax()) {
+            return response()->json([
+                'code' => 200,
+            ]);
+        }
+
         return redirect()->back();
+    }
+
+    public function getReportModal(Request $request)
+    {
+        if ($request->ajax()) {
+            $commentId = $request->get('comment');
+            $itemId = $request->get('item');
+            $itemType = $request->get('type');
+
+            $comment = Comment::query()->where('id', $commentId)
+                ->where($itemType, $itemId)
+                ->first();
+
+            if (!empty($comment)) {
+                $data = [
+                    'comment' => $comment,
+                    'itemId' => $itemId,
+                    'itemType' => $itemType,
+                ];
+
+                $html = (string)view()->make("design_1.web.components.comments.report_modal", $data);
+
+                return response()->json([
+                    'code' => 200,
+                    'html' => $html,
+                ]);
+            }
+        }
+
+        abort(403);
     }
 
     public function report(Request $request, $id)
     {
-        $comment = comment::findOrFail($id);
+        $data = $request->all();
 
-        $this->validate($request, [
+        $validator = Validator::make($data, [
             'item_id' => 'required',
+            'item_name' => 'required',
             'message' => 'required',
         ]);
 
-        $item_name = $request->get('item_name');
-        $item_id = $request->get('item_id');
-        $data = $request->all();
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $itemName = $data['item_name'];
+        $itemId = $data['item_id'];
 
         $user = auth()->user();
 
         if (!empty($user)) {
-            CommentReport::create([
-                $item_name => $item_id,
-                'user_id' => $user->id,
-                'comment_id' => $comment->id,
-                'message' => $data['message'],
-                'created_at' => time()
-            ]);
+            $comment = Comment::query()->where('id', $id)
+                ->where($itemName, $itemId)
+                ->first();
 
-            $notifyOptions = [
-                '[u.name]' => $user->full_name,
-                '[content_type]' => trans('admin/main.comment')
-            ];
-            sendNotification("new_report_item_for_admin", $notifyOptions, 1);
+            if (!empty($comment)) {
+                CommentReport::create([
+                    $itemName => $itemId,
+                    'user_id' => $user->id,
+                    'comment_id' => $comment->id,
+                    'message' => $data['message'],
+                    'created_at' => time()
+                ]);
+
+                $notifyOptions = [
+                    '[u.name]' => $user->full_name,
+                    '[content_type]' => trans('admin/main.comment')
+                ];
+                sendNotification("new_report_item_for_admin", $notifyOptions, 1);
+
+            } else {
+                return response()->json([
+                    'code' => 422,
+                    'errors' => [
+                        'message' => [trans('update.the_comment_was_not_found')]
+                    ],
+                ], 422);
+            }
         }
 
         return response()->json([
-            'code' => 200
+            'code' => 200,
+            'title' => trans('public.request_success'),
+            'msg' => trans('panel.report_success'),
         ], 200);
     }
 }

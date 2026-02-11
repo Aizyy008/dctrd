@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Web;
 
 use App\Http\Controllers\Api\Objects\UserObj;
 use App\Http\Controllers\Api\Objects\WebinarObj;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Role;
 use App\Models\Api\Webinar;
 use App\Models\Api\User;

@@ -45,12 +45,16 @@ class SupportDepartmentsController extends Controller
         $this->authorize('admin_support_department_create');
 
         $this->validate($request, [
-            'title' => 'required|string|min:2'
+            'title' => 'required|string|min:2',
+            'icon' => 'required|string',
+            'color' => 'required|string',
         ]);
 
         $data = $request->all();
 
         $department = SupportDepartment::create([
+            'icon' => $data['icon'] ?? null,
+            'color' => $data['color'] ?? null,
             'created_at' => time(),
         ]);
 
@@ -87,7 +91,9 @@ class SupportDepartmentsController extends Controller
         $this->authorize('admin_support_departments_edit');
 
         $this->validate($request, [
-            'title' => 'required|string|min:2'
+            'title' => 'required|string|min:2',
+            'icon' => 'required|string',
+            'color' => 'required|string',
         ]);
 
         $data = $request->all();
@@ -95,6 +101,8 @@ class SupportDepartmentsController extends Controller
         $department = SupportDepartment::findOrFail($id);
 
         $department->update([
+            'icon' => $data['icon'] ?? null,
+            'color' => $data['color'] ?? null,
             'created_at' => time(),
         ]);
 

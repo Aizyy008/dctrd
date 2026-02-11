@@ -13,14 +13,14 @@ trait CheckContentLimitationTrait
                 'userNotAccess' => true
             ];
 
-            return view('web.default.course.private_content', $data);
+            return view('design_1.web.courses.private_mode.index', $data);
         } elseif (empty($user) and getFeaturesSettings('webinar_private_content_status') and $coursePage) { // user not login
             $data = [
                 'pageTitle' => trans('update.private_content'),
                 'pageRobot' => getPageRobotNoIndex(),
             ];
 
-            return view('web.default.course.private_content', $data);
+            return view('design_1.web.courses.private_mode.index', $data);
         }
 
 

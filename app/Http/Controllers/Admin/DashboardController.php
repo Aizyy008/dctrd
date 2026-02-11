@@ -138,7 +138,7 @@ class DashboardController extends Controller
         $getMostActiveStudents = $this->getMostActiveStudents();
 
         $data = [
-            'pageTitle' => trans('admin/main.marketing_dashboard_title'),
+            'pageTitle' => trans('admin/main.marketing_dashboard'),
             'usersWithoutPurchases' => $usersWithoutPurchases,
             'teachersWithoutClass' => $teachersWithoutClass,
             'featuredClasses' => $featuredClasses,

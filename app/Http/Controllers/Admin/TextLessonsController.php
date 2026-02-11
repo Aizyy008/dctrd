@@ -86,6 +86,10 @@ class TextLessonsController extends Controller
                 }
             }
 
+            $webinar->update([
+                'updated_at' => time()
+            ]);
+
             return response()->json([
                 'code' => 200,
             ], 200);
@@ -116,6 +120,8 @@ class TextLessonsController extends Controller
                 'errors' => $validator->errors(),
             ], 422);
         }
+
+        $webinar = Webinar::find($data['webinar_id']);
 
         if (!empty($data['sequence_content']) and $data['sequence_content'] == 'on') {
             $data['check_previous_parts'] = (!empty($data['check_previous_parts']) and $data['check_previous_parts'] == 'on');
@@ -162,6 +168,10 @@ class TextLessonsController extends Controller
             if ($changeChapter) {
                 WebinarChapterItem::changeChapter($textLesson->creator_id, $oldChapterId, $textLesson->chapter_id, $textLesson->id, WebinarChapterItem::$chapterTextLesson);
             }
+
+            $webinar->update([
+                'updated_at' => time()
+            ]);
 
             removeContentLocale();
 

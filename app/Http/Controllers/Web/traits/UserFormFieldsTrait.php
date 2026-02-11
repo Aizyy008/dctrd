@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\traits;
 
 use App\Models\Form;
+use App\Models\FormField;
 use App\Models\FormFieldOption;
 use App\Models\UserFormField;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ trait UserFormFieldsTrait
                     }
                 }
 
-                $html = (string)view()->make('web.default.forms.handle_field', ['fields' => $form->fields, 'values' => $values]);
+                $html = (string)view()->make('design_1.web.forms.components.handle_field', ['fields' => $form->fields, 'values' => $values]);
             }
         }
 
@@ -130,20 +131,30 @@ trait UserFormFieldsTrait
         }
     }
 
-    private function storeBecomeInstructorFormFields($data, $become)
+    private function storeBecomeInstructorFormFields($data, $become, $user)
     {
         $fieldsData = $data['fields'] ?? [];
 
         UserFormField::query()->where('become_instructor_id', $become->id)->delete();
 
-        if (count($fieldsData)) {
+        if (!empty($fieldsData) and is_array($fieldsData) and count($fieldsData)) {
             foreach ($fieldsData as $fieldId => $value) {
-                UserFormField::query()->updateOrCreate([
-                    "become_instructor_id" => $become->id,
-                    "form_field_id" => $fieldId,
-                    "value" => (is_array($value)) ? json_encode($value) : $value,
-                    'created_at' => time()
-                ]);
+                $formField = FormField::query()->find($fieldId);
+
+                if (!empty($formField)) {
+
+                    if ($formField->type == "upload" and !empty($value) and request()->file($value)) {
+                        $destination = "forms/{$formField->form_id}";
+                        $value = $this->uploadFile($value, $destination, "upload_field_{$fieldId}", $user->id);
+                    }
+
+                    UserFormField::query()->updateOrCreate([
+                        "become_instructor_id" => $become->id,
+                        "form_field_id" => $fieldId,
+                        "value" => (is_array($value)) ? json_encode($value) : $value,
+                        'created_at' => time()
+                    ]);
+                }
             }
         }
     }

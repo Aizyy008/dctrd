@@ -39,11 +39,9 @@ class StoreProductsExport implements FromCollection, WithHeadings, WithMapping
             trans('update.delivery_fee'),
             trans('admin/main.sales'),
             trans('admin/main.income'),
-            trans('admin/main.status'),
-            trans('admin/main.point'),
-            trans('admin/main.ordering'),
             trans('admin/main.updated_at'),
             trans('admin/main.created_at'),
+            trans('admin/main.status'),
         ];
     }
 
@@ -81,11 +79,9 @@ class StoreProductsExport implements FromCollection, WithHeadings, WithMapping
             $product->delivery_fee ? handlePrice($product->delivery_fee) : '-',
             $product->salesCount(),
             handlePrice($product->sales()->sum('total_amount')),
-            $status,
-            $product->point ?? '',
-            $product->ordering ?? '',
             dateTimeFormat($product->updated_at, 'Y M j | H:i'),
             dateTimeFormat($product->created_at, 'Y M j | H:i'),
+            $status,
         ];
     }
 }

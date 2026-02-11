@@ -14,7 +14,9 @@ class AdvertisingBannersController extends Controller
         $this->authorize('admin_advertising_banners');
 
 
-        $banners = AdvertisingBanner::paginate(15);
+        $banners = AdvertisingBanner::query()
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
 
         $data = [
             'pageTitle' => trans('admin/main.advertising_banners_list'),

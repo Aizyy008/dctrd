@@ -22,8 +22,9 @@
                                 <i class="fas fa-percentage"></i>
                             </div>
                         </div>
-                        <input type="number" name="value[tax]" value="{{ (!empty($itemValue) and !empty($itemValue['tax'])) ? $itemValue['tax'] : old('tax') }}" class="form-control text-center" maxlength="3" min="0" max="100"/>
+                        <input type="text" name="value[tax]" value="{{ (!empty($itemValue) and !empty($itemValue['tax'])) ? $itemValue['tax'] : old('tax') }}" class="form-control text-center" oninput="validatePrice(this)"/>
                     </div>
+                    <div class="invalid-feedback d-block"></div>
                 </div>
 
 
@@ -37,7 +38,7 @@
                         </div>
                         <input type="number" name="value[minimum_payout]" value="{{ (!empty($itemValue) and !empty($itemValue['minimum_payout'])) ? $itemValue['minimum_payout'] : old('minimum_payout') }}" class="form-control text-center" min="0"/>
                     </div>
-                    <div class="text-muted text-small mt-1">{{ trans('admin/main.minimum_payout_amount_hint') }}</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.minimum_payout_amount_hint') }}</div>
                 </div>
 
                 <div class="form-group">

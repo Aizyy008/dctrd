@@ -49,13 +49,21 @@ trait InstallmentsTrait
                 $installments = $installmentPlans->getPlans('courses', $course->id, $course->type, $course->category_id, $course->teacher_id);
 
                 $itemPrice = $course->getPrice();
-                $cash = $installments->sum('upfront');
+                $cash = $itemPrice;
                 $plansCount = $installments->count();
+                $minimumUpfront = 0;
                 $minimumAmount = 0;
 
                 foreach ($installments as $installment) {
-                    if ($minimumAmount == 0 or $minimumAmount > $installment->totalPayments($itemPrice)) {
-                        $minimumAmount = $installment->totalPayments($itemPrice);
+                    $totalPayments = $installment->totalPayments($itemPrice);
+                    $getUpfront = $installment->getUpfront($itemPrice);
+
+                    if ($minimumAmount == 0 or $minimumAmount > $totalPayments) {
+                        $minimumAmount = $totalPayments;
+                    }
+
+                    if ($minimumUpfront == 0 or $minimumUpfront > $getUpfront) {
+                        $minimumUpfront = $getUpfront;
                     }
                 }
 
@@ -69,9 +77,10 @@ trait InstallmentsTrait
                     'cash' => $cash,
                     'plansCount' => $plansCount,
                     'minimumAmount' => $minimumAmount,
+                    'minimumUpfront' => $minimumUpfront,
                 ];
 
-                return view('web.default.installment.plans', $data);
+                return view('design_1.web.installments.plans.index', $data);
             }
         }
 
@@ -98,6 +107,7 @@ trait InstallmentsTrait
                 $quantity = $request->get('quantity', 1);
                 $itemPrice = $product->getPrice() * $quantity;
                 $cash = $installments->sum('upfront');
+                $minimumUpfront = $installments->min('upfront');
                 $plansCount = $installments->count();
                 $minimumAmount = 0;
 
@@ -117,9 +127,10 @@ trait InstallmentsTrait
                     'cash' => $cash,
                     'plansCount' => $plansCount,
                     'minimumAmount' => $minimumAmount,
+                    'minimumUpfront' => $minimumUpfront,
                 ];
 
-                return view('web.default.installment.plans', $data);
+                return view('design_1.web.installments.plans.index', $data);
             }
         }
 
@@ -140,6 +151,7 @@ trait InstallmentsTrait
 
             $itemPrice = $package->getPrice();
             $cash = $installments->sum('upfront');
+            $minimumUpfront = $installments->min('upfront');
             $plansCount = $installments->count();
             $minimumAmount = 0;
 
@@ -159,9 +171,10 @@ trait InstallmentsTrait
                 'cash' => $cash,
                 'plansCount' => $plansCount,
                 'minimumAmount' => $minimumAmount,
+                'minimumUpfront' => $minimumUpfront,
             ];
 
-            return view('web.default.installment.plans', $data);
+            return view('design_1.web.installments.plans.index', $data);
         }
 
         abort(404);
@@ -179,6 +192,7 @@ trait InstallmentsTrait
 
             $itemPrice = $subscribe->getPrice();
             $cash = $installments->sum('upfront');
+            $minimumUpfront = $installments->min('upfront');
             $plansCount = $installments->count();
             $minimumAmount = 0;
 
@@ -198,9 +212,10 @@ trait InstallmentsTrait
                 'cash' => $cash,
                 'plansCount' => $plansCount,
                 'minimumAmount' => $minimumAmount,
+                'minimumUpfront' => $minimumUpfront,
             ];
 
-            return view('web.default.installment.plans', $data);
+            return view('design_1.web.installments.plans.index', $data);
         }
 
         abort(404);
@@ -291,7 +306,7 @@ trait InstallmentsTrait
                     'pageRobot' => getPageRobotNoIndex(),
                 ];
 
-                return view('web.default.course.access_denied', $data);
+                return view('design_1.web.installments.status.access_denied', $data);
             }
         }
 

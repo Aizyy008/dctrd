@@ -1,33 +1,12 @@
 <?php
 
 use App\Mixins\Financial\MultiCurrency;
-use App\Models\ProductSpecification;
-use App\Services\CrossSellingService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 
-function getProductSpecifications($product_category)
-{
-    $specifications = ProductSpecification::all();
-    $specifications_categories = [];
-    foreach ($specifications as $sp) {
-        if (in_array($product_category,$sp->categories->pluck('category_id')->toArray())) {
-            $specifications_categories[] = $sp->id;
-        }
-    }
-    return ProductSpecification::whereIn('id',$specifications_categories)->with('multiValues')->get();
-}
-
-function getFullRouteNameWithPrefix($routeName)
-{
-    $route = \Route::getRoutes()->getByName($routeName);
-
-        // If route exists, return the full route name with prefix
-        if ($route) {
-            return $route->getName();
-        }
-
-        return null;
-}
+require 'assets_helpers.php';
+require 'settings.php';
+require 'theme_helpers.php';
 
 function getTemplate()
 {
@@ -39,6 +18,24 @@ function getTemplate()
     }
     return 'web.default';
 }
+
+
+function getPlatformName()
+{
+    return (!empty(getGeneralSettings("site_name"))) ? getGeneralSettings("site_name") : env('APP_NAME');
+}
+
+function getPlatformLogo()
+{
+    return (!empty(getGeneralSettings("logo"))) ? getGeneralSettings("logo") : "";
+}
+
+function makeAvatar($name, $size = 40)
+{
+    // used for test and fake logo
+    return "/getDefaultAvatar?&name={$name}&size=$size";
+}
+
 
 function formatSizeUnits($bytes)
 {
@@ -62,7 +59,7 @@ function formatSizeUnits($bytes)
  * @param $timestamp
  * @param string $format
  *
- * // Use this format everywhere : j:day , M:month, Y:year, H:hour, i:minute => {j M Y} or {j M Y H:i}
+ * // Use this format everywhere : j:day , M:month, F:full month, Y:year, H:hour, i:minute => {j M Y} or {j M Y H:i}
  * */
 function dateTimeFormat($timestamp, $format = 'H:i', $useAdminSetting = true, $applyTimezone = true, $timezone = null)
 {
@@ -155,6 +152,10 @@ function diffTimestampDay($firstTime, $lastTime)
 
 function convertMinutesToHourAndMinute($minutes)
 {
+    if ($minutes < 1) {
+        return 0;
+    }
+
     return intdiv($minutes, 60) . ':' . (str_pad($minutes % 60, 2, 0, STR_PAD_LEFT));
 }
 
@@ -414,7 +415,7 @@ function localeToCountryCode($code, $revers = false)
         "AF" => 'ZA',
         "SQ" => 'AL',
         "AM" => 'ET',
-        "AR" => 'IQ',
+        "AR" => 'SA',
         "HY" => 'AM',
         "AY" => 'BO',
         "AZ" => 'AZ',
@@ -722,17 +723,133 @@ function currenciesLists($sing = null)
 
 function currency($user = null)
 {
+    // Authenticated users: use stored user currency (unchanged behavior)
     if (empty($user)) {
         $user = auth()->user();
     }
 
     if (!empty($user) and !empty($user->currency)) {
         return $user->currency;
-    } else if (empty($user)) {
-        $checkCookie = Cookie::get('user_currency');
+    }
 
+    // Guests: cookie wins if present
+    if (empty($user)) {
+        $checkCookie = Cookie::get('user_currency');
         if (!empty($checkCookie)) {
             return $checkCookie;
+        }
+
+        // Auto-detect for guests when enabled
+        $multiCurrencyEnabled = !empty(getFinancialCurrencySettings('multi_currency'));
+        $visitorsDefaultCurrencyMode = getFinancialCurrencySettings('visitors_default_currency') ?? 'default';
+
+        if ($multiCurrencyEnabled && $visitorsDefaultCurrencyMode === 'detect_ip') {
+            try {
+                // Detect user country via GeoIP
+                $location = \Torann\GeoIP\Facades\GeoIP::getLocation(request()->ip());
+                $countryIso = !empty($location) && !empty($location->iso_code) ? strtoupper($location->iso_code) : null;
+
+                if (!empty($countryIso)) {
+                    // Map of country ISO to preferred currency
+                    $countryToCurrency = [
+                        // MIDDLE EAST
+                        'AE' => 'AED', 'SA' => 'SAR', 'QA' => 'QAR', 'KW' => 'KWD', 'OM' => 'OMR', 'BH' => 'BHD', 'IQ' => 'IQD', 'IR' => 'IRR', 'JO' => 'JOD', 'LB' => 'LBP', 'YE' => 'YER',
+
+                        // EUROZONE (EUR)
+                        'AT' => 'EUR', 'BE' => 'EUR', 'CY' => 'EUR', 'EE' => 'EUR', 'FI' => 'EUR', 'FR' => 'EUR', 'DE' => 'EUR', 'GR' => 'EUR', 'IE' => 'EUR', 'IT' => 'EUR', 'LV' => 'EUR', 'LT' => 'EUR', 'LU' => 'EUR', 'MT' => 'EUR', 'NL' => 'EUR', 'PT' => 'EUR', 'SK' => 'EUR', 'SI' => 'EUR', 'ES' => 'EUR',
+                        // EUROPE (non-euro)
+                        'GB' => 'GBP', 'PL' => 'PLN', 'CZ' => 'CZK', 'RO' => 'RON', 'HU' => 'HUF', 'SE' => 'SEK', 'NO' => 'NOK', 'DK' => 'DKK', 'CH' => 'CHF', 'RU' => 'RUB', 'UA' => 'UAH', 'TR' => 'TRY', 'BG' => 'BGN', 'HR' => 'HRK', 'IS' => 'ISK',
+
+                        // AMERICAS
+                        'US' => 'USD', 'CA' => 'CAD', 'MX' => 'MXN', 'AR' => 'ARS', 'BR' => 'BRL', 'CL' => 'CLP', 'CO' => 'COP', 'PE' => 'PEN', 'BS' => 'BSD', 'BB' => 'BBD', 'BZ' => 'BZD', 'BM' => 'BMD', 'BO' => 'BOB', 'CR' => 'CRC', 'CU' => 'CUP', 'DO' => 'DOP', 'GT' => 'GTQ',
+                        'PR' => 'USD', 'GU' => 'USD', 'AS' => 'USD', 'VI' => 'USD',
+
+                        // AFRICA
+                        'EG' => 'EGP', 'MA' => 'MAD', 'DZ' => 'DZD', 'ZA' => 'ZAR', 'NG' => 'NGN', 'KE' => 'KES', 'TZ' => 'TZS', 'UG' => 'UGX', 'GH' => 'GHS', 'ET' => 'ETB', 'TN' => 'TND', 'LY' => 'LYD', 'SD' => 'SDG', 'BI' => 'BIF', 'CD' => 'CDF', 'NA' => 'NAD',
+                        // WEST AFRICAN CFA (XOF)
+                        'BJ' => 'XOF', 'BF' => 'XOF', 'CI' => 'XOF', 'GW' => 'XOF', 'ML' => 'XOF', 'NE' => 'XOF', 'SN' => 'XOF', 'TG' => 'XOF',
+                        // CENTRAL AFRICAN CFA (XAF)
+                        'CM' => 'XAF', 'CF' => 'XAF', 'TD' => 'XAF', 'CG' => 'XAF', 'GA' => 'XAF', 'GQ' => 'XAF',
+
+                        // ASIA
+                        'IN' => 'INR', 'PK' => 'PKR', 'BD' => 'BDT', 'LK' => 'LKR', 'NP' => 'NPR', 'AF' => 'AFN', 'IR' => 'IRR', 'IQ' => 'IQD', 'IL' => 'ILS', 'LB' => 'LBP', 'TR' => 'TRY', 'JO' => 'JOD', 'QA' => 'QAR', 'KW' => 'KWD', 'OM' => 'OMR',
+                        'CN' => 'CNY', 'JP' => 'JPY', 'KR' => 'KRW', 'MY' => 'MYR', 'SG' => 'SGD', 'TH' => 'THB', 'VN' => 'VND', 'ID' => 'IDR', 'PH' => 'PHP', 'HK' => 'HKD', 'TW' => 'TWD',
+                        'AZ' => 'AZN', 'AM' => 'AMD', 'GE' => 'GEL', 'KZ' => 'KZT', 'KG' => 'KGS', 'UZ' => 'UZS', 'TJ' => 'TJS', 'TM' => 'TMT',
+
+                        // OCEANIA
+                        'AU' => 'AUD', 'NZ' => 'NZD', 'FJ' => 'FJD',
+
+                        // MENA & NORTH AFRICA edge
+                        'PS' => 'ILS', 'SY' => 'SYP', 'YE' => 'YER', 'AE' => 'AED', 'SA' => 'SAR', 'BH' => 'BHD', 'OM' => 'OMR', 'QA' => 'QAR', 'KW' => 'KWD',
+
+                        // SPECIAL/LEGACY OR PROJECT-SPECIFIC CODES FROM LISTS
+                        'AL' => 'Lek', // Albania (project uses "Lek" key)
+                        'AW' => 'AWG',
+                        'AZ' => 'AZN',
+                        'BB' => 'BBD',
+                        'BD' => 'BDT',
+                        'BY' => 'BYN',
+                        'BA' => 'BAM',
+                        'BW' => 'BWP',
+                        'KH' => 'KHR',
+                        'KY' => 'KYD',
+                        'HR' => 'HRK', // legacy per project list
+                        'CZ' => 'CZK',
+                        'DK' => 'DKK',
+                        'DO' => 'DOP',
+                        'DM' => 'XCD', 'GD' => 'XCD', 'AG' => 'XCD', 'KN' => 'XCD', 'LC' => 'XCD', 'VC' => 'XCD', 'AI' => 'XCD', 'MS' => 'XCD',
+                        'HK' => 'HKD',
+                        'HU' => 'HUF',
+                        'ID' => 'IDR',
+                        'IL' => 'ILS',
+                        'LB' => 'LBP',
+                        'MY' => 'MYR',
+                        'MV' => 'MVR',
+                        'NG' => 'NGN',
+                        'NO' => 'NOK',
+                        'OM' => 'OMR',
+                        'PK' => 'PKR',
+                        'PH' => 'PHP',
+                        'PL' => 'PLN',
+                        'RO' => 'RON',
+                        'SG' => 'SGD',
+                        'CH' => 'CHF',
+                        'TH' => 'THB',
+                        'UA' => 'UAH',
+                        'GB' => 'GBP',
+                        'TW' => 'TWD',
+                        'VN' => 'VND',
+                        'UZ' => 'UZS',
+                        'TZ' => 'TZS',
+                        'ET' => 'ETB',
+                        'KW' => 'KWD',
+                        'BI' => 'BIF',
+                        'CD' => 'CDF',
+                        'NA' => 'NAD',
+                        'UG' => 'UGX',
+                        'KE' => 'KES',
+                        'GE' => 'GEL',
+                        'QA' => 'QAR',
+                        'MZ' => 'MZM', // project list uses MZM
+                    ];
+
+                    $guessedCurrency = $countryToCurrency[$countryIso] ?? null;
+
+                    if (!empty($guessedCurrency)) {
+                        // Ensure guessed currency is available among active currencies
+                        $multiCurrency = new MultiCurrency();
+                        $activeCurrencies = $multiCurrency->getCurrencies();
+                        $activeCodes = $activeCurrencies->pluck('currency')->toArray();
+                        $activeCodes[] = (getFinancialCurrencySettings('currency') ?? 'USD'); // include default
+
+                        if (in_array($guessedCurrency, array_unique($activeCodes))) {
+                            return $guessedCurrency;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fallback to default if detection fails
+            }
         }
     }
 
@@ -1505,411 +1622,6 @@ function truncate($text, $length, $withTail = true)
 }
 
 
-/**
- * @param null $page => Setting::$pagesSeoMetas
- * @return array [title, description]
- */
-function getSeoMetas($page = null)
-{
-    return App\Models\Setting::getSeoMetas($page);
-}
-
-/**
- * @return array [title, image, link]
- */
-function getSocials()
-{
-    return App\Models\Setting::getSocials();
-}
-
-/**
- * @return array [title, items => [title, link]]
- */
-function getFooterColumns()
-{
-    return App\Models\Setting::getFooterColumns();
-}
-
-
-/*
- * @return array [site_name, site_email, site_phone, site_language, register_method, user_languages, rtl_languages, fav_icon, locale, logo, footer_logo, rtl_layout, home hero1 is active, home hero2 is active, content_translate, default_time_zone, date_format, time_format]
- */
-function getGeneralSettings($key = null)
-{
-    return App\Models\Setting::getGeneralSettings($key);
-}
-
-/**
- * @param null $key
- * $key => "agora_resolution" | "agora_max_bitrate" | "agora_min_bitrate" | "agora_frame_rate" | "agora_live_streaming" | "agora_chat" | "agora_cloud_rec" | "agora_in_free_courses"
- * "new_interactive_file" | "timezone_in_register" | "timezone_in_create_webinar"
- * "sequence_content_status" | "webinar_assignment_status" | "webinar_private_content_status" | "disable_view_content_after_user_register"
- * "direct_classes_payment_button_status" | "mobile_app_status" | "cookie_settings_status" | "show_other_register_method" | "show_certificate_additional_in_register"
- * @return
- * */
-function getFeaturesSettings($key = null)
-{
-    return App\Models\Setting::getFeaturesSettings($key);
-}
-
-
-function getSMSChannelsSettings($key = null)
-{
-    return App\Models\Setting::getSMSChannelsSettings($key);
-}
-
-/**
- * @param null $key
- * $key => cookie_settings_modal_message | cookie_settings_modal_items
- * @return
- * */
-function getCookieSettings($key = null)
-{
-    return App\Models\Setting::getCookieSettings($key);
-}
-
-
-/**
- * @param $key
- * @return array|[commission, tax, minimum_payout, currency, currency_position, price_display]
- */
-function getFinancialSettings($key = null)
-{
-    return App\Models\Setting::getFinancialSettings($key);
-}
-
-function getFinancialCurrencySettings($key = null)
-{
-    return App\Models\Setting::getFinancialCurrencySettings($key);
-}
-
-function getCommissionSettings($key = null)
-{
-    return App\Models\Setting::getCommissionSettings($key);
-}
-
-
-/**
- * @param string $section => 2 for hero section 2
- * @return array|[title, description, hero_background]
- */
-function getHomeHeroSettings($section = '1')
-{
-    return App\Models\Setting::getHomeHeroSettings($section);
-}
-
-/**
- * @return array|[title, description, background]
- */
-function getHomeVideoOrImageBoxSettings()
-{
-    return App\Models\Setting::getHomeVideoOrImageBoxSettings();
-}
-
-
-/**
- * @param null $page => admin_login, admin_dashboard, login, register, remember_pass, search, categories,
- * become_instructor, certificate_validation, blog, instructors
- * ,dashboard, panel_sidebar, user_avatar, user_cover, instructor_finder_wizard, products_lists
- * @return string|array => [all pages]
- */
-function getPageBackgroundSettings($page = null)
-{
-    return App\Models\Setting::getPageBackgroundSettings($page);
-}
-
-
-/**
- * @param null $key => css, js
- * @return string|array => {css, js}
- */
-function getCustomCssAndJs($key = null)
-{
-    return App\Models\Setting::getCustomCssAndJs($key);
-}
-
-/**
- * @return array
- */
-function getOfflineBankSettings($key = null)
-{
-    return App\Models\Setting::getOfflineBankSettings($key);
-}
-
-/**
- * @return array [status, users_affiliate_status, affiliate_user_commission, affiliate_user_amount, referred_user_amount, referral_description]
- */
-function getReferralSettings()
-{
-    $settings = App\Models\Setting::getReferralSettings();
-
-    if (empty($settings['status'])) {
-        $settings['status'] = false;
-    } else {
-        $settings['status'] = true;
-    }
-
-    if (empty($settings['users_affiliate_status'])) {
-        $settings['users_affiliate_status'] = false;
-    } else {
-        $settings['users_affiliate_status'] = true;
-    }
-
-    if (empty($settings['affiliate_user_commission'])) {
-        $settings['affiliate_user_commission'] = 0;
-    }
-
-    if (empty($settings['affiliate_user_amount'])) {
-        $settings['affiliate_user_amount'] = 0;
-    }
-
-    if (empty($settings['referred_user_amount'])) {
-        $settings['referred_user_amount'] = 0;
-    }
-
-    if (empty($settings['referral_description'])) {
-        $settings['referral_description'] = '';
-    }
-
-    return $settings;
-}
-
-/**
- * @return array
- */
-function getOfflineBanksTitle()
-{
-    $titles = [];
-
-    $banks = getOfflineBankSettings();
-
-    if (!empty($banks) and count($banks)) {
-        foreach ($banks as $bank) {
-            $titles[] = $bank['title'] ?? "";
-        }
-    }
-
-    return $titles;
-}
-
-/**
- * @return array
- */
-function getReportReasons()
-{
-    return App\Models\Setting::getReportReasons();
-}
-
-/**
- * @param $template {String|nullable}
- * @return array
- */
-function getNotificationTemplates($template = null)
-{
-    return App\Models\Setting::getNotificationTemplates($template);
-}
-
-/**
- * @param $key
- * @return array
- */
-function getContactPageSettings($key = null)
-{
-    return App\Models\Setting::getContactPageSettings($key);
-}
-
-/**
- * @param $key
- * @return array
- */
-function get404ErrorPageSettings($key = null)
-{
-    return App\Models\Setting::get404ErrorPageSettings($key);
-}
-
-/**
- * @param $key
- * @return array
- */
-function getHomeSectionsSettings($key = null)
-{
-    return App\Models\Setting::getHomeSectionsSettings($key);
-}
-
-/**
- * @param $key
- * @return array
- */
-function getNavbarLinks()
-{
-    $links = App\Models\Setting::getNavbarLinksSettings();
-    $productCategories = \App\Models\ProductCategory::getCategories();
-
-    if (!empty($links)) {
-        usort($links, function ($item1, $item2) {
-            return $item1['order'] <=> $item2['order'];
-        });
-    }
-
-    foreach ($links as $k => $link) {
-        // remove additional Courses link
-        if (strpos($link['link'], '/classes') !== false) {
-            unset($links[$k]);
-        }
-
-        // Handle Products link add categories menu
-        if (strpos($link['link'], '/products') !== false) {
-            $links[$k]['categories'] = $productCategories;
-        }
-    }
-
-    return $links;
-}
-
-
-
-
-
-
-
-// Function to assign icons to product types
-function getTypeIcon($type)
-{
-    $icons = [
-        'Electronics' => asset('images/icons/electronics.png'),
-        'Fashion' => asset('images/icons/fashion.png'),
-        'Furniture' => asset('images/icons/furniture.png'),
-        'Sports' => asset('images/icons/sports.png'),
-        'Books' => asset('images/icons/books.png'),
-    ];
-
-    return $icons[$type] ?? asset('images/icons/default.png'); // Default icon if not found
-}
-
-
-
-
-
-/**
- * @return array
- */
-function getPanelSidebarSettings()
-{
-    return App\Models\Setting::getPanelSidebarSettings();
-}
-
-
-/**
- * @return array
- */
-function getFindInstructorsSettings()
-{
-    return App\Models\Setting::getFindInstructorsSettings();
-}
-
-/**
- * @return array
- */
-function getRewardProgramSettings()
-{
-    return App\Models\Setting::getRewardProgramSettings();
-}
-
-/**
- * @return array
- */
-function getRewardsSettings()
-{
-    return App\Models\Setting::getRewardsSettings();
-}
-
-/**
- * @param $kay => [status, virtual_product_commission, physical_product_commission, store_tax,
- *                 possibility_create_virtual_product, possibility_create_physical_product,
- *                 shipping_tracking_url, activate_comments
- *              ]
- */
-function getStoreSettings($key = null)
-{
-    return App\Models\Setting::getStoreSettings($key);
-}
-
-function getBecomeInstructorSectionSettings()
-{
-    return App\Models\Setting::getBecomeInstructorSectionSettings();
-}
-
-function getForumSectionSettings()
-{
-    return App\Models\Setting::getForumSectionSettings();
-}
-
-function getRegistrationPackagesGeneralSettings($key = null)
-{
-    return App\Models\Setting::getRegistrationPackagesGeneralSettings($key);
-}
-
-function getRegistrationPackagesInstructorsSettings($key = null)
-{
-    return App\Models\Setting::getRegistrationPackagesInstructorsSettings($key);
-}
-
-function getRegistrationPackagesOrganizationsSettings($key = null)
-{
-    return App\Models\Setting::getRegistrationPackagesOrganizationsSettings($key);
-}
-
-function getMobileAppSettings($key = null)
-{
-    return App\Models\Setting::getMobileAppSettings($key);
-}
-
-function getMaintenanceSettings($key = null)
-{
-    return App\Models\Setting::getMaintenanceSettings($key);
-}
-
-function getRestrictionSettings($key = null)
-{
-    return App\Models\Setting::getRestrictionSettings($key);
-}
-
-function getGeneralOptionsSettings($key = null)
-{
-    return App\Models\Setting::getGeneralOptionsSettings($key);
-}
-
-function getGiftsGeneralSettings($key = null)
-{
-    return App\Models\Setting::getGiftsGeneralSettings($key);
-}
-
-function getAiContentsSettingsName($key = null)
-{
-    return App\Models\Setting::getAiContentsSettingsName($key);
-}
-
-function getCertificateMainSettings($key = null)
-{
-    return App\Models\Setting::getCertificateMainSettings($key);
-}
-
-function getRemindersSettings($key = null)
-{
-    return App\Models\Setting::getRemindersSettings($key);
-}
-
-function getGeneralSecuritySettings($key = null)
-{
-    return App\Models\Setting::getGeneralSecuritySettings($key);
-}
-
-function getAbandonedCartSettings($key = null)
-{
-    return App\Models\Setting::getAbandonedCartSettings($key);
-}
-
-
 function getAdminPanelUrlPrefix()
 {
     $prefix = getGeneralSecuritySettings('admin_panel_url');
@@ -1921,7 +1633,12 @@ function getAdminPanelUrl($url = null, $withFirstSlash = true)
     return ($withFirstSlash ? '/' : '') . getAdminPanelUrlPrefix() . ($url ?? '');
 }
 
-function getAdvertisingModalSettings()
+function getLandingBuilderUrl($url = null, $withFirstSlash = true)
+{
+    return getAdminPanelUrl("/landing-builder", $withFirstSlash) . ($url ?? '');
+}
+
+function getAdvertisingModalSettings($setInCookie = false)
 {
     $cookieKey = 'show_advertise_modal';
     $settings = App\Models\Setting::getAdvertisingModalSettings();
@@ -1934,127 +1651,13 @@ function getAdvertisingModalSettings()
         if (empty($checkCookie)) {
             $show = true;
 
-            Cookie::queue($cookieKey, 1, 30 * 24 * 60);
+            if ($setInCookie) {
+                Cookie::queue($cookieKey, 1, 30 * 24 * 60);
+            }
         }
     }
 
     return $show ? $settings : null;
-}
-
-function getOthersPersonalizationSettings($key = null)
-{
-    return \App\Models\Setting::getOthersPersonalizationSettings($key);
-}
-
-function getInstallmentsSettings($key = null)
-{
-    return \App\Models\Setting::getInstallmentsSettings($key);
-}
-
-function getInstallmentsTermsSettings($key = null)
-{
-    return \App\Models\Setting::getInstallmentsTermsSettings($key);
-}
-
-function getRegistrationBonusSettings($key = null)
-{
-    return \App\Models\Setting::getRegistrationBonusSettings($key);
-}
-
-function getRegistrationBonusTermsSettings($key = null)
-{
-    return \App\Models\Setting::getRegistrationBonusTermsSettings($key);
-}
-
-function getStatisticsSettings($key = null)
-{
-    return \App\Models\Setting::getStatisticsSettings($key);
-}
-
-/**
- * @return string ("primary_color"|"secondary_color") || null
- * */
-function getThemeColorsSettings($admin = false)
-{
-    $settings = App\Models\Setting::getThemeColorsSettings();
-
-    $result = '';
-
-    if (!empty($settings) and count($settings)) {
-        $result = ":root{" . PHP_EOL;
-
-        if ($admin) {
-            foreach (\App\Models\Setting::$rootAdminColors as $color) {
-                if (!empty($settings['admin_' . $color])) {
-                    $result .= "--$color:" . $settings['admin_' . $color] . ';' . PHP_EOL;
-                }
-            }
-        } else {
-            foreach (\App\Models\Setting::$rootColors as $color) {
-                if (!empty($settings[$color])) {
-                    $result .= "--$color:" . $settings[$color] . ';' . PHP_EOL;
-                }
-            }
-
-            if (!empty($settings['front_body_background'])) {
-                $result .= "--body_bg:" . $settings['front_body_background'] . ';' . PHP_EOL;
-            }
-        }
-
-        $result .= "}" . PHP_EOL;
-    }
-
-    return $result;
-}
-
-
-/**
- * @return string ("primary_color"|"secondary_color") || null
- * */
-function getThemeFontsSettings()
-{
-    $settings = App\Models\Setting::getThemeFontsSettings();
-
-    $result = '';
-
-    if (!empty($settings) and count($settings)) {
-
-        foreach ($settings as $type => $setting) {
-
-            if (!empty($settings[$type]['regular'])) {
-                $result .= "@font-face {
-                      font-family: '$type-font-family';
-                      font-style: normal;
-                      font-weight: 400;
-                      font-display: swap;
-                      src: url({$settings[$type]['regular']}) format('woff2');
-                    }";
-            }
-
-            if (!empty($settings[$type]['bold'])) {
-                $result .= "@font-face {
-                      font-family: '$type-font-family';
-                      font-style: normal;
-                      font-weight: bold;
-                      font-display: swap;
-                      src: url({$settings[$type]['bold']}) format('woff2');
-                    }";
-            }
-
-            if (!empty($settings[$type]['medium'])) {
-                $result .= "@font-face {
-                      font-family: '$type-font-family';
-                      font-style: normal;
-                      font-weight: 500;
-                      font-display: swap;
-                      src: url({$settings[$type]['medium']}) format('woff2');
-                    }";
-            }
-
-        }
-    }
-
-    return $result;
 }
 
 /**
@@ -2081,7 +1684,7 @@ function getDefaultLocale()
 
     /// I did not use the helper method because the Setting model uses translation and may get stuck in the loop.
 
-    $setting = cache()->remember('settings.getDefaultLocale', 24 * 60 * 60, function () use ($name) {
+    $setting = cache()->remember('settings.getDefaultLocales', 24 * 60 * 60, function () use ($name) {
         $setting = \Illuminate\Support\Facades\DB::table('settings')
             ->where('page', $name)
             ->where('name', $name)
@@ -2107,6 +1710,38 @@ function getDefaultLocale()
     }
 
     return $siteLanguage;
+}
+
+function getUserLocale()
+{
+    $locale = null;
+
+    if (auth()->check()) {
+        $user = auth()->user();
+        $locale = $user->language;
+    }
+
+    if (empty($locale)) {
+        $checkCookie = Cookie::get('user_locale');
+
+        if (!empty($checkCookie)) {
+            $locale = $checkCookie;
+        }
+    }
+
+    if (empty($locale)) {
+        $locale = getDefaultLocale();
+    } else {
+        $locale = mb_strtolower($locale);
+
+        $userLanguages = getUserLanguagesLists();
+
+        if (!in_array($locale, $userLanguages)) {
+            $locale = getDefaultLocale();
+        }
+    }
+
+    return mb_strtolower($locale);
 }
 
 function deepClone($object)
@@ -2166,7 +1801,7 @@ function sendNotification($template, $options, $user_id = null, $group_id = null
 
                 if (!empty($user) and !empty($user->email)) {
                     try {
-                        // \Mail::to($user->email)->send(new \App\Mail\SendNotifications(['title' => $title, 'message' => $message]));
+                        \Mail::to($user->email)->send(new \App\Mail\SendNotifications(['title' => $title, 'message' => $message]));
                     } catch (Exception $exception) {
                         // dd($exception)
                     }
@@ -2291,30 +1926,27 @@ function random_str($length, $includeNumeric = true, $includeChar = true)
 function checkCourseForSale($course, $user)
 {
     if (!$course->canSale()) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.course_not_capacity'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     if ($course->checkUserHasBought($user)) {
-        $toastData = [
+        return [
             'title' => trans('cart.fail_purchase'),
             'msg' => trans('site.you_bought_webinar'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     if ($course->creator_id == $user->id or $course->teacher_id == $user->id) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.cant_purchase_your_course'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     $isRequiredPrerequisite = false;
@@ -2322,7 +1954,7 @@ function checkCourseForSale($course, $user)
         $prerequisites = $course->prerequisites;
         if (count($prerequisites)) {
             foreach ($prerequisites as $prerequisite) {
-                $prerequisiteWebinar = $prerequisite->prerequisiteWebinar;
+                $prerequisiteWebinar = $prerequisite->course;
 
                 if ($prerequisite->required and !empty($prerequisiteWebinar) and !$prerequisiteWebinar->checkUserHasBought()) {
                     $isRequiredPrerequisite = true;
@@ -2332,35 +1964,132 @@ function checkCourseForSale($course, $user)
     }
 
     if ($isRequiredPrerequisite) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.this_course_has_required_prerequisite'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     return 'ok';
 }
 
-function checkProductForSale($product, $user)
+function checkMeetingPackageForSale($meetingPackage, $user)
 {
+    if ($meetingPackage->creator_id == $user->id) {
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.cant_purchase_your_meeting_package'),
+            'status' => 'error'
+        ];
+    }
+
+    return 'ok';
+}
+
+function checkEventTicketForSale(\App\Models\EventTicket $eventTicket, $user, $quantity = 1)
+{
+    $event = $eventTicket->event;
+
+    if ($event->creator_id == $user->id) {
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.cant_purchase_your_event_tickets'),
+            'status' => 'error'
+        ];
+    }
+
+    if ($eventTicket->checkUserHasBought($user)) {
+        return [
+            'title' => trans('cart.fail_purchase'),
+            'msg' => trans('update.you_have_already_purchased_this_event_ticket'),
+            'status' => 'error'
+        ];
+    }
+
+    if (!empty($event->sales_end_date) and $event->sales_end_date <= time()) {
+        return [
+            'title' => trans('cart.fail_purchase'),
+            'msg' => trans('update.event_sales_date_has_ended'),
+            'status' => 'error'
+        ];
+    }
+
+    // Capacity
+    /*$ticketsIds = $event->tickets()->pluck('id')->toArray();
+    $cartQuantity = \App\Models\Cart::query()->whereIn('event_ticket_id', $ticketsIds)->sum('quantity');*/
+
+    $eventTicketAvailability = $eventTicket->getAvailableCapacity();
+    if (!is_null($eventTicketAvailability) and $eventTicketAvailability < $quantity) {
+        return [
+            'title' => trans('cart.fail_purchase'),
+            'msg' => trans('update.event_ticket_purchase_capacity_not_available', ['count' => $eventTicketAvailability]),
+            'status' => 'error'
+        ];
+    }
+
+    if (!is_null($event->purchase_limit_count)) {
+        $salesCount = $event->getAllSales($user, true);
+
+        if (($salesCount + $quantity) > $event->purchase_limit_count) {
+            return [
+                'title' => trans('cart.fail_purchase'),
+                'msg' => trans('update.event_ticket_purchase_limit_count_error', ['count' => $eventTicketAvailability]),
+                'status' => 'error'
+            ];
+        }
+    }
+
+    $isRequiredPrerequisite = false;
+    if (!empty($event->prerequisites)) {
+        $prerequisites = $event->prerequisites;
+
+        if (count($prerequisites)) {
+            foreach ($prerequisites as $prerequisite) {
+                $prerequisiteWebinar = $prerequisite->course;
+
+                if ($prerequisite->required and !empty($prerequisiteWebinar) and !$prerequisiteWebinar->checkUserHasBought($user)) {
+                    $isRequiredPrerequisite = true;
+                }
+            }
+        }
+    }
+
+    if ($isRequiredPrerequisite) {
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.this_event_has_required_prerequisite'),
+            'status' => 'error'
+        ];
+    }
+
+    return 'ok';
+}
+
+function checkProductForSale(Request $request, $product, $user)
+{
+    if (!$product->ordering) {
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.product_not_enable_ordering'),
+            'status' => 'error'
+        ];
+    }
+
     if ($product->getAvailability() < 1) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('update.product_not_availability'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     if ($product->creator_id == $user->id) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('update.cant_purchase_your_product'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     return 'ok';
@@ -2434,16 +2163,6 @@ function getContentLocale()
     return session()->get('edit_content_locale', null);
 }
 
-function crossSelling($user, $model, $location)
-{
-    return app(CrossSellingService::class, [
-        'user' => $user,
-        'model' => $model,
-        'location' => $location
-    ]);
-}
-
-
 function storeContentLocale($locale, $table, $item_id)
 {
     removeContentLocale();
@@ -2488,6 +2207,20 @@ function getUserCurrencyItem($user = null, $userCurrency = null)
     }
 
     return $multiCurrency->getDefaultCurrency();
+}
+
+function getCurrencyItemByCurrency($currency) // $currency = USD
+{
+    $multiCurrency = new \App\Mixins\Financial\MultiCurrency();
+    $currencies = $multiCurrency->getCurrencies();
+
+    foreach ($currencies as $currencyItem) {
+        if ($currencyItem->currency == $currency) {
+            return $currencyItem;
+        }
+    }
+
+    return null;
 }
 
 function curformat($amount)
@@ -2624,7 +2357,7 @@ function convertPriceToUserCurrency($price, $userCurrencyItem = null)
         return $price * $exchangeRate;
     }
 
-    return $price;
+    return $price + 0;
 }
 
 function convertPriceToDefaultCurrency($price, $userCurrencyItem = null)
@@ -2721,22 +2454,21 @@ function checkShowCookieSecurityDialog()
     return $show;
 }
 
-function getNavbarButton($roleId = null, $forGuest = false)
-{
-    return \App\Models\NavbarButton::where('role_id', $roleId)
-        ->where('for_guest', $forGuest)
-        ->first();
-}
-
-
 function getLeafletApiPath()
 {
     return "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
     //return 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 }
 
+function getDefaultMapsLocation(): array
+{
+    return [
+        'lat' => 32.768800,
+        'lon' => 53.613281,
+    ];
+}
 
-function convertToMB($size, $unit = 'B')
+function convertToMB($size = 0, $unit = 'B')
 {
     $units = array('B', 'KB', 'MB', 'GB', 'TB');
     $index = array_search($unit, $units);
@@ -2761,7 +2493,7 @@ function checkMobileNumber($phoneNumber)
         return true;
     }
 
-    return false;
+    return true;
 }
 
 function canDeleteContentDirectly()
@@ -2800,6 +2532,95 @@ function getRazorpayApiKey(): array
     ];
 }
 
+function checkTimestampInToday($timestamp)
+{
+    $now = now();
+
+    $startOfDay = $now->startOfDay()->timestamp;
+    $endOfDay = $now->endOfDay()->timestamp;
+
+    return ($startOfDay <= $timestamp and $endOfDay >= $timestamp);
+}
+
+function startOfDayTimestamp($timestamp)
+{
+    $dateTime = new DateTime("@$timestamp");
+
+    try {
+        $dateTime->setTimezone(new DateTimeZone(getTimezone()));
+    } catch (\Exception $exception) {
+
+    }
+
+    $dateTime->setTime(00, 00, 00);
+
+    return $dateTime->getTimestamp();
+}
+
+function endOfDayTimestamp($timestamp)
+{
+    $dateTime = new DateTime("@$timestamp");
+
+    try {
+        $dateTime->setTimezone(new DateTimeZone(getTimezone()));
+    } catch (\Exception $exception) {
+
+    }
+
+    $dateTime->setTime(23, 59, 59);
+
+    return $dateTime->getTimestamp();
+}
+
+
+function getFileNameByPath($path)
+{
+    $name = "";
+
+    if (!empty($path)) {
+        $path = explode('/', $path);
+
+        $name = $path[array_key_last($path)];
+    }
+
+    return $name;
+}
+
+function removeCurrencyFromPrice($price)
+{
+    $currency = currencySign();
+
+    $price = str_replace($currency, '', $price);
+    return trim($price);
+}
+
+
+function shortNumbers($num)
+{
+    $suffixes = array('', 'K', 'M', 'B', 'T');
+
+    // Determine the magnitude (logarithm base 1000)
+    $magnitude = floor((strlen((string)$num) - 1) / 3);
+
+    // Ensure magnitude is within the range of defined suffixes
+    if ($magnitude >= count($suffixes)) {
+        $magnitude = count($suffixes) - 1;
+    }
+
+    // Divide the number by the appropriate power of 1000 and round to one decimal place
+    $shortNum = $num / pow(1000, $magnitude);
+
+    // Format the number to one decimal place
+    $shortNum = number_format($shortNum, 1);
+
+    // Remove the decimal if the number is a whole number
+    if (str_ends_with($shortNum, '.0')) {
+        $shortNum = substr($shortNum, 0, -2);
+    }
+
+    return $shortNum . $suffixes[$magnitude];
+}
+
 
 function customSortArrayNumAndTextIndex($array)
 {
@@ -2819,11 +2640,26 @@ function customSortArrayNumAndTextIndex($array)
     return array_merge($numericKeys, $textualKeys);
 }
 
-
-function getDefaultMapsLocation(): array
+function getDefaultAvatarPath()
 {
-    return [
-        'lat' => 32.768800,
-        'lon' => 53.613281,
-    ];
+    $settings = getOthersPersonalizationSettings();
+
+    if (!empty($settings) and !empty($settings['default_user_avatar'])) {
+        $avatarUrl = $settings['default_user_avatar'];
+    } else {
+        $avatarUrl = "/assets/default/img/default/avatar-1.png";
+    }
+
+    return $avatarUrl;
+}
+
+function getAvailableUploadFileSources()
+{
+    $sources = getFeaturesSettings('available_sources');
+
+    if (empty($sources) or !is_array($sources)) {
+        $sources = [];
+    }
+
+    return $sources;
 }

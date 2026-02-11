@@ -19,7 +19,8 @@ class AdvertisingBanner extends Model implements TranslatableContract
 
 
     static $positions = [
-        'home1', 'home2', 'course', 'course_sidebar', 'product_show', 'bundle', 'bundle_sidebar', 'upcoming_course', 'upcoming_course_sidebar'
+        'course', 'course_sidebar', 'product_show', 'bundle', 'bundle_sidebar', 'upcoming_course', 'upcoming_course_sidebar',
+        'event', 'event_sidebar'
     ];
 
     static $size = [

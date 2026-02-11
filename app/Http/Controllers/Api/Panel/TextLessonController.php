@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\FileResource;
 use App\Http\Resources\TextLessonResource;
 use App\Models\Api\TextLesson;

@@ -12,6 +12,7 @@ use App\Models\FloatingBar;
 use Closure;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
+use Jenssegers\Agent\Agent;
 
 class Share
 {
@@ -24,21 +25,45 @@ class Share
      */
     public function handle($request, Closure $next)
     {
+        $data = $this->getShareData($request);
 
-        $purchaseNotificationsHelper = new PurchaseNotificationsHelper();
-        $purchaseNotifications = $purchaseNotificationsHelper->getDisplayableNotifications();
-        view()->share('purchaseNotifications', $purchaseNotifications);
+        foreach ($data as $key => $value) {
+            view()->share($key, $value);
+        }
 
+        return $next($request);
+    }
+
+    /**
+     * Handle an incoming request.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+
+    public function getShareData($request): array
+    {
+        $data = [];
+
+        $agent = new Agent();
+        $userDeviceType = ($agent->deviceType() == "phone") ? "mobile" : "desktop";
+        $data['userDeviceType'] = $userDeviceType;
+
+        if ($userDeviceType == "desktop") { // Show Notifications Just in Desktop
+            $purchaseNotificationsHelper = new PurchaseNotificationsHelper();
+            $purchaseNotifications = $purchaseNotificationsHelper->getDisplayableNotifications();
+            $data['purchaseNotifications'] = $purchaseNotifications;
+        }
 
         if (auth()->check()) {
             $user = auth()->user();
-            view()->share('authUser', $user);
+            $data['authUser'] = $user;
 
             if (!$user->isAdmin()) {
 
                 $unReadNotifications = $user->getUnReadNotifications();
 
-                view()->share('unReadNotifications', $unReadNotifications);
+                $data['unReadNotifications'] = $unReadNotifications;
             }
         }
 
@@ -46,25 +71,26 @@ class Share
         $carts = $cartManagerController->getCarts();
         $totalCartsPrice = Cart::getCartsTotalPrice($carts);
 
-        view()->share('userCarts', $carts);
-        view()->share('totalCartsPrice', $totalCartsPrice);
+        $data['userCarts'] = $carts;
+        $data['totalCartsPrice'] = $totalCartsPrice;
+        $data['userCartCount'] = count($carts);
 
         $cartDiscount = CartDiscount::query()->where('enable', true)->count();
-        view()->share('userCartDiscount', $cartDiscount);
+        $data['userCartDiscount'] = $cartDiscount;
 
         $generalSettings = getGeneralSettings();
-        view()->share('generalSettings', $generalSettings);
+        $data['generalSettings'] = $generalSettings;
 
 
         $currency = currencySign();
-        view()->share('currency', $currency);
+        $data['currency'] = $currency;
 
         if (getFinancialCurrencySettings('multi_currency')) {
             $multiCurrency = new MultiCurrency();
             $currencies = $multiCurrency->getCurrencies();
 
             if ($currencies->isNotEmpty()) {
-                view()->share('currencies', $currencies);
+                $data['currencies'] = $currencies;
             }
         }
 
@@ -75,18 +101,27 @@ class Share
         }
         App::setLocale(session('locale'));
 
-        view()->share('categories', \App\Models\Category::getCategories());
-        view()->share('navbarPages', getNavbarLinks());
+        $data['categories'] = \App\Models\Category::getCategories();
 
 
         if (!$request->is("course/learning*")) {
             $floatingBar = FloatingBar::getFloatingBar($request);
-            view()->share('floatingBar', $floatingBar);
+            $data['floatingBar'] = $floatingBar;
         }
 
         $userTimezone = getTimezone();
         config()->set('app.timezone', $userTimezone);
 
-        return $next($request);
+
+        // Theme Color Mode
+        $data['userThemeColorMode'] = getUserThemeColorMode();
+
+        // Theme Header
+        $data['themeHeaderData'] = getThemeHeaderData($userDeviceType);
+
+        // Theme Header
+        $data['themeFooterData'] = getThemeFooterData();
+
+        return $data;
     }
 }

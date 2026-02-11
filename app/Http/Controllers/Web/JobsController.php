@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Mixins\Cart\AbandonedCartReminder;
+use App\Mixins\Cart\ClearAbandonedCartItems;
 use App\Mixins\Notifications\SendSMS;
 use App\Models\File;
 use App\Models\Gift;
@@ -20,11 +21,13 @@ use App\Models\Subscribe;
 use App\Models\SubscribeRemind;
 use App\Models\TextLesson;
 use App\Models\WebinarChapterItem;
+use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class JobsController extends Controller
 {
@@ -38,6 +41,23 @@ class JobsController extends Controller
         /*Schema::table("ai_content_template_translations", function (Blueprint $table) {
 
         });*/
+    }
+
+    public function makeUsersTableUsername()
+    {
+        $users = User::query()->whereNull('username')->get();
+
+        foreach ($users as $user) {
+            $username = User::makeUsernameString($user);
+
+            $user->update([
+                'username' => $username
+            ]);
+        }
+
+        return response()->json([
+            'status' => "OK!"
+        ]);
     }
 
     public function sendSessionsReminder($request)
@@ -338,6 +358,17 @@ class JobsController extends Controller
         return response()->json([
             'status' => 200,
             'message' => "Notifications were sent for Abandoned Cart Rules"
+        ]);
+    }
+
+    public function clearAbandonedCartItems()
+    {
+        $clearAbandonedCart = (new ClearAbandonedCartItems());
+        $clearAbandonedCart->clearItems();
+
+        return response()->json([
+            'status' => 200,
+            'message' => "Job Started for Clear Abandoned Cart Items"
         ]);
     }
 

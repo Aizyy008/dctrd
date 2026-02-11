@@ -21,6 +21,7 @@ class FileResource extends JsonResource
         }
         return [
             'id' => $this->id,
+            'content_type' => 'file',
             'title' => $this->title,
             'description' => $this->description,
             'can_view_error' => $this->canViewError(),

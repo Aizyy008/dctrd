@@ -10,7 +10,7 @@
 
         <h4 class="text-dark font-weight-normal">{{ trans('admin/main.welcome') }} <span class="font-weight-bold">{{ $siteGeneralSettings['site_name'] ?? '' }}</span></h4>
 
-        <p class="text-muted">{{ trans('auth.admin_tagline') }}</p>
+        <p class="text-gray-500">{{ trans('auth.admin_tagline') }}</p>
 
         <form method="POST" action="{{ getAdminPanelUrl() }}/login" class="needs-validation" novalidate="">
             <input type="hidden" name="_token" value="{{ csrf_token() }}">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\Comment;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class BlogCommentsController extends Controller
@@ -24,37 +25,30 @@ class BlogCommentsController extends Controller
 
         $this->handleAuthorize($user);
 
-        $posts = Blog::select('id', 'author_id')->where('author_id', $user->id)
+        $posts = Blog::query()->select('id', 'author_id')
+            ->where('author_id', $user->id)
             ->get();
 
         $blogIds = $posts->pluck('id')->toArray();
+        $query = Comment::query()->whereIn('blog_id', $blogIds);
 
-        $query = Comment::whereIn('blog_id', $blogIds);
+        $query = $this->handleFilters($request, $query);
+        $getListData = $this->getListsData($request, $query);
 
-        $comments = $this->handleFilters($request, $query)->orderBy('created_at', 'desc')
-            ->with([
-                'blog'
-            ])
-            ->paginate(10);
+        if ($request->ajax()) {
+            return $getListData;
+        }
 
         $data = [
             'pageTitle' => trans('panel.comments'),
             'posts' => $posts,
-            'comments' => $comments,
         ];
+        $data = array_merge($data, $getListData);
 
-        $blogId = $request->get('blog_id', null);
-
-        if (!empty($blogId) and is_numeric($blogId)) {
-            $data['selectedPost'] = Blog::where('id', $blogId)
-                ->where('author_id', $user->id)
-                ->first();
-        }
-
-        return view('web.default.panel.blog.comments.index', $data);
+        return view('design_1.panel.blog.comments.index', $data);
     }
 
-    private function handleFilters(Request $request, $query)
+    private function handleFilters(Request $request, Builder $query): Builder
     {
         $from = $request->get('from', null);
         $to = $request->get('to', null);
@@ -66,6 +60,49 @@ class BlogCommentsController extends Controller
             $query->where('blog_id', $blogId);
         }
 
+        $query->orderBy('created_at', 'desc');
+
         return $query;
     }
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $comments = $query
+            ->with([
+                'blog'
+            ])
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $comments, $total, $count);
+        }
+
+        return [
+            'comments' => $comments,
+            'pagination' => $this->makePagination($request, $comments, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $comments, $total, $count)
+    {
+        $html = "";
+
+        foreach ($comments as $commentRow) {
+            $html .= (string)view()->make('design_1.panel.blog.comments.table_items', ['comment' => $commentRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $comments, $total, $count, true)
+        ]);
+    }
+
 }

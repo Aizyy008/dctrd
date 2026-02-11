@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\User;
 use Cviebrock\EloquentSluggable\Services\SlugService;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class ForumTopic extends Model
 {
@@ -54,6 +56,12 @@ class ForumTopic extends Model
         return $this->hasMany('App\Models\ForumTopicPost', 'topic_id', 'id');
     }
 
+    public function visits()
+    {
+        return $this->morphMany(VisitLog::class, 'targetable');
+    }
+
+
     public function getPostsUrl()
     {
         return "/forums/{$this->forum->slug}/topics/{$this->slug}/posts";
@@ -72,5 +80,32 @@ class ForumTopic extends Model
     public function getEditUrl()
     {
         return "/forums/{$this->forum->slug}/topics/{$this->slug}/edit";
+    }
+
+    public function getParticipatesUsers($count = 6)
+    {
+        $userIdsQuery = ForumTopicPost::query()->select('user_id', DB::raw("count(user_id) as user_post_count"))
+            ->where('topic_id', $this->id)
+            ->groupBy('user_id')
+            ->orderBy('user_post_count', 'desc');
+
+        $total = $userIdsQuery->get()->count();
+
+        if (!empty($count)) {
+            $userIdsQuery->limit($count);
+        }
+
+        $userIds = $userIdsQuery->pluck('user_id')->toArray();
+
+        $query = User::query();
+        $query->select('id', 'role_id', 'role_name', 'full_name', 'mobile', 'email', 'avatar', 'avatar_settings', 'created_at');
+        $query->whereIn('id', $userIds);
+        $activeUsers = $query->get();
+
+
+        return [
+            'users' => $activeUsers,
+            'count' => $total
+        ];
     }
 }

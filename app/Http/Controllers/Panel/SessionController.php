@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AgoraHistory;
 use App\Models\ReserveMeeting;
 use App\Models\Session;
+use App\Models\SessionAttendance;
 use App\Models\Translation\SessionTranslation;
 use App\Models\Webinar;
 use App\Models\WebinarChapterItem;
@@ -85,15 +86,18 @@ class SessionController extends Controller
                 'moderator_secret' => $data['moderator_secret'] ?? null,
                 'check_previous_parts' => $data['check_previous_parts'],
                 'access_after_day' => $data['access_after_day'],
+                'enable_attendance' => (!empty($data['enable_attendance']) and $data['enable_attendance'] == 'on'),
                 'extra_time_to_join' => $data['extra_time_to_join'] ?? null,
                 'status' => (!empty($data['status']) and $data['status'] == 'on') ? Session::$Active : Session::$Inactive,
                 'created_at' => time()
             ]);
 
             if (!empty($session)) {
+                $locale = $request->get("locale", getDefaultLocale());
+
                 SessionTranslation::updateOrCreate([
                     'session_id' => $session->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => $locale,
                 ], [
                     'title' => $data['title'],
                     'description' => $data['description'],
@@ -123,6 +127,10 @@ class SessionController extends Controller
                 WebinarChapterItem::makeItem($session->creator_id, $session->chapter_id, $session->id, WebinarChapterItem::$chapterSession);
             }
 
+
+            $webinar->update([
+                'updated_at' => time()
+            ]);
 
             return response()->json([
                 'code' => 200,
@@ -218,13 +226,17 @@ class SessionController extends Controller
                     'agora_settings' => $agoraSettings,
                     'check_previous_parts' => $data['check_previous_parts'],
                     'access_after_day' => $data['access_after_day'],
+                    'enable_attendance' => (!empty($data['enable_attendance']) and $data['enable_attendance'] == 'on'),
                     'extra_time_to_join' => $data['extra_time_to_join'] ?? null,
                     'updated_at' => time()
                 ]);
 
+                $locale = $request->get("locale", getDefaultLocale());
+
+
                 SessionTranslation::updateOrCreate([
                     'session_id' => $session->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                     'description' => $data['description'],
@@ -233,6 +245,11 @@ class SessionController extends Controller
                 if ($changeChapter) {
                     WebinarChapterItem::changeChapter($session->creator_id, $oldChapterId, $session->chapter_id, $session->id, WebinarChapterItem::$chapterSession);
                 }
+
+
+                $webinar->update([
+                    'updated_at' => time()
+                ]);
 
                 return response()->json([
                     'code' => 200,
@@ -315,6 +332,137 @@ class SessionController extends Controller
         $response = \Bigbluebutton::create($createMeeting);
 
         return true;
+    }
+
+    public function joinToSession($id)
+    {
+        $session = Session::where('id', $id)
+            ->where('status', Session::$Active)
+            ->first();
+
+        if (!empty($session)) {
+            $user = auth()->user();
+
+            $checkUserCanAccessToSession = $this->checkUserCanAccessToSession($session, $user);
+
+            if ($checkUserCanAccessToSession['canAccess']) {
+
+                // Store User (audience) Attendance Status
+                if (!$checkUserCanAccessToSession['isModerator']) {
+                    $this->handleStoreAttendanceStatus($session, $user);
+                } else {
+                    // Update Session Start Date
+                    $session->update([
+                        'date' => time(),
+                    ]);
+                }
+
+
+                $link = $session->link;
+
+                if ($session->session_api == 'big_blue_button') {
+                    $link = url('panel/sessions/' . $session->id . '/join/toBigBlueButton');
+                }
+
+                /*if ($zoom_start_link and auth()->check() and auth()->id() == $session->creator_id and $session->session_api == 'zoom') {
+                    $link = $session->zoom_start_link;
+                }*/
+
+                if ($session->session_api == 'agora') {
+                    $link = url('panel/sessions/' . $session->id . '/join/toAgora');
+                }
+
+                if ($session->session_api == 'jitsi') {
+                    $link = url('panel/sessions/' . $session->id . '/join/toJitsi');
+                }
+
+                return redirect($link);
+            }
+        }
+
+        abort(404);
+    }
+
+    private function checkUserCanAccessToSession(Session $session, $user)
+    {
+        $canAccess = false;
+        $isModerator = false;
+
+        if ($user->id == $session->creator_id) {
+            $canAccess = true;
+            $isModerator = true;
+        } else if (!empty($session->reserve_meeting_id)) {
+            $ReserveMeeting = ReserveMeeting::where('id', $session->reserve_meeting_id)
+                ->where('user_id', $user->id)
+                ->where('meeting_type', 'online')
+                ->where('status', \App\Models\ReserveMeeting::$open)
+                ->first();
+
+            if (!empty($ReserveMeeting)) {
+                $canAccess = true;
+            }
+        } else if (!empty($session->webinar_id)) {
+            $webinar = $session->webinar;
+
+            if (!empty($webinar) and $webinar->checkUserHasBought($user)) {
+                $canAccess = true;
+            }
+        } else if (!empty($session->event_id)) {
+            $event = $session->event;
+
+            if (!empty($event) and $event->checkUserHasBought($user)) {
+                $canAccess = true;
+            }
+        } else if (!empty($session->meeting_package_sold_id)) {
+            $packageSold = $session->meetingPackageSold;
+
+            if (!empty($packageSold) and $packageSold->user_id == $user->id) {
+                $canAccess = true;
+            }
+        }
+
+        if (!$canAccess and !empty($session->webinar)) {
+            $partnerTeachers = !empty($session->webinar->webinarPartnerTeacher) ? $session->webinar->webinarPartnerTeacher->pluck('teacher_id')->toArray() : [];
+
+            if (in_array($user->id, $partnerTeachers)) {
+                $canAccess = true;
+                $isModerator = true;
+            }
+        }
+
+        return [
+            'canAccess' => $canAccess,
+            'isModerator' => $isModerator
+        ];
+    }
+
+    private function handleStoreAttendanceStatus($session, $user)
+    {
+        $attendanceSettings = getAttendanceSettings();
+
+        if (!empty($attendanceSettings['status'])) {
+            $time = time();
+            $timeAllowedForPresent = (!empty($attendanceSettings['time_allowed_for_attendance']) ? $attendanceSettings['time_allowed_for_attendance'] : 0) * 60; // converted Minute To Second
+            $timeAllowedForLate = (!empty($attendanceSettings['time_allowed_for_delay']) ? $attendanceSettings['time_allowed_for_delay'] : 0) * 60;
+
+
+            if (($session->date + $timeAllowedForPresent) >= $time) {
+                $attendanceStatus = "present";
+            } else if (($session->date + $timeAllowedForLate + $timeAllowedForPresent) >= $time) {
+                $attendanceStatus = "late";
+            } else {
+                $attendanceStatus = "absent";
+            }
+
+            SessionAttendance::query()->updateOrCreate([
+                'student_id' => $user->id,
+                'session_id' => $session->id,
+            ], [
+                'status' => $attendanceStatus,
+                'joined_at' => time(),
+            ]);
+
+        }
     }
 
     public function joinToBigBlueButton($id)
@@ -400,49 +548,46 @@ class SessionController extends Controller
                 $canAccess = true;
                 $streamRole = 'host';
             } else {
+                $checkUserCanAccessToSession = $this->checkUserCanAccessToSession($session, $user);
+                $canAccess = $checkUserCanAccessToSession['canAccess'];
 
-                if (!empty($session->reserve_meeting_id)) {
-                    $ReserveMeeting = ReserveMeeting::where('id', $session->reserve_meeting_id)
-                        ->where('user_id', $user->id)
-                        ->where('meeting_type', 'online')
-                        ->where('status', \App\Models\ReserveMeeting::$open)
-                        ->first();
-
-                    if (!empty($ReserveMeeting)) {
-                        $canAccess = true;
-                    }
-                } else {
-                    $webinar = Webinar::find($session->webinar_id);
-
-                    if ($webinar->checkUserHasBought($user)) {
-                        $canAccess = true;
-                    }
+                if ($canAccess) {
+                    $canAccess = (!empty($session->agora_settings) and !empty($session->agora_settings->users_join));
                 }
 
                 if (!$canAccess) {
-                    $partnerTeachers = !empty($session->webinar->webinarPartnerTeacher) ? $session->webinar->webinarPartnerTeacher->pluck('teacher_id')->toArray() : [];
-
-                    if (in_array($user->id, $partnerTeachers)) {
-                        $canAccess = true;
-                    }
-                }
-
-                if ($canAccess) {
-                    $canAccess = (!empty($session->agora_settings) and $session->agora_settings->users_join);
-                    if (!$canAccess) {
-                        $canAccessError = trans('update.join_to_the_session_has_been_disabled_by_the_instructor');
-                    }
+                    $canAccessError = trans('update.join_to_the_session_has_been_disabled_by_the_instructor');
                 }
             }
 
             if ($canAccess) {
+                $isHost = ($streamRole === 'host');
                 $agoraController = new AgoraController();
 
-                $isHost = ($streamRole === 'host');
                 $appId = $agoraController->appId;
                 $rtcToken = $agoraController->getRTCToken($channelName, $isHost);
                 $rtmToken = $agoraController->getRTMToken($accountName);
 
+                $breadcrumbs = null;
+
+                if (!empty($session->webinar_id)) {
+                    $webinar = $session->webinar;
+
+                    if (!empty($webinar)) {
+                        $webinar->noticeboards_count = $webinar->noticeboards()->count();
+
+                        $breadcrumbs = [
+                            ['text' => trans('update.platform'), 'url' => '/'],
+                            ['text' => trans('update.course'), 'url' => $webinar->getUrl()],
+                            ['text' => trans('update.learning_page'), 'url' => null],
+                        ];
+                    }
+                } /*elseif (!empty($session->event_id)) {
+                    $event = $session->event;
+
+                } elseif (!empty($session->meeting_package_sold_id)) {
+
+                }*/
 
                 $data = [
                     'pageTitle' => trans('update.live_session'),
@@ -458,11 +603,15 @@ class SessionController extends Controller
                     'notStarted' => (!$isHost and empty($agoraHistory)),
                     'streamStartAt' => (!$isHost and !empty($agoraHistory)) ? $agoraHistory->start_at : time(),
                     'authUserId' => $user->id,
+                    'authUser' => $user,
                     'hostUserId' => $session->creator_id,
-                    'sessionStreamType' => $session->getSessionStreamType()
+                    'hostUser' => $session->creator,
+                    'sessionStreamType' => $session->getSessionStreamType(),
+                    'breadcrumbs' => $breadcrumbs,
+                    'userIsCourseTeacher' => $isHost,
                 ];
 
-                return view('web.default.course.agora.index', $data);
+                return view('design_1.web.courses.agora.index', $data);
             } else {
                 $toastData = [
                     'title' => trans('public.request_failed'),
@@ -574,7 +723,7 @@ class SessionController extends Controller
                         'role' => $role,
                     ];
 
-                    return view('web.default.course.jitsi.join_live', $data);
+                    return view('design_1.web.courses.jitsi.join_live', $data);
                 }
             }
         }

@@ -1,8 +1,8 @@
 <!-- Modal -->
 <div class="d-none" id="extraDescriptionForm">
-    <h3 class="section-title after-line font-20 text-dark-blue mb-25">{{ trans('update.add_items') }}</h3>
+    <h3 class="section-title after-line font-20 text-dark-blue mb-25 p-16">{{ trans('update.add_items') }}</h3>
 
-    <div class="js-form" data-action="{{ getAdminPanelUrl() }}/webinar-extra-description/store">
+    <div class="js-form p-16" data-action="{{ getAdminPanelUrl() }}/webinar-extra-description/store">
         <input type="hidden" name="webinar_id" value="{{  !empty($webinar) ? $webinar->id :''  }}">
         <input type="hidden" name="type">
 

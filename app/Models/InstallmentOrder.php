@@ -170,6 +170,7 @@ class InstallmentOrder extends Model
         $count = 0;
         $amount = 0;
         $time = time();
+        $firstDueAt = null;
 
         $itemPrice = $this->getItemPrice();
 
@@ -187,6 +188,10 @@ class InstallmentOrder extends Model
                     if (empty($payment)) {
                         $count += 1;
                         $amount += $step->getPrice($itemPrice);
+
+                        if (empty($firstDueAt)) {
+                            $firstDueAt = $dueAt;
+                        }
                     }
                 }
             }
@@ -195,6 +200,7 @@ class InstallmentOrder extends Model
         return [
             'count' => $count,
             'amount' => $amount,
+            'firstDueAt' => $firstDueAt,
         ];
     }
 

@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
+use App\Mixins\Logs\UserLoginHistoryMixin;
 use App\Mixins\RegistrationPackage\UserPackage;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -136,10 +137,13 @@ class RegistrationPackagesController extends Controller
 
     }
 
-    public function webPayRender(Request $request, User $user,$package_id)
+    public function webPayRender(Request $request, User $user, $package_id)
     {
 
-        Auth::login($user);
+        Auth::login($user, true);
+
+        $userLoginHistoryMixin = new UserLoginHistoryMixin();
+        $userLoginHistoryMixin->storeUserLoginHistory($user);
 
         return view('api.registration_package', compact('package_id'));
     }

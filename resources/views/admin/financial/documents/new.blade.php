@@ -89,7 +89,10 @@
                                 @enderror
                             </div>
 
+
+                            <div class="text-right mt-3">
                             <button type="submit" class="btn btn-primary">{{ trans('admin/main.submit') }}</button>
+                            </div>
                         </form>
                     </div>
                 </div>

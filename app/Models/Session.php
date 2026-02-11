@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\SequenceContent;
+use App\User;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\CalendarLinks\Link;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
@@ -40,7 +41,7 @@ class Session extends Model implements TranslatableContract
 
     public function creator()
     {
-        return $this->hasOne('App\User', 'user_id', 'id');
+        return $this->belongsTo(User::class, 'creator_id', 'id');
     }
 
     public function webinar()
@@ -51,6 +52,16 @@ class Session extends Model implements TranslatableContract
     public function sessionReminds()
     {
         return $this->hasMany('App\Models\SessionRemind', 'session_id', 'id');
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(SessionAttendance::class, 'session_id', 'id');
+    }
+
+    public function attendanceNotification()
+    {
+        return $this->hasOne(SessionAttendanceNotification::class, 'session_id', 'id');
     }
 
     public function learningStatus()
@@ -73,6 +84,21 @@ class Session extends Model implements TranslatableContract
         return $this->morphOne('App\Models\CoursePersonalNote', 'targetable');
     }
 
+    public function reserveMeeting()
+    {
+        return $this->belongsTo(ReserveMeeting::class, 'reserve_meeting_id', 'id');
+    }
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class, 'event_id', 'id');
+    }
+
+    public function meetingPackageSold()
+    {
+        return $this->belongsTo(MeetingPackageSold::class, 'meeting_package_sold_id', 'id');
+    }
+
     public function addToCalendarLink()
     {
         try {
@@ -86,27 +112,9 @@ class Session extends Model implements TranslatableContract
         }
     }
 
-    public function getJoinLink($zoom_start_link = false)
+    public function getJoinLink()
     {
-        $link = $this->link;
-
-        if ($this->session_api == 'big_blue_button') {
-            $link = url('panel/sessions/' . $this->id . '/joinToBigBlueButton');
-        }
-
-        /*if ($zoom_start_link and auth()->check() and auth()->id() == $this->creator_id and $this->session_api == 'zoom') {
-            $link = $this->zoom_start_link;
-        }*/
-
-        if ($this->session_api == 'agora') {
-            $link = url('panel/sessions/' . $this->id . '/joinToAgora');
-        }
-
-        if ($this->session_api == 'jitsi') {
-            $link = url('panel/sessions/' . $this->id . '/joinToJitsi');
-        }
-
-        return $link;
+        return "/panel/sessions/{$this->id}/join";
     }
 
     public function isFinished(): bool
@@ -152,5 +160,16 @@ class Session extends Model implements TranslatableContract
         }
 
         return $sessionStreamType;
+    }
+
+    public function getUserAttendanceStatus($user = null)
+    {
+        if (empty($user)) {
+            $user = auth()->user();
+        }
+
+        $attendance = $this->attendances()->where('student_id', $user->id)->first();
+
+        return !empty($attendance) ? $attendance->status : "absent";
     }
 }

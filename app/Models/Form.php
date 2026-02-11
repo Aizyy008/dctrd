@@ -16,12 +16,17 @@ class Form extends Model implements TranslatableContract
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 
-    public $translatedAttributes = ['title', 'heading_title', 'description', 'welcome_message_title', 'welcome_message_description', 'tank_you_message_title', 'tank_you_message_description'];
+    public $translatedAttributes = ['title', 'subtitle', 'heading_title', 'description', 'welcome_message_title', 'welcome_message_description', 'tank_you_message_title', 'tank_you_message_description'];
 
 
     public function getTitleAttribute()
     {
         return getTranslateAttributeValue($this, 'title');
+    }
+
+    public function getSubtitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'subtitle');
     }
 
     public function getHeadingTitleAttribute()

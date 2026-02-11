@@ -11,7 +11,7 @@ class Discount extends Model
     protected $guarded = ['id'];
     static $discountUserTypes = ['all_users', 'special_users'];
 
-    static $discountSource = ['all', 'course', 'bundle', 'category', 'meeting', 'product'];
+    static $discountSource = ['all', 'course', 'bundle', 'category', 'meeting', 'product', 'event', 'meeting_package'];
     static $panelDiscountSource = ['all', 'course', 'bundle', 'meeting', 'product'];
     static $discountSourceAll = 'all';
     static $discountSourceCourse = 'course';
@@ -19,15 +19,12 @@ class Discount extends Model
     static $discountSourceMeeting = 'meeting';
     static $discountSourceProduct = 'product';
     static $discountSourceBundle = 'bundle';
+    static $discountSourceEvent = 'event';
+    static $discountSourceMeetingPackage = 'meeting_package';
 
     static $discountTypes = ['percentage', 'fixed_amount'];
     static $discountTypePercentage = 'percentage';
     static $discountTypeFixedAmount = 'fixed_amount';
-    // =============== discount_coupon_product() ===============
-    public function discount_coupon_product()
-    {
-        return $this->belongsToMany(Product::class, 'discount_coupon_product', 'discount_id', 'product_id');
-    }
 
     public function creator()
     {
@@ -47,6 +44,16 @@ class Discount extends Model
     public function discountBundles()
     {
         return $this->hasMany('App\Models\DiscountBundle', 'discount_id', 'id');
+    }
+
+    public function discountEvents()
+    {
+        return $this->hasMany('App\Models\DiscountEvent', 'discount_id', 'id');
+    }
+
+    public function discountMeetingPackages()
+    {
+        return $this->hasMany('App\Models\DiscountMeetingPackage', 'discount_id', 'id');
     }
 
     public function discountCategories()
@@ -98,22 +105,23 @@ class Discount extends Model
         ];
     }
 
-    public function checkValidDiscount()
+    public function checkValidDiscount($user = null)
     {
         if ($this->expired_at < time()) {
             return trans('update.discount_code_has_expired'); // expired
         }
 
-        $user = auth()->user();
+        if (empty($user)) {
+            $user = auth()->user();
+        }
+
         $carts = Cart::where('creator_id', $user->id)->get();
 
 
-        if (($this->source == self::$discountSourceCourse or $this->source == self::$discountSourceCategory))
-        {
+        if (($this->source == self::$discountSourceCourse or $this->source == self::$discountSourceCategory)) {
             $webinarCount = array_filter($carts->pluck('webinar_id')->toArray());
-            // dd($webinarCount);
-            if (empty($webinarCount) or count($webinarCount) < 1)
-            {
+
+            if (empty($webinarCount) or count($webinarCount) < 1) {
                 return trans('update.discount_code_is_for_courses_error');
             }
         } elseif ($this->source == self::$discountSourceBundle) {
@@ -121,6 +129,18 @@ class Discount extends Model
 
             if (empty($bundleCount) or count($bundleCount) < 1) {
                 return trans('update.discount_code_is_for_bundles_error');
+            }
+        }  elseif ($this->source == self::$discountSourceEvent) {
+            $eventTicketCount = array_filter($carts->pluck('event_ticket_id')->toArray());
+
+            if (empty($eventTicketCount) or count($eventTicketCount) < 1) {
+                return trans('update.discount_code_is_for_events_error');
+            }
+        } elseif ($this->source == self::$discountSourceMeetingPackage) {
+            $meetingPackagesCount = array_filter($carts->pluck('meeting_package_id')->toArray());
+
+            if (empty($meetingPackagesCount) or count($meetingPackagesCount) < 1) {
+                return trans('update.discount_code_is_for_meeting_package_error');
             }
         } elseif ($this->source == self::$discountSourceProduct) {
             $productCount = array_filter($carts->pluck('product_order_id')->toArray());
@@ -168,13 +188,45 @@ class Discount extends Model
             }
         }
 
-        if ($this->source == self::$discountSourceProduct)
-        {
+        if ($this->source == self::$discountSourceEvent and count($this->discountEvents)) {
+            $discountEventsIds = $this->discountEvents()->pluck('event_id')->toArray();
+            $hasSpecialEvents = false;
+
+            foreach ($carts as $cart) {
+                $eventTicket = $cart->eventTicket;
+
+                if (!empty($eventTicket) and in_array($eventTicket->event_id, $discountEventsIds)) {
+                    $hasSpecialEvents = true;
+                }
+            }
+
+            if (!$hasSpecialEvents) {
+                return trans('update.your_coupon_is_valid_for_another_events');
+            }
+        }
+
+        if ($this->source == self::$discountSourceMeetingPackage and count($this->discountMeetingPackages)) {
+            $discountMeetingPackagesIds = $this->discountMeetingPackages()->pluck('meeting_package_id')->toArray();
+            $hasSpecialMeetingPackages = false;
+
+            foreach ($carts as $cart) {
+                $meetingPackage = $cart->meetingPackage;
+
+                if (!empty($meetingPackage) and in_array($meetingPackage->id, $discountMeetingPackagesIds)) {
+                    $hasSpecialMeetingPackages = true;
+                }
+            }
+
+            if (!$hasSpecialMeetingPackages) {
+                return trans('update.your_coupon_is_valid_for_another_meeting_packages');
+            }
+        }
+
+        if ($this->source == self::$discountSourceProduct) {
             $hasSpecialProducts = false;
-            foreach ($carts as $cart)
-            {
-                if (!empty($cart->productOrder))
-                {
+
+            foreach ($carts as $cart) {
+                if (!empty($cart->productOrder)) {
                     $product = $cart->productOrder->product;
 
                     if (!empty($product) and ($this->product_type == 'all' or $this->product_type == $product->type)) {
@@ -203,9 +255,8 @@ class Discount extends Model
                 return trans('update.your_coupon_is_valid_for_another_category');
             }
         }
-        // ++++++++++++++ type = special_users ++++++++++++++
-        if ($this->type == 'special_users')
-        {
+
+        if ($this->type == 'special_users') {
             $userDiscount = DiscountUser::where('user_id', $user->id)
                 ->where('discount_id', $this->id)
                 ->first();
@@ -214,14 +265,12 @@ class Discount extends Model
                 return trans('cart.coupon_invalid'); // not for this user
             }
         }
-        // ++++++++++++++ minimum_order ++++++++++++++
-        if (!empty($this->minimum_order))
-        {
-            // check user orders minimum amounts
+
+
+        if (!empty($this->minimum_order)) { // check user orders minimum amounts
             $totalCartsPrice = Cart::getCartsTotalPrice($carts);
 
-            if ($this->minimum_order > $totalCartsPrice)
-            {
+            if ($this->minimum_order > $totalCartsPrice) {
                 return trans('update.discount_code_minimum_order_error', ['min_order' => $this->minimum_order]); // the minimum order is less than the discount amount
             }
         }

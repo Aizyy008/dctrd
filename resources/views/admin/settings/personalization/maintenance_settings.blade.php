@@ -84,6 +84,19 @@
                                value="{{ (!empty($itemValue) and !empty($itemValue['end_date'])) ? dateTimeFormat($itemValue['end_date'], 'Y-m-d H:i', false) : '' }}"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label class="input-label">{{ trans("update.right_float_image") }}</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button type="button" class="input-group-text admin-file-manager" data-input="image_right_float_image" data-preview="holder">
+                                <i class="fa fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <input type="text" name="value[right_float_image]" id="image_right_float_image" value="{{ (!empty($itemValue) and !empty($itemValue["right_float_image"])) ? $itemValue["right_float_image"] : "" }}" class="form-control"/>
+                    </div>
+                </div>
+
             </div>
         </div>
 

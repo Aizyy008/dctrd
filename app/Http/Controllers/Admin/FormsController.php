@@ -63,6 +63,7 @@ class FormsController extends Controller
         $this->validate($request, [
             'url' => 'required|string|max:255|unique:forms',
             'title' => 'required|string|max:255',
+            'subtitle' => 'required|string',
         ]);
 
         $data = $request->all();
@@ -73,6 +74,8 @@ class FormsController extends Controller
             'url' => $data['url'],
             'cover' => $data['cover'] ?? null,
             'image' => $data['image'] ?? null,
+            'header_icon' => $data['header_icon'] ?? null,
+            'header_overlay_image' => $data['header_overlay_image'] ?? null,
             'enable_login' => (!empty($data['enable_login']) and $data['enable_login'] == "on"),
             'enable_resubmission' => (!empty($data['enable_resubmission']) and $data['enable_resubmission'] == "on"),
             'enable_welcome_message' => (!empty($data['enable_welcome_message']) and $data['enable_welcome_message'] == "on"),
@@ -104,6 +107,7 @@ class FormsController extends Controller
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
             'heading_title' => $data['heading_title'] ?? null,
             'description' => $data['description'] ?? null,
             'welcome_message_title' => $data['welcome_message_title'] ?? null,
@@ -197,6 +201,8 @@ class FormsController extends Controller
             'url' => $data['url'],
             'cover' => $data['cover'] ?? null,
             'image' => $data['image'] ?? null,
+            'header_icon' => $data['header_icon'] ?? null,
+            'header_overlay_image' => $data['header_overlay_image'] ?? null,
             'enable_login' => (!empty($data['enable_login']) and $data['enable_login'] == "on"),
             'enable_resubmission' => (!empty($data['enable_resubmission']) and $data['enable_resubmission'] == "on"),
             'enable_welcome_message' => (!empty($data['enable_welcome_message']) and $data['enable_welcome_message'] == "on"),

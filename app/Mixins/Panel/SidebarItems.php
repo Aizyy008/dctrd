@@ -31,6 +31,13 @@ class SidebarItems
             'items' => []
         ];
 
+        $items['events'] = [
+            'icon' => self::getIcon('events'),
+            'text' => trans('update.events_calendar'),
+            'url' => '/panel/events-calender',
+            'items' => []
+        ];
+
 
         return $items;
     }
@@ -89,46 +96,54 @@ class SidebarItems
             $items['webinars'] = [
                 'icon' => self::getIcon('webinars'),
                 'text' => trans('panel.webinars'),
-                'url' => '/panel/webinars',
+                'url' => '/panel/courses',
                 'items' => []
             ];
 
             if ($user->isOrganization() || $user->isTeacher()) {
                 if ($user->can('panel_webinars_create')) {
-                    $items['webinars']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/webinars/new'];
+                    $items['webinars']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/courses/new'];
                 }
 
                 if ($user->can('panel_webinars_lists')) {
-                    $items['webinars']['items'][] = ['text' => trans('panel.my_classes'), 'url' => '/panel/webinars'];
+                    $items['webinars']['items'][] = ['text' => trans('panel.my_classes'), 'url' => '/panel/courses'];
                 }
 
                 if ($user->can('panel_webinars_invited_lists')) {
-                    $items['webinars']['items'][] = ['text' => trans('panel.invited_classes'), 'url' => '/panel/webinars/invitations'];
+                    $items['webinars']['items'][] = ['text' => trans('panel.invited_classes'), 'url' => '/panel/courses/invitations'];
                 }
             }
 
             if (!empty($user->organ_id) and $user->can('panel_webinars_organization_classes')) {
-                $items['webinars']['items'][] = ['text' => trans('panel.organization_classes'), 'url' => '/panel/webinars/organization_classes'];
+                $items['webinars']['items'][] = ['text' => trans('panel.organization_classes'), 'url' => '/panel/courses/organization_classes'];
             }
 
             if ($user->can('panel_webinars_my_purchases')) {
-                $items['webinars']['items'][] = ['text' => trans('panel.my_purchases'), 'url' => '/panel/webinars/purchases'];
+                $items['webinars']['items'][] = ['text' => trans('panel.my_purchases'), 'url' => '/panel/courses/purchases'];
             }
 
             if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_webinars_my_class_comments')) {
-                $items['webinars']['items'][] = ['text' => trans('panel.my_class_comments'), 'url' => '/panel/webinars/comments'];
+                $items['webinars']['items'][] = ['text' => trans('panel.my_class_comments'), 'url' => '/panel/courses/comments'];
             }
 
             if ($user->can('panel_webinars_comments')) {
-                $items['webinars']['items'][] = ['text' => trans('panel.my_comments'), 'url' => '/panel/webinars/my-comments'];
+                $items['webinars']['items'][] = ['text' => trans('panel.my_comments'), 'url' => '/panel/courses/my-comments'];
             }
 
             if ($user->can('panel_webinars_favorites')) {
-                $items['webinars']['items'][] = ['text' => trans('panel.favorites'), 'url' => '/panel/webinars/favorites'];
+                $items['webinars']['items'][] = ['text' => trans('panel.favorites'), 'url' => '/panel/courses/favorites'];
             }
 
             if (!empty(getFeaturesSettings('course_notes_status')) and $user->can('panel_webinars_personal_course_notes')) {
-                $items['webinars']['items'][] = ['text' => trans('update.course_notes'), 'url' => '/panel/webinars/personal-notes'];
+                $items['webinars']['items'][] = ['text' => trans('update.course_notes'), 'url' => '/panel/courses/personal-notes'];
+            }
+
+            if (!empty(getAttendanceSettings('status')) and $user->can('panel_attendances_lists')) {
+                if ($user->isOrganization() or $user->isTeacher()) {
+                    $items['webinars']['items'][] = ['text' => trans('update.attendances'), 'url' => '/panel/courses/attendances'];
+                } else {
+                    $items['webinars']['items'][] = ['text' => trans('update.attendances'), 'url' => '/panel/courses/my-attendances'];
+                }
             }
         }
 
@@ -173,6 +188,39 @@ class SidebarItems
             }
         }
 
+        if ($user->can('panel_events') and !empty(getEventsSettings("status"))) {
+            $items['events'] = [
+                'icon' => self::getIcon('events'),
+                'text' => trans('update.events'),
+                'url' => '/panel/events',
+                'items' => []
+            ];
+
+            if (!$user->isUser() and $user->can('panel_events_create')) {
+                $items['events']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/events/new'];
+            }
+
+            if (!$user->isUser() and $user->can('panel_events_lists')) {
+                $items['events']['items'][] = ['text' => trans('update.my_events'), 'url' => '/panel/events'];
+            }
+
+            if (!empty($user->organ_id) and $user->can('panel_events_organization_lists')) {
+                $items['events']['items'][] = ['text' => trans('update.organization_events'), 'url' => '/panel/events/my-organization'];
+            }
+
+            if ($user->can('panel_events_my_purchases')) {
+                $items['events']['items'][] = ['text' => trans('panel.my_purchases'), 'url' => '/panel/events/my-purchases'];
+            }
+
+            if (!$user->isUser() and $user->can('panel_events_comments')) {
+                $items['events']['items'][] = ['text' => trans('panel.comments'), 'url' => '/panel/events/comments'];
+            }
+
+            if ($user->can('panel_events_my_comments')) {
+                $items['events']['items'][] = ['text' => trans('panel.my_comments'), 'url' => '/panel/events/my-comments'];
+            }
+        }
+
         if ($user->can('panel_meetings')) {
 
             $items['meetings'] = [
@@ -194,6 +242,14 @@ class SidebarItems
                 if ($user->can('panel_meetings_settings')) {
                     $items['meetings']['items'][] = ['text' => trans('panel.settings'), 'url' => '/panel/meetings/settings'];
                 }
+
+                if (!empty(getMeetingPackagesSettings("status"))) {
+                    $items['meetings']['items'][] = ['text' => trans('update.sold_meeting_packages'), 'url' => '/panel/meetings/sold-packages'];
+                }
+            }
+
+            if (!empty(getMeetingPackagesSettings("status"))) {
+                $items['meetings']['items'][] = ['text' => trans('update.purchased_packages'), 'url' => '/panel/meetings/purchased-packages'];
             }
         }
 
@@ -213,11 +269,12 @@ class SidebarItems
             ];
 
             if ($user->can('panel_assignments_lists')) {
-                $items['assignments']['items'][] = ['text' => trans('update.my_assignments'), 'url' => '/panel/assignments/my-assignments'];
+                $items['assignments']['items'][] = ['text' => trans('update.my_assignments'), 'url' => '/panel/assignments/my-requests'];
             }
 
             if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_assignments_my_courses_assignments')) {
-                $items['assignments']['items'][] = ['text' => trans('update.students_assignments'), 'url' => '/panel/assignments/my-courses-assignments'];
+                $items['assignments']['items'][] = ['text' => trans('update.assignments'), 'url' => '/panel/assignments'];
+                $items['assignments']['items'][] = ['text' => trans('update.students_assignments'), 'url' => '/panel/assignments/histories'];
             }
         }
 
@@ -265,17 +322,14 @@ class SidebarItems
 
             if (($user->isOrganization() || $user->isTeacher()) and $user->can('panel_certificates_lists')) {
                 $items['certificates']['items'][] = ['text' => trans('public.list'), 'url' => '/panel/certificates'];
+                $items['certificates']['items'][] = ['text' => trans('webinars.all_students'), 'url' => '/panel/certificates/students'];
             }
 
             if ($user->can('panel_certificates_achievements')) {
-                $items['certificates']['items'][] = ['text' => trans('quiz.achievements'), 'url' => '/panel/certificates/achievements'];
+                $items['certificates']['items'][] = ['text' => trans('update.my_achievements'), 'url' => '/panel/certificates/my-achievements'];
             }
 
             $items['certificates']['items'][] = ['text' => trans('site.certificate_validation'), 'url' => '/certificate_validation'];
-
-            if ($user->can('panel_certificates_course_certificates')) {
-                $items['certificates']['items'][] = ['text' => trans('update.course_certificates'), 'url' => '/panel/certificates/webinars'];
-            }
         }
 
         return $items;
@@ -452,7 +506,7 @@ class SidebarItems
         }
 
         // Forums
-        if (getFeaturesSettings('forums_status') and $user->can('panel_forums')) {
+        if (getForumsGeneralSettings('forums_status') and $user->can('panel_forums')) {
             $items['forums'] = [
                 'icon' => self::getIcon('forums'),
                 'text' => trans('update.forums'),
@@ -491,11 +545,11 @@ class SidebarItems
             ];
 
             if ($user->can('panel_blog_new_article')) {
-                $items['blog']['items'][] = ['text' => trans('update.new_article'), 'url' => '/panel/blog/posts/new'];
+                $items['blog']['items'][] = ['text' => trans('update.new_article'), 'url' => '/panel/blog/new'];
             }
 
             if ($user->can('panel_blog_my_articles')) {
-                $items['blog']['items'][] = ['text' => trans('update.my_articles'), 'url' => '/panel/blog/posts'];
+                $items['blog']['items'][] = ['text' => trans('update.my_articles'), 'url' => '/panel/blog'];
             }
 
             if ($user->can('panel_blog_comments')) {

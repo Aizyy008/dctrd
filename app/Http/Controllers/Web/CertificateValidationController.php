@@ -22,7 +22,7 @@ class CertificateValidationController extends Controller
             'pageRobot' => $pageRobot,
         ];
 
-        return view(getTemplate() . '.auth.certificate_validation', $data);
+        return view('design_1.web.certificate_validation.index', $data);
     }
 
     public function checkValidate(Request $request)
@@ -45,6 +45,8 @@ class CertificateValidationController extends Controller
 
         $certificate = Certificate::where('id', $certificateId)->first();
 
+        $result = [];
+
         if (!empty($certificate)) {
             $webinarTitle = "-";
 
@@ -55,19 +57,16 @@ class CertificateValidationController extends Controller
             }
 
             $result = [
-                'student' => $certificate->student->full_name,
-                'webinar_title' => $webinarTitle,
-                'date' => dateTimeFormat($certificate->created_at, 'j F Y'),
+                'certificate' => $certificate,
+                'webinarTitle' => $webinarTitle,
             ];
-
-            return response()->json([
-                'code' => 200,
-                'certificate' => $result
-            ]);
         }
 
+        $html = (string)view()->make('design_1.web.certificate_validation.status', $result);
+
         return response()->json([
-            'code' => 404,
+            'code' => 200,
+            'html' => $html
         ]);
     }
 }

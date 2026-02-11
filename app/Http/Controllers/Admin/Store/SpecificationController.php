@@ -79,7 +79,7 @@ class SpecificationController extends Controller
         $hasMultiValues = (!empty($data['input_type']) and $data['input_type'] == 'multi_value');
         $this->setMultiValues($specification, $request->get('multi_values'), $hasMultiValues, $data['locale']);
 
-        return redirect(getAdminPanelUrl() . '/store/specifications');
+        return redirect(getAdminPanelUrl().'/store/specifications');
     }
 
     public function edit(Request $request, $id)
@@ -152,7 +152,7 @@ class SpecificationController extends Controller
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl() . '/store/specifications');
+        return redirect(getAdminPanelUrl().'/store/specifications');
     }
 
     public function destroy(Request $request, $id)
@@ -163,7 +163,7 @@ class SpecificationController extends Controller
 
         $specification->delete();
 
-        return redirect(getAdminPanelUrl() . '/store/specifications');
+        return redirect(getAdminPanelUrl().'/store/specifications');
     }
 
     private function handleSpecificationCategories($specification, $categories)
@@ -183,6 +183,7 @@ class SpecificationController extends Controller
     private function setMultiValues($specification, $multiValues, $hasMultiValues, $locale)
     {
         $oldIds = [];
+
         if ($hasMultiValues and !empty($multiValues) and count($multiValues)) {
             foreach ($multiValues as $key => $multiValue) {
                 $check = ProductSpecificationMultiValue::where('id', $key)->first();
@@ -223,51 +224,5 @@ class SpecificationController extends Controller
             ->delete();
 
         return true;
-    }
-
-    public function setMultiValuesAjax(Request $request)
-    {
-        $request->validate([
-            'variant_id' => 'required|exists:product_specifications,id',
-            'values' => 'array',
-        ]);
-
-        $specification = ProductSpecification::findOrFail($request->variant_id);
-        $locale = $request->get('locale') ?? app()->getLocale();
-        $multiValues = $request->get('values', []);
-        $oldIds = [];
-
-        foreach ($multiValues as $multiValue) {
-            if (!empty($multiValue)) {
-                // Check if the value exists within the related multiValues
-                $exists = $specification->multiValues()
-                    ->whereHas('translations', function ($query) use ($multiValue, $locale) {
-                        $query->where('title', $multiValue)
-                            ->where('locale', mb_strtolower($locale));
-                    })
-                    ->exists();
-
-                if (!$exists) {
-                    $new = ProductSpecificationMultiValue::create([
-                        'specification_id' => $specification->id,
-                    ]);
-
-                    ProductSpecificationMultiValueTranslation::updateOrCreate([
-                        'product_specification_multi_value_id' => $new->id,
-                        'locale' => mb_strtolower($locale),
-                    ], [
-                        'title' => $multiValue,
-                    ]);
-
-                    $oldIds[] = $multiValue;
-                }
-            }
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Values updated successfully',
-            'new_ids' => $oldIds,
-        ]);
     }
 }

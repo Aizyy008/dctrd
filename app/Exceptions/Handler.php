@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Http\Middleware\Share;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -10,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Handler extends ExceptionHandler
 {
@@ -35,7 +37,7 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param  \Throwable  $exception
+     * @param \Throwable $exception
      * @return void
      *
      * @throws \Exception
@@ -48,8 +50,8 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Throwable  $exception
+     * @param \Illuminate\Http\Request $request
+     * @param \Throwable $exception
      * @return \Symfony\Component\HttpFoundation\Response
      *
      * @throws \Throwable
@@ -60,6 +62,45 @@ class Handler extends ExceptionHandler
 
             return $this->renderApi($request, $exception);
         }
+
+        $modelNotFound = ($exception instanceof ModelNotFoundException);
+
+        if (
+            $this->isHttpException($exception) or
+            (
+                $exception->getCode() == 0 and
+                ($modelNotFound or !env('APP_DEBUG'))
+            )
+        ) {
+
+            if ($this->isHttpException($exception)) {
+                $statusCode = $exception->getStatusCode();
+            } else if ($modelNotFound) {
+                $statusCode = 404;
+            } else {
+                $statusCode = 500;
+            }
+
+            if (in_array($statusCode, [404, 403, 419, 500])) {
+                $share = (new Share());
+                $shareData = $share->getShareData($request);
+
+                $errorSettings = "get{$statusCode}ErrorPageSettings"();
+                $pageTitle = !empty($errorSettings['title']) ? $errorSettings['title'] : trans('update.error_page');
+
+                $data = [
+                    "pageTitle" => $pageTitle,
+                    'statusCode' => $statusCode,
+                    'errorSettings' => $errorSettings,
+                    'dontShowCookieSecurity' => true,
+                ];
+
+                $data = array_merge($data, $shareData);
+
+                return response()->view('design_1.web.errors.errors', $data, $statusCode);
+            }
+        }
+
         return parent::render($request, $exception);
     }
 

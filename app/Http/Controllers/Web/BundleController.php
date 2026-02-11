@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\MorphTypesEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Web\traits\BundleShowTrait;
 use App\Http\Controllers\Web\traits\CheckContentLimitationTrait;
 use App\Http\Controllers\Web\traits\InstallmentsTrait;
 use App\Mixins\Cashback\CashbackRules;
 use App\Mixins\Installment\InstallmentPlans;
+use App\Mixins\Logs\VisitLogMixin;
 use App\Models\AdvertisingBanner;
 use App\Models\Bundle;
 use App\Models\Cart;
@@ -14,16 +17,200 @@ use App\Models\Discount;
 use App\Models\Favorite;
 use App\Models\RewardAccounting;
 use App\Models\Sale;
+use App\Models\SpecialOffer;
+use App\Models\Ticket;
+use App\Models\UpcomingCourseFilterOption;
 use App\Models\Webinar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class BundleController extends Controller
 {
-    use InstallmentsTrait;
+    use InstallmentsTrait, BundleShowTrait;
     use CheckContentLimitationTrait;
 
-    public function index($slug)
+    public function index(Request $request)
+    {
+        $query = Bundle::query()->where('status', Bundle::$active);
+        $query->where('private', false);
+        $query->where('only_for_students', false);
+
+        $filterMaxPrice = deepClone($query)->max('price') ?? 10000;
+
+        $query = $this->handleFilters($request, $query);
+
+        $getListData = $this->getListData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
+        $seoSettings = getSeoMetas('bundles_lists');
+        $pageTitle = $seoSettings['title'] ?? trans('update.bundles');
+        $pageDescription = $seoSettings['description'] ?? '';
+        $pageRobot = getPageRobot('bundles_lists');
+
+        $data = [
+            'pageTitle' => $pageTitle,
+            'pageDescription' => $pageDescription,
+            'pageRobot' => $pageRobot,
+            'seoSettings' => $seoSettings,
+            'pageBasePath' => "/bundles",
+            'filterMaxPrice' => ($filterMaxPrice > 1000) ? $filterMaxPrice : 1000,
+        ];
+
+        $data = array_merge($data, $getListData);
+
+        return view('design_1.web.bundles.lists.index', $data);
+    }
+
+
+    private function handleFilters(Request $request, $query)
+    {
+        $free = $request->get('free');
+        $has_discount = $request->get('discount');
+        $sort = $request->get('sort');
+        $type = $request->get('type');
+        $moreOptions = $request->get('moreOptions');
+
+
+        if (!empty($free)) {
+            $query->where(function ($query) {
+                $query->whereNull('price');
+                $query->orWhere('price', '<', '1');
+            });
+        }
+
+        if (!empty($has_discount)) {
+
+            if (!empty($withDiscount) and $withDiscount == 'on') {
+                $now = time();
+                $webinarIdsHasDiscount = [];
+
+                $tickets = Ticket::where('start_date', '<', $now)
+                    ->where('end_date', '>', $now)
+                    ->whereNotNull("bundle_id")
+                    ->get();
+
+                foreach ($tickets as $ticket) {
+                    if ($ticket->isValid()) {
+                        $webinarIdsHasDiscount[] = $ticket->bundle_id;
+                    }
+                }
+
+                $specialOffersItemIds = SpecialOffer::where('status', 'active')
+                    ->where('from_date', '<', $now)
+                    ->where('to_date', '>', $now)
+                    ->pluck("bundle_id")
+                    ->toArray();
+
+                $webinarIdsHasDiscount = array_merge($specialOffersItemIds, $webinarIdsHasDiscount);
+
+                $webinarIdsHasDiscount = array_unique($webinarIdsHasDiscount);
+
+                $query->whereIn("id", $webinarIdsHasDiscount);
+            }
+        }
+
+        if (!empty($type) and count($type)) {
+            $query->whereHas('webinar', function (Builder $query) use ($type) {
+                $query->whereIn('type', $type);
+            });
+        }
+
+        if (!empty($moreOptions) and count($moreOptions)) {
+            $query->whereHas('webinar', function (Builder $query) use ($moreOptions) {
+
+                if (in_array('supported_courses', $moreOptions)) {
+                    $query->where('support', true);
+                }
+
+                if (in_array('quiz_included', $moreOptions)) {
+                    $query->where('include_quizzes', true);
+                }
+
+                if (in_array('certificate_included', $moreOptions)) {
+                    $query->where('certificate', true);
+                }
+
+                if (in_array('assignment_included', $moreOptions)) {
+                    $query->where('assignments', true);
+                }
+
+                if (in_array('course_forum_included', $moreOptions)) {
+                    $query->where('forum', true);
+                }
+
+                if (in_array('point_courses', $moreOptions)) {
+                    $query->where('points', true);
+                }
+            });
+        }
+
+
+        if (!empty($sort)) {
+            switch ($sort) {
+                case 'newest':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+                case 'earliest_publish_date':
+                    $query->orderBy('publish_date', 'asc');
+                    break;
+                case 'farthest_publish_date':
+                    $query->orderBy('publish_date', 'desc');
+                    break;
+                case 'highest_price':
+                    $query->orderBy('price', 'desc');
+                    break;
+                case 'lowest_price':
+                    $query->orderBy('price', 'asc');
+                    break;
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        return $query;
+    }
+
+    private function getListData(Request $request, $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = 10;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $bundles = $query->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $bundles, $total, $count);
+        }
+
+        return [
+            'bundles' => $bundles,
+            'pagination' => $this->makePagination($request, $bundles, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $bundles, $total, $count)
+    {
+        $html = (string)view()->make('design_1.web.bundles.components.cards.grids.index', [
+            'bundles' => $bundles,
+            'gridCardClassName' => "col-12 col-lg-6 mt-24",
+            'withoutStyles' => true
+        ]);
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $bundles, $total, $count, true)
+        ]);
+    }
+
+
+    public function show(Request $request, $slug)
     {
         $user = null;
 
@@ -59,32 +246,6 @@ class BundleController extends Controller
                 },
                 'reviews' => function ($query) {
                     $query->where('status', 'active');
-                    $query->with([
-                        'comments' => function ($query) {
-                            $query->where('status', 'active');
-                        },
-                        'creator' => function ($qu) {
-                            $qu->select('id', 'full_name', 'avatar');
-                        }
-                    ]);
-                },
-                'comments' => function ($query) {
-                    $query->where('status', 'active');
-                    $query->whereNull('reply_id');
-                    $query->with([
-                        'user' => function ($query) {
-                            $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
-                        },
-                        'replies' => function ($query) {
-                            $query->where('status', 'active');
-                            $query->with([
-                                'user' => function ($query) {
-                                    $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
-                                }
-                            ]);
-                        }
-                    ]);
-                    $query->orderBy('created_at', 'desc');
                 },
             ])
             ->withCount([
@@ -160,6 +321,19 @@ class BundleController extends Controller
                 ->get();
         }
 
+
+        $reviewController = new BundleReviewController();
+        $bundleReviews = $reviewController->getReviewsByBundleSlug($request, $bundle->slug);
+
+        $commentController = new CommentController();
+        $bundleComments = $commentController->getComments($request, 'bundle', $bundle->id);
+
+
+        // Visit Logs
+        $visitLogMixin = new VisitLogMixin();
+        $visitLogMixin->storeVisit($request, $bundle->creator_id, $bundle->id, MorphTypesEnum::BUNDLE);
+
+
         $pageRobot = getPageRobot('bundle_show'); // index
 
         $data = [
@@ -176,99 +350,11 @@ class BundleController extends Controller
             'cashbackRules' => $cashbackRules ?? null,
             'installments' => $installments ?? null,
             'instructorDiscounts' => $instructorDiscounts,
+            'bundleComments' => $bundleComments,
+            'bundleReviews' => $bundleReviews,
         ];
 
-        return view('web.default.bundle.index', $data);
-    }
-
-    public function favoriteToggle($slug)
-    {
-        $userId = auth()->id();
-        $bundle = Bundle::where('slug', $slug)
-            ->where('status', 'active')
-            ->first();
-
-        if (!empty($bundle)) {
-
-            $isFavorite = Favorite::where('bundle_id', $bundle->id)
-                ->where('user_id', $userId)
-                ->first();
-
-            if (empty($isFavorite)) {
-                Favorite::create([
-                    'user_id' => $userId,
-                    'bundle_id' => $bundle->id,
-                    'created_at' => time()
-                ]);
-            } else {
-                $isFavorite->delete();
-            }
-        }
-
-        return response()->json([], 200);
-    }
-
-    public function buyWithPoint($slug)
-    {
-        if (auth()->check()) {
-            $user = auth()->user();
-
-            $bundle = Bundle::where('slug', $slug)
-                ->where('status', 'active')
-                ->first();
-
-            if (!empty($bundle)) {
-                if (empty($bundle->points)) {
-                    $toastData = [
-                        'title' => '',
-                        'msg' => trans('update.can_not_buy_this_bundle_with_point'),
-                        'status' => 'error'
-                    ];
-                    return back()->with(['toast' => $toastData]);
-                }
-
-                $availablePoints = $user->getRewardPoints();
-
-                if ($availablePoints < $bundle->points) {
-                    $toastData = [
-                        'title' => '',
-                        'msg' => trans('update.you_have_no_enough_points_for_this_bundle'),
-                        'status' => 'error'
-                    ];
-                    return back()->with(['toast' => $toastData]);
-                }
-
-                $checkCourseForSale = checkCourseForSale($bundle, $user);
-
-                if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
-                }
-
-                Sale::create([
-                    'buyer_id' => $user->id,
-                    'seller_id' => $bundle->creator_id,
-                    'bundle_id' => $bundle->id,
-                    'type' => Sale::$bundle,
-                    'payment_method' => Sale::$credit,
-                    'amount' => 0,
-                    'total_amount' => 0,
-                    'created_at' => time(),
-                ]);
-
-                RewardAccounting::makeRewardAccounting($user->id, $bundle->points, 'withdraw', null, false, RewardAccounting::DEDUCTION);
-
-                $toastData = [
-                    'title' => '',
-                    'msg' => trans('update.success_pay_bundle_with_point_msg'),
-                    'status' => 'success'
-                ];
-                return back()->with(['toast' => $toastData]);
-            }
-
-            abort(404);
-        } else {
-            return redirect('/login');
-        }
+        return view('design_1.web.bundles.show.index', $data);
     }
 
     public function free(Request $request, $slug)
@@ -284,10 +370,10 @@ class BundleController extends Controller
                 $checkCourseForSale = checkCourseForSale($bundle, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
-                if (!empty($bundle->price) and $bundle->price > 0) {
+                if (!isFreeModeEnabled() and !empty($bundle->price) and $bundle->price > 0) {
                     $toastData = [
                         'title' => trans('cart.fail_purchase'),
                         'msg' => trans('update.bundle_not_free'),
@@ -344,7 +430,7 @@ class BundleController extends Controller
                 $checkCourseForSale = checkCourseForSale($bundle, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
                 $fakeCarts = collect();

@@ -1,4 +1,4 @@
- @extends('admin.layouts.app')
+@extends('admin.layouts.app')
 
 @push('libraries_top')
     <link rel="stylesheet" href="/assets/admin/vendor/owl.carousel/owl.carousel.min.css">
@@ -8,11 +8,10 @@
 
 @section('content')
 
-
     <section class="section">
         <div class="row">
-            <div class="col-12 mb-4">
-                <div class="hero text-white hero-bg-image hero-bg" data-background="{{ !empty(getPageBackgroundSettings('admin_dashboard')) ? getPageBackgroundSettings('admin_dashboard') : '' }}">
+            <div class="col-12 mb-3">
+                <div class="hero rounded-12 text-white hero-bg-image bg-secondary" data-background="{{ !empty(getThemePageBackgroundSettings('admin_dashboard')) ? getThemePageBackgroundSettings('admin_dashboard') : '' }}">
                     <div class="hero-inner">
                         <h2>{{trans('admin/main.welcome')}}, {{ $authUser->full_name }}!</h2>
 
@@ -21,10 +20,13 @@
                                 <div>
                                     <p class="lead">{{trans('admin/main.welcome_card_text')}}</p>
 
-                                    <div class="mt-2 mb-2 d-flex flex-column flex-md-row">
-                                        <a href="{{ getAdminPanelUrl() }}/comments/webinars" class="mt-2 mt-md-0 btn btn-outline-white btn-lg btn-icon icon-left ml-0 ml-md-2"><i class="far fa-comment"></i>{{trans('admin/main.comments')}} </a>
-                                        <a href="{{ getAdminPanelUrl() }}/supports" class="mt-2 mt-md-0 btn btn-outline-white btn-lg btn-icon icon-left ml-0 ml-md-2"><i class="far fa-envelope"></i>{{trans('admin/main.tickets')}}</a>
-                                        <a href="{{ getAdminPanelUrl() }}/reports/webinars" class="mt-2 mt-md-0 btn btn-outline-white btn-lg btn-icon icon-left ml-0 ml-md-2"><i class="fas fa-info"></i>{{trans('admin/main.reports')}}</a>
+                                    <div class="mt-4 mb-2 d-flex align-items-center gap-16 rounded-24 flex-column flex-md-row">
+                                        <a href="{{ getAdminPanelUrl() }}/comments/webinars" class="mt-2 mt-md-0 rounded-16 btn btn-outline-white btn-lg btn-icon icon-left">
+                                            <x-iconsax-lin-message class="mr-1 icons" width="24px" height="24px"/>{{trans('admin/main.comments')}} </a>
+                                        <a href="{{ getAdminPanelUrl() }}/supports" class="mt-2 mt-md-0 btn rounded-16 btn-outline-white btn-lg btn-icon icon-left">
+                                            <x-iconsax-lin-sms class="mr-1 icons" width="24px" height="24px"/>{{trans('admin/main.tickets')}}</a>
+                                        <a href="{{ getAdminPanelUrl() }}/reports/webinars" class="mt-2 mt-md-0 btn rounded-16 btn-outline-white btn-lg btn-icon icon-left">
+                                            <x-iconsax-lin-info-circle class="mr-1 icons" width="24px" height="24px"/>{{trans('admin/main.reports')}}</a>
                                     </div>
                                 </div>
                             @endcan
@@ -34,11 +36,13 @@
                                     <p class="lead d-none d-lg-block">&nbsp;</p>
 
                                     @include('admin.includes.delete_button',[
-                                             'url' => getAdminPanelUrl().'/clear-cache',
-                                             'btnClass' => 'btn btn-outline-white btn-lg btn-icon icon-left mt-2 w-100',
-                                             'btnText' => trans('admin/main.clear_all_cache'),
-                                             'hideDefaultClass' => true
-                                          ])
+                                                     'url' => getAdminPanelUrl().'/clear-cache',
+                                                     'btnClass' => 'rounded-16 text-white border btn-outline-white font-14 btn-lg btn-icon icon-left mt-6',
+                                                     'btnText' => trans('admin/main.clear_all_cache'),
+                                                     'btnIcon' => 'trash',
+                                                     'iconType' => 'lin',
+                                                     'iconClass' => 'text-white mr-2',
+                                                  ])
                                 </div>
                             @endcan
                         </div>
@@ -52,28 +56,28 @@
                 @can('admin_general_dashboard_daily_sales_statistics')
                     @if(!empty($dailySalesTypeStatistics))
                         <div class="card card-statistic-2">
-                            <div class="card-stats">
+                            <div class="card-stats rounded-12">
                                 <div class="card-stats-title">{{trans('admin/main.daily_sales_type_statistics')}}</div>
 
                                 <div class="card-stats-items">
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ $dailySalesTypeStatistics['webinarsSales'] }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.live_class')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.live_class')}}</div>
                                     </div>
 
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ $dailySalesTypeStatistics['courseSales'] }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.course')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.course')}}</div>
                                     </div>
 
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ $dailySalesTypeStatistics['appointmentSales'] }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.appointment')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.appointment')}}</div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-icon shadow-primary bg-primary">
-                                <i class="fas fa-archive"></i>
+                            <div class="card-icon size-48 bg-primary-30 rounded-12">
+                                <x-iconsax-bul-bag class="icons text-primary" width="24px" height="24px"/>
                             </div>
                             <div class="card-wrap">
                                 <div class="card-header">
@@ -99,22 +103,22 @@
                                 <div class="card-stats-items">
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ handlePrice($getIncomeStatistics['todaySales']) }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.today')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.today')}}</div>
                                     </div>
 
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ handlePrice($getIncomeStatistics['monthSales']) }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.this_month')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.this_month')}}</div>
                                     </div>
 
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ handlePrice($getIncomeStatistics['yearSales']) }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.this_year')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.this_year')}}</div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-icon shadow-primary bg-primary">
-                                <i class="fas fa-dollar-sign"></i>
+                            <div class="card-icon size-48 bg-primary-30 rounded-12">
+                                <x-iconsax-bul-dollar-square class="icons text-primary" width="24px" height="24px"/>
                             </div>
                             <div class="card-wrap">
                                 <div class="card-header">
@@ -139,21 +143,21 @@
                                 <div class="card-stats-items">
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ $getTotalSalesStatistics['todaySales'] }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.today')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.today')}}</div>
                                     </div>
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ $getTotalSalesStatistics['monthSales'] }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.this_month')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.this_month')}}</div>
                                     </div>
                                     <div class="card-stats-item">
                                         <div class="card-stats-item-count">{{ $getTotalSalesStatistics['yearSales'] }}</div>
-                                        <div class="card-stats-item-label">{{trans('admin/main.this_year')}}</div>
+                                        <div class="text-gray-500 card-stats-item-label">{{trans('admin/main.this_year')}}</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="card-icon shadow-primary bg-primary">
-                                <i class="fas fa-shopping-cart"></i>
+                            <div class="card-icon size-48 bg-primary-30 rounded-12">
+                                <x-iconsax-bul-chart-square class="icons text-primary" width="24px" height="24px"/>
                             </div>
 
                             <div class="card-wrap">
@@ -175,8 +179,8 @@
             @can('admin_general_dashboard_new_sales')
                 <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                     <a href="{{ getAdminPanelUrl() }}/financial/sales" class="card card-statistic-1">
-                        <div class="card-icon bg-primary">
-                            <i class="fas fa-shopping-cart"></i>
+                        <div class="card-icon bg-primary-40 rounded-12">
+                            <x-iconsax-bul-shopping-cart class="icons text-primary" width="32px" height="32px"/>
                         </div>
                         <div class="card-wrap">
                             <div class="card-header">
@@ -193,8 +197,9 @@
             @can('admin_general_dashboard_new_comments')
                 <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                     <a href="{{ getAdminPanelUrl() }}/comments/webinars" class="card card-statistic-1">
-                        <div class="card-icon bg-danger">
-                            <i class="fas fa-comment"></i></div>
+                        <div class="card-icon bg-danger-30 rounded-12">
+                            <x-iconsax-bul-message-2 class="icons text-danger" width="32px" height="32px"/>
+                        </div>
                         <div class="card-wrap">
                             <div class="card-header">
                                 <h4>{{trans('admin/main.new_comment')}}</h4>
@@ -210,8 +215,9 @@
             @can('admin_general_dashboard_new_tickets')
                 <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                     <a href="{{ getAdminPanelUrl() }}/supports" class="card card-statistic-1">
-                        <div class="card-icon bg-warning">
-                            <i class="far fa-envelope"></i></div>
+                        <div class="card-icon bg-warning-30 rounded-12">
+                            <x-iconsax-bul-sms class="icons text-warning" width="32px" height="32px"/>
+                        </div>
                         <div class="card-wrap">
                             <div class="card-header">
                                 <h4>{{trans('admin/main.new_ticket')}}</h4>
@@ -227,8 +233,9 @@
             @can('admin_general_dashboard_new_reviews')
                 <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                     <a class="card card-statistic-1">
-                        <div class="card-icon bg-success">
-                            <i class="fas fa-eye"></i></div>
+                        <div class="card-icon bg-success-30 rounded-12">
+                            <x-iconsax-bul-video-time class="icons text-success" width="32px" height="32px"/>
+                        </div>
                         <div class="card-wrap">
                             <div class="card-header">
                                 <h4>{{trans('admin/main.pending_review_classes')}}</h4>
@@ -271,7 +278,7 @@
                                     @if(!empty($getMonthAndYearSalesChartStatistics))
                                         <div class="statistic-details mt-4 position-relative">
                                             <div class="statistic-details-item">
-                                                <span class="text-muted">
+                                                <span class="text-gray-500">
                                                     @if($getMonthAndYearSalesChartStatistics['todaySales']['grow_percent']['status'] == 'up')
                                                         <span class="text-primary"><i class="fas fa-caret-up"></i></span>
                                                     @else
@@ -285,7 +292,7 @@
                                                 <div class="detail-name">{{trans('admin/main.today_sales')}}</div>
                                             </div>
                                             <div class="statistic-details-item">
-                                                <span class="text-muted">
+                                                <span class="text-gray-500">
                                                     @if($getMonthAndYearSalesChartStatistics['weekSales']['grow_percent']['status'] == 'up')
                                                         <span class="text-primary"><i class="fas fa-caret-up"></i></span>
                                                     @else
@@ -299,7 +306,7 @@
                                                 <div class="detail-name">{{trans('admin/main.week_sales')}}</div>
                                             </div>
                                             <div class="statistic-details-item">
-                                                <span class="text-muted">
+                                                <span class="text-gray-500">
                                                     @if($getMonthAndYearSalesChartStatistics['monthSales']['grow_percent']['status'] == 'up')
                                                         <span class="text-primary"><i class="fas fa-caret-up"></i></span>
                                                     @else
@@ -313,7 +320,7 @@
                                                 <div class="detail-name">{{trans('admin/main.month_sales')}}</div>
                                             </div>
                                             <div class="statistic-details-item">
-                                                <span class="text-muted">
+                                                <span class="text-gray-500">
                                                     @if($getMonthAndYearSalesChartStatistics['yearSales']['grow_percent']['status'] == 'up')
                                                         <span class="text-primary"><i class="fas fa-caret-up"></i></span>
                                                     @else
@@ -348,16 +355,16 @@
                                     <li class="media">
                                         <img class="mr-3 rounded-circle" width="50" height="50" src="{{ $recentComment->user->getAvatar() }}" alt="avatar">
                                         <div class="media-body">
-                                            <div class="float-right text-primary font-12">{{ dateTimeFormat($recentComment->created_at, 'j M Y | H:i') }}</div>
+                                            <div class="float-right text-gray-500 font-12">{{ dateTimeFormat($recentComment->created_at, 'j M Y | H:i') }}</div>
                                             <div class="media-title">{{ $recentComment->user->full_name }}</div>
-                                            <span class="text-small text-muted">{{ truncate($recentComment->comment, 150) }}</span>
+                                            <span class="text-small text-gray-500">{{ truncate($recentComment->comment, 150) }}</span>
                                         </div>
                                     </li>
                                 @endforeach
                             </ul>
 
                             <div class="text-center pt-1 pb-1">
-                                <a href="{{ getAdminPanelUrl() }}/comments/webinars" class="btn btn-primary btn-lg btn-round ">
+                                <a href="{{ getAdminPanelUrl() }}/comments/webinars" class="btn rounded-16 btn-primary btn-lg btn-round ">
                                     {{trans('admin/main.view_all')}}
                                 </a>
                             </div>
@@ -376,9 +383,9 @@
                         <div class="card card-hero">
                             <div class="card-header">
                                 <div class="card-icon">
-                                    <i class="fas fa-envelope"></i>
+                                    <x-iconsax-bul-sms class="icons" width="80px" height="80px"/>
                                 </div>
-                                <h5>{{trans('admin/main.recent_tickets')}}</h5>
+                                <h4>{{trans('admin/main.recent_tickets')}}</h4>
                                 <div class="card-description">{{ $recentTickets['pendingReply'] }} {{ trans('admin/main.pending_reply') }}</div>
                             </div>
 
@@ -388,25 +395,28 @@
                                     @foreach($recentTickets['tickets'] as $ticket)
                                         <a href="{{ getAdminPanelUrl() }}/supports/{{ $ticket->id }}/conversation" class="ticket-item">
                                             <div class="ticket-title">
-                                                <h4>{{ $ticket->title }}</h4>
+                                                <h4 class="text-dark">{{ $ticket->title }}</h4>
                                             </div>
                                             <div class="ticket-info">
-                                                <div>{{ $ticket->user->full_name }}</div>
+                                                <div class="text-gray-500">{{ $ticket->user->full_name }}</div>
                                                 <div class="bullet"></div>
                                                 @if($ticket->status == 'replied' or $ticket->status == 'open')
-                                                    <span class="text-warning  text-small font-600-bold">{{ trans('admin/main.pending_reply') }}</span>
+                                                    <span class="badge-status-card text-warning bg-warning-30">{{ trans('admin/main.pending_reply') }}</span>
                                                 @elseif($ticket->status == 'close')
-                                                    <span class="text-danger  text-small font-600-bold">{{ trans('admin/main.close') }}</span>
+                                                    <span class="badge-status-card text-danger bg-danger-30">{{ trans('admin/main.close') }}</span>
                                                 @else
-                                                    <span class="text-primary  text-small font-600-bold">{{ trans('admin/main.replied') }}</span>
+                                                    <span class="badge-status-card text-success bg-success-30">{{ trans('admin/main.replied') }}</span>
                                                 @endif
                                             </div>
                                         </a>
                                     @endforeach
 
-                                    <a href="{{ getAdminPanelUrl() }}/supports" class="ticket-item ticket-more">
-                                        {{trans('admin/main.view_all')}} <i class="fas fa-chevron-right"></i>
-                                    </a>
+                                    <div class="text-center pt-10 pb-10">
+                                        <a href="{{ getAdminPanelUrl() }}/supports" class="btn rounded-16 btn-primary btn-lg btn-round ">
+                                            {{trans('admin/main.view_all')}}
+                                        </a>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -420,9 +430,9 @@
                         <div class="card card-hero">
                             <div class="card-header">
                                 <div class="card-icon">
-                                    <i class="fas fa-users"></i>
+                                    <x-iconsax-bul-video class="icons" width="80px" height="80px"/>
                                 </div>
-                                <h5>{{trans('admin/main.recent_live_classes')}}</h5>
+                                <h4>{{trans('admin/main.recent_live_classes')}}</h4>
                                 <div class="card-description">{{ $recentWebinars['pendingReviews'] }} {{trans('admin/main.pending_review')}}</div>
                             </div>
                             <div class="card-body p-0">
@@ -430,40 +440,42 @@
                                     @foreach($recentWebinars['webinars'] as $webinar)
                                         <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/edit" class="ticket-item">
                                             <div class="ticket-title">
-                                                <h4>{{ $webinar->title }}</h4>
+                                                <h4 class="text-dark">{{ $webinar->title }}</h4>
                                             </div>
 
                                             <div class="ticket-info">
-                                                <div>{{ $webinar->teacher->full_name }}</div>
+                                                <div class="text-gray-500">{{ $webinar->teacher->full_name }}</div>
                                                 <div class="bullet"></div>
                                                 @switch($webinar->status)
                                                     @case(\App\Models\Webinar::$active)
-                                                    <span class="text-success">{{ trans('admin/main.publish') }}</span>
-                                                    @if($webinar->isProgressing())
-                                                        <div class="text-warning text-small font-600-bold">({{  trans('webinars.in_progress') }})</div>
-                                                    @elseif($webinar->start_date > time())
-                                                        <div class="text-danger text-small font-600-bold">({{  trans('admin/main.not_conducted') }})</div>
-                                                    @else
-                                                        <span class="text-success text-small font-600-bold">({{ trans('public.finished') }})</span>
-                                                    @endif
-                                                    @break
+                                                        @if($webinar->isProgressing())
+                                                            <span class="badge-status-card text-warning bg-warning-30">{{ trans('webinars.in_progress') }}</span>
+                                                        @elseif($webinar->start_date > time())
+                                                            <span class="badge-status-card text-success bg-success-30">{{ trans('admin/main.not_conducted') }}</span>
+                                                        @else
+                                                            <span class="badge-status-card text-success bg-success-30">{{ trans('public.finished') }}</span>
+                                                        @endif
+                                                        @break
                                                     @case(\App\Models\Webinar::$isDraft)
-                                                    <span class="text-dark">{{ trans('admin/main.is_draft') }}</span>
-                                                    @break
+                                                        <span class="badge-status-card text-dark bg-dark-30">{{ trans('admin/main.is_draft') }}</span>
+                                                        @break
                                                     @case(\App\Models\Webinar::$pending)
-                                                    <span class="text-warning">{{ trans('admin/main.waiting') }}</span>
-                                                    @break
+                                                        <span class="badge-status-card text-warning bg-warning-30">{{ trans('admin/main.waiting') }}</span>
+                                                        @break
                                                     @case(\App\Models\Webinar::$inactive)
-                                                    <span class="text-danger">{{ trans('public.rejected') }}</span>
-                                                    @break
+                                                        <span class="badge-status-card text-danger bg-danger-30">{{ trans('public.rejected') }}</span>
+                                                        @break
                                                 @endswitch
                                             </div>
                                         </a>
                                     @endforeach
 
-                                    <a href="{{ getAdminPanelUrl() }}/webinars?type=webinar" class="ticket-item ticket-more">
-                                        {{trans('admin/main.view_all')}} <i class="fas fa-chevron-right"></i>
-                                    </a>
+                                    <div class="text-center pt-10 pb-10">
+                                        <a href="{{ getAdminPanelUrl() }}/webinars?type=webinar" class="btn rounded-16 btn-primary btn-lg btn-round ">
+                                            {{trans('admin/main.view_all')}}
+                                        </a>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -477,9 +489,9 @@
                         <div class="card card-hero">
                             <div class="card-header">
                                 <div class="card-icon">
-                                    <i class="fas fa-play-circle"></i>
+                                    <x-iconsax-bul-video-circle class="icons" width="80px" height="80px"/>
                                 </div>
-                                <h5>{{trans('admin/main.recent_courses')}}</h5>
+                                <h4>{{trans('admin/main.recent_courses')}}</h4>
                                 <div class="card-description">{{ $recentCourses['pendingReviews'] }} {{trans('admin/main.pending_review')}}</div>
                             </div>
                             <div class="card-body p-0">
@@ -489,41 +501,42 @@
                                     @foreach($recentCourses['courses'] as $course)
                                         <a href="{{ getAdminPanelUrl() }}/webinars/{{ $course->id }}/edit" class="ticket-item">
                                             <div class="ticket-title">
-                                                <h4>{{ $course->title }}</h4>
+                                                <h4 class="text-dark">{{ $course->title }}</h4>
                                             </div>
 
                                             <div class="ticket-info">
-                                                <div>{{ $course->teacher->full_name }}</div>
+                                                <div class="text-gray-500">{{ $course->teacher->full_name }}</div>
                                                 <div class="bullet"></div>
                                                 @switch($course->status)
                                                     @case(\App\Models\Webinar::$active)
-                                                    <span class="text-success">{{ trans('admin/main.publish') }}</span>
-                                                    @if($course->isProgressing())
-                                                        <div class="text-warning text-small font-600-bold">({{  trans('webinars.in_progress') }})</div>
-                                                    @elseif($course->start_date > time())
-                                                        <div class="text-danger text-small font-600-bold">({{  trans('admin/main.not_conducted') }})</div>
-                                                    @else
-                                                        <span class="text-success text-small font-600-bold">({{ trans('public.finished') }})</span>
-                                                    @endif
-                                                    @break
+                                                        @if($course->isProgressing())
+                                                            <span class="badge-status-card text-warning bg-warning-30">{{ trans('webinars.in_progress') }}</span>
+                                                        @elseif($course->start_date > time())
+                                                            <span class="badge-status-card text-success bg-success-30">{{ trans('admin/main.not_conducted') }}</span>
+                                                        @else
+                                                            <span class="badge-status-card text-success bg-success-30">{{ trans('public.finished') }}</span>
+                                                        @endif
+                                                        @break
                                                     @case(\App\Models\Webinar::$isDraft)
-                                                    <span class="text-dark">{{ trans('admin/main.is_draft') }}</span>
-                                                    @break
+                                                        <span class="badge-status-card text-dark bg-dark-30">{{ trans('admin/main.is_draft') }}</span>
+                                                        @break
                                                     @case(\App\Models\Webinar::$pending)
-                                                    <span class="text-warning">{{ trans('admin/main.waiting') }}</span>
-                                                    @break
+                                                        <span class="badge-status-card text-warning bg-warning-30">{{ trans('admin/main.waiting') }}</span>
+                                                        @break
                                                     @case(\App\Models\Webinar::$inactive)
-                                                    <span class="text-danger">{{ trans('public.rejected') }}</span>
-                                                    @break
+                                                        <span class="badge-status-card text-danger bg-danger-30">{{ trans('public.rejected') }}</span>
+                                                        @break
                                                 @endswitch
                                             </div>
                                         </a>
                                     @endforeach
 
+                                    <div class="text-center pt-10 pb-10">
+                                        <a href="{{ getAdminPanelUrl() }}/webinars?type=course" class="btn rounded-16 btn-primary btn-lg btn-round ">
+                                            {{trans('admin/main.view_all')}}
+                                        </a>
+                                    </div>
 
-                                    <a href="{{ getAdminPanelUrl() }}/webinars?type=course" class="ticket-item ticket-more">
-                                        {{trans('admin/main.view_all')}} <i class="fas fa-chevron-right"></i>
-                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -565,7 +578,7 @@
     <script src="/assets/default/vendors/chartjs/chart.min.js"></script>
     <script src="/assets/admin/vendor/owl.carousel/owl.carousel.min.js"></script>
 
-    <script src="/assets/admin/js/dashboard.min.js"></script>
+    <script src="/assets/admin/js/parts/dashboard.min.js"></script>
 
     <script>
         (function ($) {

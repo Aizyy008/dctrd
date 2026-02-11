@@ -8,9 +8,12 @@ use App\Mixins\RegistrationPackage\UserPackage;
 use App\Models\Accounting;
 use App\Models\Badge;
 use App\Models\BundleWebinar;
+use App\Models\DeleteAccountRequest;
 use App\Models\ForumTopic;
 use App\Models\ForumTopicLike;
 use App\Models\ForumTopicPost;
+use App\Models\Gift;
+use App\Models\InstallmentOrder;
 use App\Models\Meeting;
 use App\Models\Noticeboard;
 use App\Models\Notification;
@@ -24,11 +27,14 @@ use App\Models\Role;
 use App\Models\Follow;
 use App\Models\Sale;
 use App\Models\Section;
+use App\Models\SessionAttendance;
+use App\Models\TimeSpentOnCourse;
 use App\Models\UserCommission;
 use App\Models\Webinar;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -66,6 +72,37 @@ class User extends Authenticatable
     private $user_group;
     private $userInfo;
 
+
+    public static function boot()
+    {
+        parent::boot();
+
+        self::creating(function ($model) {
+            if (empty($model->username)) {
+                $username = self::makeUsernameString($model);
+
+                if (self::checkDuplicateUsername($username)) {
+                    $username = self::makeUsernameString($model, 8);
+                }
+
+                $model->username = $username;
+            }
+        });
+    }
+
+    public static function makeUsernameString($user, $rand = 5)
+    {
+        $random = mb_strtolower(random_str($rand));;
+
+        return Str::slug($user->full_name) . '-' . $random;
+    }
+
+    private static function checkDuplicateUsername($username)
+    {
+        $user = self::query()->where('username', $username)->first();
+
+        return !empty($user);
+    }
 
     static function getMainAdmin()
     {
@@ -134,15 +171,28 @@ class User extends Authenticatable
             if (!empty($settings) and !empty($settings['user_avatar_style']) and $settings['user_avatar_style'] == "ui_avatar") {
                 $avatarUrl = "/getDefaultAvatar?item={$this->id}&name={$this->full_name}&size=$size";
             } else {
-                if (!empty($settings) and !empty($settings['default_user_avatar'])) {
-                    $avatarUrl = $settings['default_user_avatar'];
-                } else {
-                    $avatarUrl = "/assets/default/img/default/avatar-1.png";
-                }
+                $avatarUrl = getDefaultAvatarPath();
             }
         }
 
         return $avatarUrl;
+    }
+
+    public function getProfileSecondaryImage()
+    {
+        $path = null;
+
+        if (!empty($this->profile_secondary_image)) {
+            $path = $this->profile_secondary_image;
+        } else {
+            $settings = getOthersPersonalizationSettings();
+
+            if (!empty($settings) and !empty($settings['default_user_profile_secondary_image'])) {
+                $path = $settings['default_user_profile_secondary_image'];
+            }
+        }
+
+        return $path;
     }
 
     public function getCover()
@@ -152,13 +202,13 @@ class User extends Authenticatable
 
             $imgUrl = url($path);
         } else {
-            $imgUrl = getPageBackgroundSettings('user_cover');
+            $imgUrl = getThemePageBackgroundSettings('user_cover');
         }
 
         return $imgUrl;
     }
 
-    public function getSignature()
+    public function getSignature($justUserMetaValue = false)
     {
         $path = null;
 
@@ -170,25 +220,41 @@ class User extends Authenticatable
             }
         }
 
-        if (empty($path)) {
-            $path = getPageBackgroundSettings('user_default_signature');
+        if (empty($path) and !$justUserMetaValue) {
+            $path = getThemePageBackgroundSettings('user_default_signature');
         }
 
         return $path;
     }
 
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
     public function getProfileUrl()
     {
-        return '/users/' . $this->id . '/profile';
+        return '/users/' . $this->getUsername() . '/profile';
+    }
+
+    public function getMeetingReservationUrl()
+    {
+        return '/users/' . $this->getUsername() . '/meetings';
     }
 
     public function getLocationAttribute()
     {
         if (is_array($this->attributes['location'])) {
             return $this->attributes['location'];
+        } else if (!empty($this->attributes['location'])) {
+            $location = Geo::getST_AsTextFromBinary($this->attributes['location']);
+
+            if (!empty($location)) {
+                return Geo::get_geo_array($location);
+            }
         }
 
-        return \Geo::get_geo_array($this->attributes['location']);
+        return Geo::get_geo_array($this->attributes['location']);
     }
 
     public function getLevelOfTrainingAttribute()
@@ -221,13 +287,13 @@ class User extends Authenticatable
 
     public function getUserGroup()
     {
-        if (empty($this->user_group)) {
-            if (!empty($this->userGroup) and !empty($this->userGroup->group) and $this->userGroup->group->status == 'active') {
-                $this->user_group = $this->userGroup->group;
-            }
+        $group = null;
+
+        if (!empty($this->userGroup) and !empty($this->userGroup->group) and $this->userGroup->group->status == 'active') {
+            $group = $this->userGroup->group;
         }
 
-        return $this->user_group;
+        return $group;
     }
 
 
@@ -248,7 +314,7 @@ class User extends Authenticatable
 
     public function hasMeeting()
     {
-        $meeting = Meeting::where('disabled', false)
+        $meeting = Meeting::query()->where('disabled', false)
             ->where('creator_id', $this->id)
             ->first();
 
@@ -291,6 +357,11 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\Product', 'creator_id', 'id');
     }
 
+    public function events()
+    {
+        return $this->hasMany('App\Models\Event', 'creator_id', 'id');
+    }
+
     public function productOrdersAsBuyer()
     {
         return $this->hasMany('App\Models\ProductOrder', 'buyer_id', 'id');
@@ -329,6 +400,11 @@ class User extends Authenticatable
     public function loginHistories()
     {
         return $this->hasMany('App\Models\UserLoginHistory', 'user_id', 'id');
+    }
+
+    public function deleteAccountRequest()
+    {
+        return $this->hasOne(DeleteAccountRequest::class, 'user_id', 'id');
     }
 
     public function getActiveWebinars($just_count = false)
@@ -397,6 +473,11 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\UserOccupation', 'user_id', 'id');
     }
 
+    public function profileAttachments()
+    {
+        return $this->hasMany('App\Models\UserProfileAttachment', 'user_id', 'id');
+    }
+
     public function userRegistrationPackage()
     {
         return $this->hasOne('App\Models\UserRegistrationPackage', 'user_id', 'id');
@@ -429,17 +510,27 @@ class User extends Authenticatable
     }
 
 
-    public function rates()
+    public function timesSpentOnCourse()
+    {
+        return $this->hasMany(TimeSpentOnCourse::class, 'user_id', 'id');
+    }
+
+    public function sessionAttendance()
+    {
+        return $this->hasMany(SessionAttendance::class, 'student_id', 'id');
+    }
+
+    public function rates($withCount = false)
     {
         $webinars = $this->webinars()
             ->where('status', 'active')
             ->get();
 
         $rate = 0;
+        $count = 0;
 
         if (!empty($webinars)) {
             $rates = 0;
-            $count = 0;
 
             foreach ($webinars as $webinar) {
                 $webinarRate = $webinar->getRate();
@@ -457,6 +548,13 @@ class User extends Authenticatable
 
                 $rate = number_format($rates / $count, 2);
             }
+        }
+
+        if ($withCount) {
+            return [
+                'rate' => $rate,
+                'count' => $count
+            ];
         }
 
         return $rate;
@@ -678,7 +776,7 @@ class User extends Authenticatable
         }
 
         /* Get Course Students Notifications */
-        $userBoughtWebinarsIds = $this->getAllPurchasedWebinarsIds();
+        $userBoughtWebinarsIds = $this->getPurchasedCoursesIds();
 
         if (!empty($userBoughtWebinarsIds)) {
             $courseStudentsNotifications = Notification::whereIn('webinar_id', $userBoughtWebinarsIds)
@@ -697,8 +795,10 @@ class User extends Authenticatable
         return $notifications->sortByDesc('created_at');
     }
 
-    public function getAllPurchasedWebinarsIds()
+    /*public function getAllPurchasedWebinarsIds()
     {
+        // use this method getPurchasedCoursesIds()
+
         $userBoughtWebinarsIds = [];
         $userBoughtWebinars = Sale::query()->where('buyer_id', $this->id)
             ->whereNotNull('webinar_id')
@@ -712,7 +812,7 @@ class User extends Authenticatable
         }
 
         return $userBoughtWebinarsIds;
-    }
+    }*/
 
     public function getUnreadNoticeboards()
     {
@@ -820,6 +920,51 @@ class User extends Authenticatable
             }
         }
 
+
+        // get users by installments
+        $installmentOrders = InstallmentOrder::query()
+            ->where('user_id', $this->id)
+            ->where('status', 'open')
+            ->whereNull('refund_at')
+            ->get();
+
+        foreach ($installmentOrders as $installmentOrder) {
+            if (!empty($installmentOrder)) {
+                $hasBought = true;
+
+                if ($installmentOrder->checkOrderHasOverdue()) {
+                    $overdueIntervalDays = getInstallmentsSettings('overdue_interval_days');
+
+                    if (empty($overdueIntervalDays) or $installmentOrder->overdueDaysPast() > $overdueIntervalDays) {
+                        $hasBought = false;
+                    }
+                }
+
+                if ($hasBought) {
+                    $webinarIds[] = $installmentOrder->webinar_id;
+                }
+            }
+        }
+
+        // get users by gifts
+        $gifts = Gift::query()
+            ->where('status', 'active')
+            ->where('email', $this->email)
+            ->where(function ($query) {
+                $query->whereNull('date');
+                $query->orWhere('date', '<', time());
+            })
+            ->whereHas('sale')
+            ->get();
+
+        foreach ($gifts as $gift) {
+            if (!empty($gift->webinar_id)) {
+                $webinarIds[] = $gift->webinar_id;
+            } else if (!empty($gift->bundle_id)) {
+                $bundleIds[] = $gift->bundle_id;
+            }
+        }
+
         if (!empty($bundleIds)) {
             $bundleWebinarIds = BundleWebinar::query()->whereIn('bundle_id', $bundleIds)
                 ->pluck('webinar_id')
@@ -828,7 +973,50 @@ class User extends Authenticatable
             $webinarIds = array_merge($webinarIds, $bundleWebinarIds);
         }
 
+
         return array_unique($webinarIds);
+    }
+
+    public function getPurchasedBundlesIds()
+    {
+        $bundleIds = [];
+
+        $sales = Sale::where('buyer_id', $this->id)
+            ->whereNotNull('bundle_id')
+            ->whereNull('refund_at')
+            ->get();
+
+        foreach ($sales as $sale) {
+            if ($sale->payment_method == Sale::$subscribe) {
+                $subscribe = $sale->getUsedSubscribe($sale->buyer_id, $sale->webinar_id);
+
+                if (!empty($subscribe)) {
+                    $subscribeSale = Sale::where('buyer_id', $this->id)
+                        ->where('type', Sale::$subscribe)
+                        ->where('subscribe_id', $subscribe->id)
+                        ->whereNull('refund_at')
+                        ->latest('created_at')
+                        ->first();
+
+                    if (!empty($subscribeSale)) {
+                        $usedDays = (int)diffTimestampDay(time(), $subscribeSale->created_at);
+
+                        if ($usedDays <= $subscribe->days) {
+                            if (!empty($sale->bundle_id)) {
+                                $bundleIds[] = $sale->bundle_id;
+                            }
+                        }
+                    }
+                }
+            } else {
+
+                if (!empty($sale->bundle_id)) {
+                    $bundleIds[] = $sale->bundle_id;
+                }
+            }
+        }
+
+        return array_unique($bundleIds);
     }
 
     public function getActiveQuizzesResults($group_by_quiz = false, $status = null)
@@ -1026,4 +1214,41 @@ class User extends Authenticatable
 
         return $access;
     }
+
+    public function getTeacherStudentsCount()
+    {
+        $studentsIds = Sale::whereNull('refund_at')
+            ->where('seller_id', $this->id)
+            ->whereNotNull('webinar_id')
+            ->pluck('buyer_id')
+            ->toArray();
+
+        return count(array_unique($studentsIds));
+    }
+
+    public function getTeacherCoursesCount()
+    {
+        return Webinar::query()->where('status', Webinar::$active)
+            ->where('private', false)
+            ->where(function ($query) {
+                $query->where('creator_id', $this->id)
+                    ->orWhere('teacher_id', $this->id);
+            })->count();
+    }
+
+    public function getLearningActivity($returnType = null)
+    {
+        $seconds = TimeSpentOnCourse::query()->where('user_id', $this->id)
+            ->where('page', 'learning_page')
+            ->sum('seconds_spent');
+
+        if ($returnType == "min") {
+            $seconds = ($seconds > 0) ? $seconds / 60 : 0;
+        } else if ($returnType == "hour") {
+            $seconds = ($seconds > 0) ? ($seconds / (60 * 60)) : 0;
+        }
+
+        return ($seconds > 0) ? round($seconds, 2) : 0;
+    }
+
 }

@@ -21,91 +21,90 @@
 
             <div class="row">
                 <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="card card-statistic-1">
-                        <div class="card-icon bg-primary">
-                            <i class="fas fa-file-video"></i>
-                        </div>
-                        <div class="card-wrap">
-                            <div class="card-header">
-                                <h4>{{trans('admin/main.total')}} {{ trans('admin/main.type_'.$classesType.'s') }}</h4>
+                    <div class="card-statistic">
+                        <div class="card-statistic__mask"></div>
+                        <div class="card-statistic__wrap">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <span class="text-gray-500 mt-8">{{trans('admin/main.total')}} {{ trans('admin/main.type_'.$classesType.'s') }}</span>
+                                <div class="d-flex-center size-48 bg-primary-30 rounded-12">
+                                    <x-iconsax-bul-video-play class="icons text-primary" width="24px" height="24px"/>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                {{ $totalWebinars }}
-                            </div>
+
+                            <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalWebinars }}</h5>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="card card-statistic-1">
-                        <div class="card-icon bg-warning">
-                            <i class="fas fa-eye"></i>
-                        </div>
 
-                        <div class="card-wrap">
-                            <div class="card-header">
-                                <h4>{{trans('admin/main.pending_review')}} {{ trans('admin/main.type_'.$classesType.'s') }}</h4>
+                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                    <div class="card-statistic">
+                        <div class="card-statistic__mask"></div>
+                        <div class="card-statistic__wrap">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <span class="text-gray-500 mt-8">{{trans('admin/main.pending_review')}} {{ trans('admin/main.type_'.$classesType.'s') }}</span>
+                                <div class="d-flex-center size-48 bg-warning-30 rounded-12">
+                                    <x-iconsax-bul-video-time class="icons text-warning" width="24px" height="24px"/>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                {{ $totalPendingWebinars }}
-                            </div>
+
+                            <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalPendingWebinars }}</h5>
                         </div>
                     </div>
                 </div>
 
                 @if($classesType == 'webinar')
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                        <div class="card card-statistic-1">
-                            <div class="card-icon bg-info">
-                                <i class="fas fa-history"></i>
-                            </div>
+                        <div class="card-statistic">
+                            <div class="card-statistic__mask"></div>
+                            <div class="card-statistic__wrap">
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <span class="text-gray-500 mt-8">{{trans('admin/main.inprogress_live_classes')}}</span>
+                                    <div class="d-flex-center size-48 bg-accent-30 rounded-12">
+                                        <x-iconsax-bul-timer class="icons text-accent" width="24px" height="24px"/>
+                                    </div>
+                                </div>
 
-                            <div class="card-wrap">
-                                <div class="card-header">
-                                    <h4>{{trans('admin/main.inprogress_live_classes')}}</h4>
-                                </div>
-                                <div class="card-body">
-                                    {{ $inProgressWebinars }}
-                                </div>
+                                <h5 class="font-24 mt-12 line-height-1 text-black">{{ $inProgressWebinars }}</h5>
                             </div>
                         </div>
                     </div>
                 @else
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                        <div class="card card-statistic-1">
-                            <div class="card-icon bg-info">
-                                <i class="fas fa-history"></i>
-                            </div>
+                        <div class="card-statistic">
+                            <div class="card-statistic__mask"></div>
+                            <div class="card-statistic__wrap">
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <span class="text-gray-500 mt-8">{{trans('admin/main.total_durations')}}</span>
+                                    <div class="d-flex-center size-48 bg-accent-30 rounded-12">
+                                        <x-iconsax-bul-clock class="icons text-accent" width="24px" height="24px"/>
+                                    </div>
+                                </div>
 
-                            <div class="card-wrap">
-                                <div class="card-header">
-                                    <h4>{{trans('admin/main.total_durations')}}</h4>
-                                </div>
-                                <div class="card-body">
-                                    {{ convertMinutesToHourAndMinute($totalDurations) }} {{ trans('home.hours') }}
-                                </div>
+                                <h5 class="font-24 mt-12 line-height-1 text-black">{{ convertMinutesToHourAndMinute($totalDurations) }} {{ trans('home.hours') }}</h5>
                             </div>
                         </div>
                     </div>
                 @endif
 
                 <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="card card-statistic-1">
-                        <div class="card-icon bg-success">
-                            <i class="fas fa-dollar-sign"></i></div>
-                        <div class="card-wrap">
-                            <div class="card-header">
-                                <h4>{{trans('admin/main.total_sales')}}</h4>
+                    <div class="card-statistic">
+                        <div class="card-statistic__mask"></div>
+                        <div class="card-statistic__wrap">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <span class="text-gray-500 mt-8">{{trans('admin/main.total_sales')}}</span>
+                                <div class="d-flex-center size-48 bg-success-30 rounded-12">
+                                    <x-iconsax-bul-bag class="icons text-success" width="24px" height="24px"/>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                {{ $totalSales }}
-                            </div>
+
+                            <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalSales }}</h5>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <section class="card">
-                <div class="card-body">
+            <section class="card mt-32">
+                <div class="card-body pb-4">
                     <form method="get" class="mb-0">
                         <input type="hidden" name="type" value="{{ request()->get('type') }}">
                         <div class="row">
@@ -215,11 +214,8 @@
                             </div>
 
 
-                            <div class="col-md-3">
-                                <div class="form-group mt-1">
-                                    <label class="input-label mb-4"> </label>
-                                    <input type="submit" class="text-center btn btn-primary w-100" value="{{trans('admin/main.show_results')}}">
-                                </div>
+                            <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
                             </div>
                         </div>
                     </form>
@@ -229,17 +225,33 @@
             <div class="row">
                 <div class="col-12 col-md-12">
                     <div class="card">
-                        <div class="card-header">
-                            @can('admin_webinars_export_excel')
-                                <div class="text-right">
-                                    <a href="{{ getAdminPanelUrl() }}/webinars/excel?{{ http_build_query(request()->all()) }}" class="btn btn-primary">{{ trans('admin/main.export_xls') }}</a>
-                                </div>
-                            @endcan
+                        <div class="card-header justify-content-between">
+                            <div>
+                                <h5 class="font-14 mb-0">{{ trans('admin/main.type_'.$classesType.'s') }}</h5>
+                                <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_courses_in_a_single_place') }}</p>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-12">
+                                @can('admin_webinars_export_excel')
+                                    <a href="{{ getAdminPanelUrl() }}/webinars/excel?{{ http_build_query(request()->all()) }}" class="btn bg-white bg-hover-gray-100 border-gray-400 text-gray-500">
+                                        <x-iconsax-lin-import-2 class="icons text-gray-500" width="18px" height="18px"/>
+                                        <span class="ml-4 font-12">{{ trans('admin/main.export_xls') }}</span>
+                                    </a>
+                                @endcan
+
+                                @can('admin_webinars_create')
+                                    <a href="{{ getAdminPanelUrl("/webinars/create") }}" target="_blank" class="btn btn-primary">
+                                        <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                        <span class="ml-4 font-12">{{ trans('admin/main.webinar_new_page_title') }}</span>
+                                    </a>
+                                @endcan
+
+                            </div>
                         </div>
 
                         <div class="card-body">
-                            <div class="">
-                                <table class="table table-striped font-14 ">
+                            <div class="table-responsive">
+                                <table class="table custom-table font-14 ">
                                     <tr>
                                         <th>{{trans('admin/main.id')}}</th>
                                         <th class="text-left">{{trans('admin/main.title')}}</th>
@@ -251,6 +263,7 @@
                                         <th>{{trans('admin/main.created_at')}}</th>
                                         @if($classesType == 'webinar')
                                             <th>{{trans('admin/main.start_date')}}</th>
+                                            <th>{{trans('admin/main.live_status')}}</th>
                                         @else
                                             <th>{{trans('admin/main.updated_at')}}</th>
                                         @endif
@@ -262,9 +275,9 @@
                                         <tr class="text-center">
                                             <td>{{ $webinar->id }}</td>
                                             <td width="18%" class="text-left">
-                                                <a class="text-primary mt-0 mb-1 font-weight-bold" href="{{ $webinar->getUrl() }}">{{ $webinar->title }}</a>
+                                                <a class="text-dark mt-0 mb-1 " href="{{ $webinar->getUrl() }}">{{ $webinar->title }}</a>
                                                 @if(!empty($webinar->category->title))
-                                                    <div class="text-small">{{ $webinar->category->title }}</div>
+                                                    <div class="text-small text-gray-500">{{ $webinar->category->title }}</div>
                                                 @else
                                                     <div class="text-small text-warning">{{trans('admin/main.no_category')}}</div>
                                                 @endif
@@ -279,19 +292,19 @@
                                                     </span>
 
                                                     @if($webinar->getDiscountPercent() > 0)
-                                                        <div class="text-danger text-small font-600-bold">{{ $webinar->getDiscountPercent() }}% {{trans('admin/main.off')}}</div>
+                                                        <div class="badge-status text-danger bg-danger-30">{{ $webinar->getDiscountPercent() }}% {{trans('admin/main.off')}}</div>
                                                     @endif
                                                 @else
                                                     {{ trans('public.free') }}
                                                 @endif
                                             </td>
                                             <td>
-                                                <span class="text-primary mt-0 mb-1 font-weight-bold">
+                                                <span class="text-dark mt-0 mb-1 ">
                                                     {{ $webinar->sales->count() }}
                                                 </span>
 
                                                 @if(!empty($webinar->capacity))
-                                                    <div class="text-small font-600-bold">{{trans('admin/main.capacity')}} : {{ $webinar->getWebinarCapacity() }}</div>
+                                                    <div class="font-12 text-gray-500">{{trans('admin/main.capacity')}} : {{ $webinar->getWebinarCapacity() }}</div>
                                                 @endif
                                             </td>
 
@@ -301,118 +314,154 @@
                                                 <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/students" target="_blank" class="">{{ $webinar->sales->count() }}</a>
                                             </td>
 
-                                            <td class="font-12">{{ dateTimeFormat($webinar->created_at, 'Y M j | H:i') }}</td>
+                                            <td>{{ dateTimeFormat($webinar->created_at, 'Y M j | H:i') }}</td>
 
                                             @if($classesType == 'webinar')
-                                                <td class="font-12">{{ dateTimeFormat($webinar->start_date, 'Y M j | H:i') }}</td>
+                                                <td>{{ dateTimeFormat($webinar->start_date, 'Y M j | H:i') }}</td>
+                                                @if($webinar->isWebinar())
+                                                <td>
+                                                @switch($webinar->status)
+                                                    @case(\App\Models\Webinar::$active)
+                                                        @if($webinar->isWebinar())
+                                                            @if($webinar->start_date > time())
+                                                                <div class="font-14 badge-status text-danger">{{  trans('admin/main.not_conducted') }}</div>
+                                                            @elseif($webinar->isProgressing())
+                                                                <div class="font-14 badge-status text-warning">{{  trans('webinars.in_progress') }}</div>
+                                                            @else
+                                                                <div class=" font-14 badge-status text-success">{{ trans('public.finished') }}</div>
+                                                            @endif
+                                                        @endif
+                                                        @break
+                                                         @case(\App\Models\Webinar::$isDraft)
+                                                        <span class="font-14 badge-status">-</span>
+                                                        @break
+                                                    @case(\App\Models\Webinar::$pending)
+                                                        <span class="font-14 badge-status">-</span>
+                                                        @break
+                                                    @case(\App\Models\Webinar::$inactive)
+                                                        <span class="font-14 badge-status">-</span>
+                                                        @break
+
+                                                @endswitch
+                                               </td>
+                                                @endif
                                             @else
-                                                <td class="font-12">{{ dateTimeFormat($webinar->updated_at, 'Y M j | H:i') }}</td>
+                                                <td>{{ dateTimeFormat($webinar->updated_at, 'Y M j | H:i') }}</td>
                                             @endif
 
                                             <td>
                                                 @switch($webinar->status)
                                                     @case(\App\Models\Webinar::$active)
-                                                        <div class="text-success font-600-bold">{{ trans('admin/main.published') }}</div>
-                                                        @if($webinar->isWebinar())
-                                                            @if($webinar->start_date > time())
-                                                                <div class="text-danger text-small">({{  trans('admin/main.not_conducted') }})</div>
-                                                            @elseif($webinar->isProgressing())
-                                                                <div class="text-warning text-small">({{  trans('webinars.in_progress') }})</div>
-                                                            @else
-                                                                <div class="text-success text-small">({{ trans('public.finished') }})</div>
-                                                            @endif
-                                                        @endif
+                                                        <div class="badge-status text-success bg-success-30">{{ trans('admin/main.published') }}</div>
                                                         @break
                                                     @case(\App\Models\Webinar::$isDraft)
-                                                        <span class="text-dark">{{ trans('admin/main.is_draft') }}</span>
+                                                        <span class="badge-status text-dark bg-dark-30">{{ trans('admin/main.is_draft') }}</span>
                                                         @break
                                                     @case(\App\Models\Webinar::$pending)
-                                                        <span class="text-warning">{{ trans('admin/main.waiting') }}</span>
+                                                        <span class="badge-status text-warning bg-warning-30">{{ trans('admin/main.waiting') }}</span>
                                                         @break
                                                     @case(\App\Models\Webinar::$inactive)
-                                                        <span class="text-danger">{{ trans('public.rejected') }}</span>
+                                                        <span class="badge-status text-danger bg-danger-30">{{ trans('public.rejected') }}</span>
                                                         @break
                                                 @endswitch
                                             </td>
-                                            <td width="200" class="">
-                                                <div class="btn-group dropdown table-actions">
+
+
+                                            <td>
+                                                <div class="btn-group dropdown table-actions position-relative">
                                                     <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
-                                                        <i class="fa fa-ellipsis-v"></i>
+                                                        <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
                                                     </button>
-                                                    <div class="dropdown-menu dropdown-menu-left text-left webinars-lists-dropdown">
+
+                                                    <div class="dropdown-menu dropdown-menu-right">
 
                                                         @can('admin_webinars_edit')
                                                             @if(in_array($webinar->status, [\App\Models\Webinar::$pending, \App\Models\Webinar::$inactive]))
-                                                                @include('admin.includes.delete_button',[
-                                                                    'url' => getAdminPanelUrl().'/webinars/'.$webinar->id.'/approve',
-                                                                    'btnClass' => 'd-flex align-items-center text-success text-decoration-none btn-transparent btn-sm mt-1',
-                                                                    'btnText' => '<i class="fa fa-check"></i><span class="ml-2">'. trans("admin/main.approve") .'</span>'
-                                                                    ])
-                                                            @endif
 
+                                                                @include('admin.includes.delete_button',[
+                                                                   'url' => getAdminPanelUrl().'/webinars/'.$webinar->id.'/approve',
+                                                                   'btnClass' => 'dropdown-item text-success mb-3 py-3 px-0 font-14',
+                                                                   'btnText' => trans("admin/main.approve"),
+                                                                   'btnIcon' => 'tick-square',
+                                                                   'iconType' => 'lin',
+                                                                   'iconClass' => 'text-success mr-2',
+                                                                ])
+                                                            @endif
                                                             @if($webinar->status == \App\Models\Webinar::$pending)
                                                                 @include('admin.includes.delete_button',[
-                                                                    'url' => getAdminPanelUrl().'/webinars/'.$webinar->id.'/reject',
-                                                                    'btnClass' => 'd-flex align-items-center text-danger text-decoration-none btn-transparent btn-sm mt-1',
-                                                                    'btnText' => '<i class="fa fa-times"></i><span class="ml-2">'. trans("admin/main.reject") .'</span>'
-                                                                    ])
+                                                                   'url' => getAdminPanelUrl().'/webinars/'.$webinar->id.'/reject',
+                                                                   'btnClass' => 'dropdown-item  text-danger mb-3 py-3 px-0 font-14',
+                                                                   'btnText' => trans("admin/main.reject"),
+                                                                   'btnIcon' => 'close-square',
+                                                                   'iconType' => 'lin',
+                                                                   'iconClass' => 'text-danger mr-2',
+                                                                ])
                                                             @endif
-
                                                             @if($webinar->status == \App\Models\Webinar::$active)
+
                                                                 @include('admin.includes.delete_button',[
-                                                                    'url' => getAdminPanelUrl().'/webinars/'.$webinar->id.'/unpublish',
-                                                                    'btnClass' => 'd-flex align-items-center text-danger text-decoration-none btn-transparent btn-sm mt-1',
-                                                                    'btnText' => '<i class="fa fa-times"></i><span class="ml-2">'. trans("admin/main.unpublish") .'</span>'
-                                                                    ])
+                                                               'url' => getAdminPanelUrl().'/webinars/'.$webinar->id.'/unpublish',
+                                                               'btnClass' => 'dropdown-item text-danger mb-3 py-3 px-0 font-14',
+                                                               'btnText' => trans("admin/main.unpublish"),
+                                                               'btnIcon' => 'gallery-slash',
+                                                               'iconType' => 'lin',
+                                                               'iconClass' => 'text-danger mr-2',
+                                                            ])
+
                                                             @endif
                                                         @endcan
 
-
                                                         @can('admin_webinar_notification_to_students')
-                                                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/sendNotification" target="_blank" class="d-flex align-items-center text-dark text-decoration-none btn-transparent btn-sm text-primary mt-1 ">
-                                                                <i class="fa fa-bell"></i>
-                                                                <span class="ml-2">{{ trans('notification.send_notification') }}</span>
+                                                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/sendNotification" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                                <x-iconsax-lin-notification-bing class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                                <span class="text-gray-500 font-14">{{ trans('notification.send_notification') }}</span>
                                                             </a>
                                                         @endcan
 
                                                         @can('admin_webinar_students_lists')
-                                                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/students" target="_blank" class="d-flex align-items-center text-dark text-decoration-none btn-transparent btn-sm text-primary mt-1 " title="{{ trans('admin/main.students') }}">
-                                                                <i class="fa fa-users"></i>
-                                                                <span class="ml-2">{{ trans('admin/main.students') }}</span>
+                                                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/students" class="dropdown-item d-flex btn-transparent align-items-center mb-3 py-3 px-0 gap-4">
+                                                                <x-iconsax-lin-teacher class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                                <span class="text-gray-500 font-14">{{ trans('admin/main.students') }}</span>
                                                             </a>
                                                         @endcan
 
                                                         @can('admin_webinar_statistics')
-                                                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/statistics" target="_blank" class="d-flex align-items-center text-dark text-decoration-none btn-transparent btn-sm text-primary mt-1 " title="{{ trans('admin/main.students') }}">
-                                                                <i class="fa fa-chart-pie"></i>
-                                                                <span class="ml-2">{{ trans('update.statistics') }}</span>
+                                                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/statistics" class="dropdown-item btn-transparent d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                                <x-iconsax-lin-graph class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                                <span class="text-gray-500 font-14">{{ trans('update.statistics') }}</span>
                                                             </a>
                                                         @endcan
 
                                                         @can('admin_support_send')
-                                                            <a href="{{ getAdminPanelUrl() }}/supports/create?user_id={{ $webinar->teacher->id }}" target="_blank" class="d-flex align-items-center text-dark text-decoration-none btn-transparent btn-sm text-primary mt-1" title="{{ trans('admin/main.send_message_to_teacher') }}">
-                                                                <i class="fa fa-comment"></i>
-                                                                <span class="ml-2">{{ trans('site.send_message') }}</span>
+                                                            <a href="{{ getAdminPanelUrl() }}/supports/create?user_id={{ $webinar->teacher->id }}" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                                <x-iconsax-lin-sms-tracking class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                                <span class="text-gray-500 font-14">{{ trans('site.send_message') }}</span>
                                                             </a>
                                                         @endcan
 
                                                         @can('admin_webinars_edit')
-                                                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/edit" target="_blank" class="d-flex align-items-center text-dark text-decoration-none btn-transparent btn-sm text-primary mt-1 " title="{{ trans('admin/main.edit') }}">
-                                                                <i class="fa fa-edit"></i>
-                                                                <span class="ml-2">{{ trans('admin/main.edit') }}</span>
+                                                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/edit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                                <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                                <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
                                                             </a>
                                                         @endcan
 
                                                         @can('admin_webinars_delete')
+
                                                             @include('admin.includes.delete_button',[
-                                                                    'url' => getAdminPanelUrl().'/webinars/'.$webinar->id.'/delete',
-                                                                    'btnClass' => 'd-flex align-items-center text-dark text-decoration-none btn-transparent btn-sm mt-1',
-                                                                    'btnText' => '<i class="fa fa-times"></i><span class="ml-2">'. trans("admin/main.delete") .'</span>'
-                                                                    ])
+                                                           'url' => getAdminPanelUrl().'/webinars/'.$webinar->id.'/delete',
+                                                           'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                           'btnText' => trans("admin/main.delete"),
+                                                           'btnIcon' => 'trash',
+                                                           'iconType' => 'lin',
+                                                           'iconClass' => 'text-danger mr-2',
+                                                        ])
                                                         @endcan
                                                     </div>
                                                 </div>
                                             </td>
+
+
                                         </tr>
                                     @endforeach
                                 </table>
@@ -426,44 +475,6 @@
                     </div>
                 </div>
             </div>
-            {{-- +++++++++++++++++++++ alerts +++++++++++++++++ --}}
-            @if (session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
-            @if ($errors->has('import_error'))
-                <div class="alert alert-danger">{{ $errors->first('import_error') }}</div>
-            @endif
-
-        {{-- +++++++++++++++++++++ import Excel +++++++++++++++++ --}}
-        <!-- Separate Form for Excel Import -->
-        <form method="post" action="{{ route('webinars.excel.import') }}" enctype="multipart/form-data" class="mt-3" id="excelImportForm">
-            {{ csrf_field() }}
-            <section>
-                <h2 class="section-title after-line">
-                    {{ trans('admin/pages/webinars.import_webinars_from_excel') }}
-                </h2>
-                <div class="row">
-                    <div class="col-8">
-                        <div class="form-group mt-15">
-                            <label class="input-label">
-                                {{ trans('admin/pages/webinars.upload_excel_file') }}
-                            </label>
-                            <input type="file" name="excel_file" class="form-control @error('excel_file') is-invalid @enderror" accept=".xlsx,.xls">
-                            @error('excel_file')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <button type="submit" class="btn btn-primary" style="margin-top:35px !important;">
-                            {{ trans('admin/pages/webinars.submit_excel') }}
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </form>
-            {{-- +++++++++++++++++++++ download Excel template +++++++++++++++++ --}}
-            @include('admin.webinars.excel_instructions')
         </div>
     </section>
 @endsection

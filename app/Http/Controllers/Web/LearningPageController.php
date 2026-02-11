@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\traits\LearningPageForumTrait;
 use App\Http\Controllers\Web\traits\LearningPageItemInfoTrait;
 use App\Http\Controllers\Web\traits\LearningPageMixinsTrait;
 use App\Http\Controllers\Web\traits\LearningPageNoticeboardsTrait;
+use App\Http\Controllers\Web\traits\LearningPagePersonalNoteTrait;
 use App\Models\Certificate;
 use App\Models\CourseLearningLastView;
 use App\Models\CourseNoticeboard;
@@ -16,7 +17,7 @@ use Illuminate\Http\Request;
 class LearningPageController extends Controller
 {
     use LearningPageMixinsTrait, LearningPageAssignmentTrait, LearningPageItemInfoTrait,
-        LearningPageNoticeboardsTrait, LearningPageForumTrait;
+        LearningPageNoticeboardsTrait, LearningPageForumTrait, LearningPagePersonalNoteTrait;
 
     public function index(Request $request, $slug)
     {
@@ -30,7 +31,7 @@ class LearningPageController extends Controller
 
         $webinarController = new WebinarController();
 
-        $data = $webinarController->course($slug, true);
+        $data = $webinarController->course($request, $slug, true);
 
         $course = $data['course'];
         $user = $data['user'];
@@ -41,7 +42,7 @@ class LearningPageController extends Controller
                 'pageTitle' => trans('update.access_denied'),
                 'pageRobot' => getPageRobotNoIndex(),
             ];
-            return view('web.default.course.not_access', $data);
+            return view('design_1.web.courses.not_access.index', $data);
         }
 
         $installmentLimitation = $webinarController->installmentContentLimitation($user, $course->id, 'webinar_id');
@@ -54,25 +55,6 @@ class LearningPageController extends Controller
             abort(403);
         }
 
-        if (!empty($requestData['type']) and $requestData['type'] == 'assignment' and !empty($requestData['item'])) {
-
-            $assignmentData = $this->getAssignmentData($course, $requestData);
-
-            $data = array_merge($data, $assignmentData);
-        }
-
-        if ($course->creator_id != $user->id and $course->teacher_id != $user->id and !$user->isAdmin()) {
-            $unReadCourseNoticeboards = CourseNoticeboard::where('webinar_id', $course->id)
-                ->whereDoesntHave('noticeboardStatus', function ($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                })
-                ->count();
-
-            if ($unReadCourseNoticeboards) {
-                $url = $course->getNoticeboardsPageUrl();
-                return redirect($url);
-            }
-        }
 
         if ($course->certificate) {
             $data["courseCertificate"] = Certificate::where('type', 'course')
@@ -81,11 +63,26 @@ class LearningPageController extends Controller
                 ->first();
         }
 
+        $data["userIsCourseTeacher"] = $this->checkUserIsInstructor($user, $course);
+
         $data['userLearningLastView'] = CourseLearningLastView::query()
             ->where('user_id', $user->id)
             ->where('webinar_id', $course->id)
             ->first();
 
-        return view('web.default.course.learningPage.index', $data);
+        $siteTitle = getGeneralSettings("site_name") ?? trans('update.platform');
+
+        $data['breadcrumbs'] = [
+            ['text' => $siteTitle, 'url' => '/'],
+            ['text' => trans('update.course'), 'url' => $course->getUrl()],
+            ['text' => trans('update.learning_page'), 'url' => null],
+        ];
+
+        $data['saleItem'] = $course->getSaleItem();
+
+        // Handle Start Tracking Time
+        $this->handleStartTrackingTime($course->id, $user->id);
+
+        return view('design_1.web.courses.learning_page.index', $data);
     }
 }

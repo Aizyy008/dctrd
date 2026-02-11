@@ -6,16 +6,25 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounting;
 use App\Models\Affiliate;
 use App\Models\AffiliateCode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AffiliateController extends Controller
 {
-    public function affiliates()
+    public function index(Request $request)
     {
         $this->authorize("panel_marketing_affiliates");
 
         $user = auth()->user();
+
+        $query = Affiliate::query()->where('affiliate_user_id', $user->id);
+
+        $getListData = $this->getListsData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
 
         $affiliateCode = $user->affiliateCode;
 
@@ -35,13 +44,7 @@ class AffiliateController extends Controller
             ->where('user_id', $user->id)
             ->sum('amount');
 
-        $affiliates = Affiliate::where('affiliate_user_id', $user->id)
-            ->with([
-                'referredUser',
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
+        $referralHowWorkSettings = getReferralHowWorkSettings();
 
         $data = [
             'pageTitle' => trans('panel.affiliates_page'),
@@ -49,10 +52,53 @@ class AffiliateController extends Controller
             'registrationBonus' => $registrationBonus,
             'affiliateBonus' => $affiliateBonus,
             'referredUsersCount' => $referredUsersCount,
-            'affiliates' => $affiliates,
+            'referralHowWorkSettings' => $referralHowWorkSettings,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view('web.default.panel.marketing.affiliates', $data);
+        return view('design_1.panel.marketing.affiliates.index', $data);
+    }
+
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $affiliates = $query
+            ->with([
+                'referredUser',
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $affiliates, $total, $count);
+        }
+
+        return [
+            'affiliates' => $affiliates,
+            'pagination' => $this->makePagination($request, $affiliates, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $affiliates, $total, $count)
+    {
+        $html = "";
+
+        foreach ($affiliates as $affiliateRow) {
+            $html .= (string)view()->make('design_1.panel.marketing.affiliates.table_items', ['affiliate' => $affiliateRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $affiliates, $total, $count, true)
+        ]);
     }
 
     private function makeUserAffiliateCode($user)

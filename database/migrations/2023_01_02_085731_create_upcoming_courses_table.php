@@ -21,8 +21,8 @@ class CreateUpcomingCoursesTable extends Migration
             $table->integer('webinar_id')->unsigned()->nullable()->comment('when assigned a course');
             $table->enum('type', ['webinar', 'course', 'text_lesson']);
             $table->string('slug')->unique()->index();
-            $table->string('thumbnail');
-            $table->string('image_cover');
+            $table->string('thumbnail')->nullable();
+            $table->string('image_cover')->nullable();
             $table->string('video_demo')->nullable();
             $table->enum('video_demo_source', ['upload', 'youtube', 'vimeo', 'external_link'])->nullable();
             $table->bigInteger('publish_date')->unsigned()->nullable();

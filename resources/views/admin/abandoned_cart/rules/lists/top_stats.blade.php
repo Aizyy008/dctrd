@@ -1,63 +1,51 @@
-<div class="row">
-    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-        <div class="card card-statistic-1">
-            <div class="card-icon bg-primary">
-                <i class="fas fa-cart-plus"></i>
-            </div>
-            <div class="card-wrap">
-                <div class="card-header">
-                    <h4>{{trans('update.total_rules')}}</h4>
-                </div>
-                <div class="card-body">
-                    {{ $totalRules }}
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-        <div class="card card-statistic-1">
-            <div class="card-icon bg-success">
-                <i class="fas fa-check"></i>
-            </div>
+@extends('admin.layouts.app')
 
-            <div class="card-wrap">
-                <div class="card-header">
-                    <h4>{{trans('update.active_rules')}}</h4>
+@section('content')
+    <section class="section">
+        <div class="section-header">
+            <h1>{{ $pageTitle }}</h1>
+            <div class="section-header-breadcrumb">
+                <div class="breadcrumb-item active"><a href="/admin/">{{trans('admin/main.dashboard')}}</a>
                 </div>
-                <div class="card-body">
-                    {{ $activeRules }}
-                </div>
+                <div class="breadcrumb-item">{{ $pageTitle}}</div>
             </div>
         </div>
-    </div>
 
-    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-        <div class="card card-statistic-1">
-            <div class="card-icon bg-warning">
-                <i class="fas fa-spinner"></i></div>
-            <div class="card-wrap">
-                <div class="card-header">
-                    <h4>{{trans('update.total_activities')}}</h4>
-                </div>
-                <div class="card-body">
-                    {{ $totalActivities }}
-                </div>
-            </div>
-        </div>
-    </div>
+        <div class="section-body">
 
-    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-        <div class="card card-statistic-1">
-            <div class="card-icon bg-info">
-                <i class="fas fa-money-bill"></i></div>
-            <div class="card-wrap">
-                <div class="card-header">
-                    <h4>{{trans('admin/main.total_sales')}}</h4>
-                </div>
-                <div class="card-body">
-                    {{ $totalSales }}
+            <div class="row">
+                <div class="col-12 col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+
+
+
+                            <div class="empty-state mx-auto d-block"  data-width="900" >
+                                <img class="img-fluid col-md-6" src="/assets/default/img/plugin.svg" alt="image">
+                                <h3 class="mt-3">This is a paid plugin!</h3>
+                                <h5 class="lead">
+                                    You can purchase it by <strong><a href="https://codecanyon.net/item/universal-plugins-bundle-for-rocket-lms/33297004">this link</a></strong> on Codecanyon.
+                                </h5>             
+                              </div>
+
+
+                            
+                        </div>
+
+                      
+
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </section>
+
+
+
+
+
+@endsection
+
+@push('scripts_bottom')
+
+@endpush

@@ -55,7 +55,7 @@
                                         <div class="form-group">
                                             <label>{{ trans('admin/main.name') }}</label>
                                             <input type="text" name="name" class="form-control  @error('name') is-invalid @enderror"
-                                                   value="{{ !empty($page) ? $page->name : old('name') }}" />
+                                                   value="{{ !empty($page) ? $page->name : old('name') }}"/>
                                             @error('name')
                                             <div class="invalid-feedback">
                                                 {{ $message }}
@@ -72,7 +72,7 @@
                                                 {{ $message }}
                                             </div>
                                             @enderror
-                                            <div class="text-muted text-small mt-1">{{ trans('admin/main.new_page_link_hint') }}</div>
+                                            <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.new_page_link_hint') }}</div>
                                         </div>
 
                                         <div class="form-group">
@@ -84,6 +84,75 @@
                                                 {{ $message }}
                                             </div>
                                             @enderror
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>{{ trans('admin/main.subtitle') }}</label>
+                                            <input type="text" name="subtitle" class="form-control  @error('subtitle') is-invalid @enderror"
+                                                   value="{{ !empty($page) ? $page->subtitle : old('subtitle') }}" placeholder="{{ trans('admin/main.pages_subtitle_placeholder') }}"/>
+                                            @error('subtitle')
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="input-label">{{ trans('admin/main.icon') }}</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <button type="button" class="input-group-text admin-file-manager " data-input="icon" data-preview="holder">
+                                                        <i class="fa fa-upload"></i>
+                                                    </button>
+                                                </div>
+                                                <input type="text" name="icon" id="icon" value="{{ !empty($page) ? $page->icon : old('icon') }}" class="form-control @error('icon') is-invalid @enderror"/>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="input-group-text admin-file-view" data-input="icon">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="invalid-feedback">@error('icon') {{ $message }} @enderror</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="input-label">{{ trans('admin/main.cover_image') }}</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <button type="button" class="input-group-text admin-file-manager " data-input="cover" data-preview="holder">
+                                                        <i class="fa fa-upload"></i>
+                                                    </button>
+                                                </div>
+                                                <input type="text" name="cover" id="cover" value="{{ !empty($page) ? $page->cover : old('cover') }}" class="form-control @error('cover') is-invalid @enderror"/>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="input-group-text admin-file-view" data-input="cover">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="invalid-feedback">@error('cover') {{ $message }} @enderror</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mt-15">
+                                            <label class="input-label">{{ trans('update.header_icon') }}</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <button type="button" class="input-group-text admin-file-manager" data-input="header_icon" data-preview="holder">
+                                                        <i class="fa fa-upload"></i>
+                                                    </button>
+                                                </div>
+                                                <input type="text" name="header_icon" id="header_icon" value="{{ !empty($page) ? $page->header_icon : old('header_icon') }}" class="form-control @error('header_icon')  is-invalid @enderror"/>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="input-group-text admin-file-view" data-input="header_icon">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                                @error('header_icon')
+                                                <div class="invalid-feedback">
+                                                    {{ $message }}
+                                                </div>
+                                                @enderror
+                                            </div>
                                         </div>
 
                                         <div class="form-group">

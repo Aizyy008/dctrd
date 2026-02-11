@@ -28,4 +28,10 @@ class UserSelectedBank extends Model
     {
         return $this->hasMany('App\Models\UserSelectedBankSpecification', 'user_selected_bank_id', 'id');
     }
+
+    public function payouts()
+    {
+        return $this->hasMany(Payout::class, 'user_selected_bank_id', 'id');
+    }
+
 }

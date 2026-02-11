@@ -75,9 +75,7 @@ class AbandonedCartRulesController extends Controller
 
         $discounts = $this->getDiscounts();
         $userGroups = Group::query()->where('status', 'active')->get();
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('update.new_rule'),
@@ -126,9 +124,7 @@ class AbandonedCartRulesController extends Controller
 
         $discounts = $this->getDiscounts();
         $userGroups = Group::query()->where('status', 'active')->get();
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('update.edit_rule') . ' ' . $rule->title,
@@ -249,7 +245,6 @@ class AbandonedCartRulesController extends Controller
                 }
             }
         }
-
 
 
         /* Users And User Groups */

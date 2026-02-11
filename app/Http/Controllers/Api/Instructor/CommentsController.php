@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Instructor;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Comment;
 use App\Models\CommentReport;
 use App\Models\Webinar;
@@ -22,7 +22,7 @@ class CommentsController extends Controller
             ->with(['webinar' => function ($query) {
                 $query->select('id', 'title', 'slug');
             }, 'user' => function ($qu) {
-                $qu->select('id', 'full_name', 'avatar');
+                $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
             }, 'replies']);
 
 

@@ -99,8 +99,12 @@ class Channel extends BasePaymentChannel implements IChannel
         return null;
     }
 
-    private function makeCallbackUrl()
+    private function makeCallbackUrl(?Order $order = null)
     {
+        // Include order_id to reduce reliance on session during callback
+        if ($order && $order->id) {
+            return url("/payments/verify/Paylink?order_id=" . $order->id);
+        }
         return url("/payments/verify/Paylink");
     }
 
@@ -109,30 +113,42 @@ class Channel extends BasePaymentChannel implements IChannel
         $this->handleClient();
 
         try {
-            $user = auth()->user();
+            // Try to get transaction number from callback payload first, then fallback to session
+            $transactionNo = $request->input('transactionNo')
+                ?? $request->input('transaction_no')
+                ?? $request->input('transaction')
+                ?? session()->get($this->order_session_key, null);
 
-            $transactionNo = session()->get($this->order_session_key, null);
+            // Clear session key to avoid reuse
             session()->forget($this->order_session_key);
+
+            if (empty($transactionNo)) {
+                throw new \Exception('Missing transaction number for Paylink verification');
+            }
 
             $response = $this->client->getInvoice($transactionNo);
 
-            if (!empty($response) and !empty($response['gatewayOrderRequest'])) {
-                $orderId = $response['gatewayOrderRequest']["orderNumber"];
-                $paymentStatus = $response['orderStatus'];
+            if (!empty($response) && !empty($response['gatewayOrderRequest'])) {
+                $orderId = $response['gatewayOrderRequest']['orderNumber'] ?? $request->input('order_id');
+                $paymentStatus = strtolower($response['orderStatus'] ?? '');
 
-                $order = Order::where('id', $orderId)
-                    ->where('user_id', $user->id)
-                    ->first();
+                if (empty($orderId)) {
+                    throw new \Exception('Missing order id in Paylink verification response');
+                }
+
+                $order = Order::where('id', $orderId)->first();
 
                 if (!empty($order)) {
                     $status = Order::$fail;
 
-                    if ($paymentStatus == 'success') {
+                    // Treat PAID/SUCCESS-like statuses as successful; Pending/Created are not
+                    $paidStatuses = ['paid', 'success', 'successful'];
+                    if (in_array($paymentStatus, $paidStatuses, true)) {
                         $status = Order::$paying;
                     }
 
                     $order->update([
-                        'status' => $status
+                        'status' => $status,
                     ]);
                 }
 

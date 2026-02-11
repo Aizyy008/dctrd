@@ -1,5 +1,5 @@
 <?php
-
+namespace App\Mixins\Geo;
 
 class Geo
 {

@@ -79,7 +79,8 @@ class RegisterController extends Controller
             'formFields' => $formFields
         ];
 
-        return view(getTemplate() . '.auth.register', $data);
+        $authTemplate = getThemeAuthenticationPagesStyleName();
+        return view("design_1.web.auth.{$authTemplate}.register.index", $data);
     }
 
     /**
@@ -231,7 +232,7 @@ class RegisterController extends Controller
         $data = $request->all();
 
         if (!empty($data['mobile']) and !empty($data['country_code'])) {
-            $data['mobile'] = $data['country_code'] . ltrim($data['mobile'], '0');
+            $data['mobile'] = ltrim($data['country_code'], '+') . ltrim($data['mobile'], '0');
         }
 
 
@@ -259,7 +260,7 @@ class RegisterController extends Controller
 
         $value = $request->get($registerMethod);
         if ($registerMethod == 'mobile') {
-            $value = $request->get('country_code') . ltrim($request->get('mobile'), '0');
+            $value = $data['mobile']; // Country code applied in the above lines
         }
 
         $referralCode = $request->get('referral_code', null);

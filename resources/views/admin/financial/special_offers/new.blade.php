@@ -196,7 +196,7 @@
                                     </div>
                                     @enderror
                                 </div>
-                                <div class=" mt-4">
+                                <div class="text-right mt-4">
                                     <button class="btn btn-primary">{{ trans('admin/main.submit') }}</button>
                                 </div>
                             </form>
@@ -209,5 +209,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/special_offers.min.js"></script>
+    <script src="/assets/admin/js/parts/special_offers.min.js"></script>
 @endpush

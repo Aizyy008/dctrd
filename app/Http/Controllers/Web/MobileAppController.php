@@ -19,6 +19,6 @@ class MobileAppController extends Controller
             'pageRobot' => getPageRobotNoIndex()
         ];
 
-        return view('web.default.mobile_app.index', $data);
+        return view('design_1.web.mobile_app.index', $data);
     }
 }

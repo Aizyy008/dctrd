@@ -90,14 +90,10 @@ class UserLoginHistoryMixin
     {
         try {
             $response = Http::get("http://ip-api.com/json/{$ipAddress}");
-            $locationData = $response->json();
-
-            return $locationData;
+            return $response->json();
         } catch (\Exception $e) {
-            \Log::error("Error fetching user location: " . $e->getMessage());
-            return null; // or return a default location structure if needed
+            return null;
         }
     }
-
 
 }

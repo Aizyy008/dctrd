@@ -15,11 +15,12 @@ class CheckApiKey
      */
     public function handle($request, Closure $next)
     {
+        $apiKey = getMobileAppGeneralSettings("api_key");
 
-        if ( !env('API_KEY') || $request->header('x-api-key') !== env('API_KEY')) {
-
+        if (empty($apiKey) or $request->header('x-api-key') !== $apiKey) {
             return apiResponse2(0, 'client_identity_error', 'client identification failed.check the api key');
         }
+
         return $next($request);
     }
 }

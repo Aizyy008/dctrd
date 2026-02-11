@@ -234,6 +234,10 @@
 
         handleSearchableSelect2('search-upcoming-course-select2', adminPanelPrefix + '/upcoming_courses/search', 'title');
 
+        handleSearchableSelect2('search-event-select2', adminPanelPrefix + '/events/search', 'title');
+
+        handleSearchableSelect2('search-meeting-package-select2', adminPanelPrefix + '/meeting-packages/search', 'title');
+
 
         var datefilter = $('.datefilter');
         datefilter.daterangepicker({
@@ -270,20 +274,6 @@
         makeSummernote($(".summernote"))
     }
 
-
-    $('body').on('change', '.js-edit-content-locale', function (e) {
-        const val = $(this).val();
-
-        if (val) {
-            var url = window.location.origin + window.location.pathname;
-
-            url += (url.indexOf('?') > -1) ? '&' : '?';
-
-            url += 'locale=' + val;
-
-            window.location.href = url;
-        }
-    });
 
     var $colorpickerinput = $(".colorpickerinput");
     if ($colorpickerinput.length) {
@@ -327,76 +317,6 @@
         return o;
     };
 
-    //
-    // delete sweet alert
-    $('body').on('click', '.delete-action', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const href = $(this).attr('href');
-
-        const title = $(this).attr('data-title') ?? deleteAlertHint;
-        const confirm = $(this).attr('data-confirm') ?? deleteAlertConfirm;
-
-        var html = '<div class="">\n' +
-            '    <p class="">' + title + '</p>\n' +
-            '    <div class="mt-30 d-flex align-items-center justify-content-center">\n' +
-            '        <button type="button" id="swlDelete" data-href="' + href + '" class="btn btn-sm btn-primary">' + confirm + '</button>\n' +
-            '        <button type="button" class="btn btn-sm btn-danger ml-10 close-swl">' + deleteAlertCancel + '</button>\n' +
-            '    </div>\n' +
-            '</div>';
-
-        Swal.fire({
-            title: deleteAlertTitle,
-            html: html,
-            icon: 'warning',
-            showConfirmButton: false,
-            showCancelButton: false,
-            allowOutsideClick: () => !Swal.isLoading(),
-        })
-    });
-
-    $('body').on('click', '#swlDelete', function (e) {
-        e.preventDefault();
-        var $this = $(this);
-        const href = $this.attr('data-href');
-
-        $this.addClass('loadingbar primary').prop('disabled', true);
-
-        $.get(href, function (result) {
-            if (result && result.code === 200) {
-                Swal.fire({
-                    title: (typeof result.title !== "undefined") ? result.title : deleteAlertSuccess,
-                    text: (typeof result.text !== "undefined") ? result.text : deleteAlertSuccessHint,
-                    showConfirmButton: false,
-                    icon: 'success',
-                });
-
-                if (typeof result.dont_reload === "undefined") {
-                    setTimeout(() => {
-                        if (typeof result.redirect_to !== "undefined" && result.redirect_to !== undefined && result.redirect_to !== null && result.redirect_to !== '') {
-                            window.location.href = result.redirect_to;
-                        } else {
-                            window.location.reload();
-                        }
-                    }, 1000);
-                }
-            } else {
-                Swal.fire({
-                    title: deleteAlertFail,
-                    text: deleteAlertFailHint,
-                    icon: 'error',
-                })
-            }
-        }).error(err => {
-            Swal.fire({
-                title: deleteAlertFail,
-                text: deleteAlertFailHint,
-                icon: 'error',
-            })
-        }).always(() => {
-            $this.removeClass('loadingbar primary').prop('disabled', false);
-        });
-    })
 
     $('body').on('change', 'input[type="file"].custom-file-input', function () {
         const value = this.value;
@@ -507,5 +427,65 @@
             $input.removeAttr('maxlength min max');
         }
     })
+
+    window.validatePrice = function (input) {
+        const $input = $(input);
+        const value = $input.val();
+        const $error = $input.closest('.form-group').find('.invalid-feedback');
+
+        $error.text('');
+
+        if (/^\d*\.?\d*$/.test(value)) {
+            $input.removeClass('is-invalid');
+        } else {
+            $input.addClass('is-invalid');
+            $error.text(priceInvalidHintLang ?? 'Price Invalid');
+        }
+    }
+
+    /* Sortable */
+    function updateToDatabase(path, idString) {
+        $.post(path, {items: idString}, function (result) {
+            if (result && result.title && result.msg) {
+                showToast('success', result.title, result.msg)
+            }
+        });
+    }
+
+    function setSortable(target) {
+        if (target.length) {
+            target.sortable({
+                group: 'no-drop',
+                handle: '.move-icon',
+                axis: "y",
+                update: function (e, ui) {
+                    var sortData = target.sortable('toArray', {attribute: 'data-id'});
+                    var path = e.target.getAttribute('data-path');
+
+                    updateToDatabase(path, sortData.join(','))
+                }
+            });
+        }
+    }
+
+    const items = [];
+
+    var draggableContentLists = $('.draggable-content-lists');
+    if (draggableContentLists.length) {
+        for (let item of draggableContentLists) {
+            items.push($(item).attr('data-drag-class'))
+        }
+    }
+
+    if (items.length) {
+        for (let item of items) {
+            const tag = $('.' + item);
+
+            if (tag.length) {
+                setSortable(tag);
+            }
+        }
+    }
+
 
 })(jQuery);

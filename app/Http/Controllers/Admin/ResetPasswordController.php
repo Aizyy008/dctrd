@@ -50,7 +50,7 @@ class ResetPasswordController extends Controller
                 'email' => $request->email
             ];
 
-            return view('admin.auth.reset_password', $data);
+            return view('admin.auth.new.reset_password', $data);
         }
 
         abort(404);

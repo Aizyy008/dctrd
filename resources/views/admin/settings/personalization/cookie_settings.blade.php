@@ -38,10 +38,30 @@
                     <input type="hidden" name="locale" value="{{ getDefaultLocale() }}">
                 @endif
             </div>
+        </div>
 
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group ">
+                    <label class="control-label">{{ trans('update.dialog_title') }}</label>
+                    <input name="value[dialog_title]" class="form-control text-left" value="{{ (!empty($itemValue) and !empty($itemValue['dialog_title'])) ? $itemValue['dialog_title'] : '' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group ">
+                    <label class="control-label">{{ trans('update.dialog_description') }}</label>
+                    <textarea name="value[dialog_description]" class="form-control text-left" rows="4">{{ (!empty($itemValue) and !empty($itemValue['dialog_description'])) ? $itemValue['dialog_description'] : '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
             <div class="col-12">
                 <div class="form-group ">
-                    <label class="control-label">{{ trans('admin/main.message') }}</label>
+                    <label class="control-label">{{ trans('update.modal_description') }}</label>
                     <textarea name="value[cookie_settings_modal_message]" class="summernote form-control text-left">{{ (!empty($itemValue) and !empty($itemValue['cookie_settings_modal_message'])) ? $itemValue['cookie_settings_modal_message'] : '' }}</textarea>
                 </div>
             </div>
@@ -72,6 +92,12 @@
                                         <button type="button" class="btn remove-btn btn-danger"><i class="fa fa-times"></i></button>
                                     </div>
                                 </div>
+
+                                <input type="text" name="value[cookie_settings_modal_items][{{ $modalItemKey }}][subtitle]"
+                                       class="form-control w-100 flex-grow-1 mt-1"
+                                       placeholder="{{ trans('admin/main.choose_subtitle') }}"
+                                       value="{{ $modalItemValue['subtitle'] ?? '' }}"
+                                />
 
                                 <textarea name="value[cookie_settings_modal_items][{{ $modalItemKey }}][description]"
                                           class="form-control w-100 flex-grow-1 mt-1" rows="4"
@@ -110,6 +136,12 @@
         </div>
     </div>
 
+    <input type="text" name="value[cookie_settings_modal_items][record][subtitle]"
+           class="form-control w-100 flex-grow-1 mt-1"
+           placeholder="{{ trans('admin/main.choose_subtitle') }}"
+           value=""
+    />
+
     <textarea name="value[cookie_settings_modal_items][record][description]" required
               class="form-control w-100 flex-grow-1 mt-1" rows="4" placeholder="{{ trans('admin/main.description') }}"></textarea>
 
@@ -125,5 +157,5 @@
 
 @push('scripts_bottom')
     <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
-    <script src="/assets/default/js/admin/settings/cookie_settings.min.js"></script>
+    <script src="/assets/admin/js/parts/settings/cookie_settings.min.js"></script>
 @endpush

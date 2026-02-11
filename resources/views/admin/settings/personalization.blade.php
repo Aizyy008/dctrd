@@ -23,10 +23,9 @@
                         <div class="card-body">
 
                             @php
-                                $items = ['page_background','home_sections','home_hero','home_hero2','home_video_or_image_box',
-                                            'panel_sidebar','find_instructors','reward_program','become_instructor_section',
-                                            'theme_colors', 'theme_fonts', 'forums_section', 'navbar_button','cookie_settings', 'mobile_app', 'maintenance_settings',
-                                            'others_personalization', 'statistics', 'restriction_settings'
+                                $items = ['panel_sidebar',
+                                            'cookie_settings', 'mobile_app', 'maintenance_settings',
+                                            'restriction_settings', 'guaranty_text', 'user_dashboard_data', 'content_review_information', 'others_personalization'
                                          ];
                             @endphp
 

@@ -13,7 +13,7 @@
             <div class="col-12">
                 @if(!empty($webinarExtraDescriptionValues) and count($webinarExtraDescriptionValues))
                     <div class="table-responsive">
-                        <table class="table table-striped text-center font-14">
+                        <table class="table custom-table text-center font-14">
 
                             <tr>
                                 @if($extraDescriptionType == \App\Models\WebinarExtraDescription::$COMPANY_LOGOS)
@@ -47,11 +47,21 @@
                         </table>
                     </div>
                 @else
-                    @include('admin.includes.no-result',[
-                         'file_name' => 'faq.png',
-                         'title' => trans("update.{$extraDescriptionType}_no_result"),
-                         'hint' => trans("update.{$extraDescriptionType}_no_result_hint"),
-                    ])
+                    <div class="d-flex-center flex-column px-32 py-120 text-center">
+                        <div class="d-flex-center size-64 rounded-12 bg-primary-30">
+                            @if($extraDescriptionType == "learning_materials")
+                                <x-iconsax-bul-teacher class="icons text-primary" width="32px" height="32px"/>
+                            @elseif($extraDescriptionType == "company_logos")
+                                <x-iconsax-bul-sticker class="icons text-primary" width="32px" height="32px"/>
+                            @else
+                                <x-iconsax-bul-shield-tick class="icons text-primary" width="32px" height="32px"/>
+                            @endif
+
+                        </div>
+                        <h3 class="font-16 font-weight-bold mt-12">{{ trans("update.{$extraDescriptionType}_no_result") }}</h3>
+                        <p class="mt-4 font-12 text-gray-500">{!! trans("update.{$extraDescriptionType}_no_result_hint") !!}</p>
+                    </div>
+
                 @endif
             </div>
         </div>

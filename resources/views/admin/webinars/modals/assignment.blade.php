@@ -51,25 +51,25 @@
 
         <div class="form-group">
             <label class="input-label">{{ trans('quiz.grade') }}</label>
-            <input type="text" name="grade" class="form-control" placeholder=""/>
+            <input type="number" name="grade" class="form-control" placeholder=""/>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-group">
             <label class="input-label">{{ trans('update.pass_grade') }}</label>
-            <input type="text" name="pass_grade" class="form-control" placeholder=""/>
+            <input type="number" name="pass_grade" class="form-control" placeholder=""/>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-group">
             <label class="input-label">{{ trans('update.deadline') }}</label>
-            <input type="text" name="deadline" class="form-control" placeholder=""/>
+            <input type="number" name="deadline" class="form-control" placeholder=""/>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-group">
             <label class="input-label">{{ trans('update.attempts') }}</label>
-            <input type="text" name="attempts" class="form-control" placeholder=""/>
+            <input type="number" name="attempts" class="form-control" placeholder=""/>
             <div class="invalid-feedback"></div>
         </div>
 

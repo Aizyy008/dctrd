@@ -6,7 +6,9 @@ use App\Models\Sale;
 use App\Models\WebinarAssignment;
 use App\Models\WebinarAssignmentAttachment;
 use App\Models\WebinarAssignmentHistory;
+use App\Models\WebinarAssignmentHistoryMessage;
 use App\User;
+use Illuminate\Http\Request;
 
 trait LearningPageAssignmentTrait
 {
@@ -19,7 +21,7 @@ trait LearningPageAssignmentTrait
             $checkSequenceContent = !empty($assignment) ? $assignment->checkSequenceContent() : null;
             $sequenceContentHasError = (!empty($checkSequenceContent) and (!empty($checkSequenceContent['all_passed_items_error']) or !empty($checkSequenceContent['access_after_day_error'])));
 
-            if ($this->checkCourseAccess($assignment->webinar_id) and !$sequenceContentHasError) {
+            if ($this->checkCourseAccess($assignment->webinar) and !$sequenceContentHasError) {
                 $attach = WebinarAssignmentAttachment::where('id', $id)
                     ->where('assignment_id', $assignmentId)
                     ->first();
@@ -50,20 +52,26 @@ trait LearningPageAssignmentTrait
         abort(404);
     }
 
-    private function getAssignmentData($course, $requestData)
+    private function getAssignmentInfo(Request $request, $course)
     {
         $user = auth()->user();
+        $id = $request->get('id');
+        $studentId = $request->get('student');
 
-        $assignment = WebinarAssignment::where('id', $requestData['item'])
+        $assignment = WebinarAssignment::where('id', $id)
             ->where('webinar_id', $course->id)
             ->first();
 
-        if (!empty($assignment)) {
-            $webinar = $assignment->webinar;
+        if (!empty($assignment) and !empty($course) and $course->checkUserHasBought($user)) {
 
-            if (!empty($webinar) and $webinar->checkUserHasBought($user)) {
+            $studentId = (!empty($studentId) and $course->isOwner($user->id)) ? $studentId : null;
 
-                $studentId = (!empty($requestData['student']) and $webinar->isOwner($user->id)) ? $requestData['student'] : null;
+            if ($course->isOwner($user->id) and empty($studentId)) {
+                // Show Instructor Content
+                return $this->getLearningPageInstructorContent($course, $assignment, $user);
+            } else {
+                // Show Student Page
+
                 $assignmentHistory = $this->getAssignmentHistory($course, $assignment, $user, $studentId);
 
                 if (!empty($assignmentHistory)) {
@@ -80,18 +88,61 @@ trait LearningPageAssignmentTrait
 
                     $deadline = $this->getAssignmentDeadline($assignment, !empty($student) ? $student : $user);
 
-                    return [
+                    $data = [
                         'assignment' => $assignment,
                         'assignmentHistory' => $assignmentHistory,
                         'checkHasAttempts' => $checkHasAttempts,
                         'submissionTimes' => $submissionTimes,
                         'assignmentDeadline' => $deadline,
+                        'assignmentStudentId' => $studentId,
+                        'user' => $user,
                     ];
+
+                    $html = (string)view()->make("design_1.web.courses.learning_page.includes.contents.assignment", $data);
+
+                    return response()->json([
+                        'code' => 200,
+                        'type' => 'assignment',
+                        'html' => $html,
+                    ]);
                 }
             }
         }
 
-        abort(404);
+        return response()->json([], 403);
+    }
+
+    private function getLearningPageInstructorContent($course, $assignment, $user)
+    {
+        $instructorAssignmentHistories = $assignment->instructorAssignmentHistories()->where('instructor_id', $user->id)->get();
+
+        $grades = $instructorAssignmentHistories->filter(function ($item) {
+            return !is_null($item->grade);
+        });
+
+        $historyIds = $instructorAssignmentHistories->pluck('id')->toArray();
+
+        $assignment->average_grade = count($grades) ? $grades->avg('grade') : null;
+
+        $assignment->submissions = WebinarAssignmentHistoryMessage::whereIn('assignment_history_id', $historyIds)
+            ->where('sender_id', '!=', $user->id)
+            ->count();
+
+        $assignment->pendingCount = $instructorAssignmentHistories->where('status', WebinarAssignmentHistory::$pending)->count();
+        $assignment->passedCount = $instructorAssignmentHistories->where('status', WebinarAssignmentHistory::$passed)->count();
+        $assignment->failedCount = $instructorAssignmentHistories->where('status', WebinarAssignmentHistory::$notPassed)->count();
+
+        $data = [
+            'assignment' => $assignment,
+            'course' => $course,
+        ];
+        $html = (string)view()->make("design_1.web.courses.learning_page.includes.contents.assignment_instructor", $data);
+
+        return response()->json([
+            'code' => 200,
+            'type' => 'assignment',
+            'html' => $html,
+        ]);
     }
 
     private function getAssignmentHistory($course, $assignment, $user, $studentId = null)

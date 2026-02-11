@@ -39,7 +39,13 @@ class ResetPasswordController extends Controller
             ->first();
 
         if (!empty($updatePassword)) {
-            return view(getTemplate() . '.auth.reset_password', ['token' => $token]);
+            $data = [
+                'pageTitle' => trans('auth.reset_password'),
+                'token' => $token,
+            ];
+
+            $authTemplate = getThemeAuthenticationPagesStyleName();
+            return view("design_1.web.auth.{$authTemplate}.reset_password.index", $data);
         }
 
         abort(404);
@@ -47,11 +53,18 @@ class ResetPasswordController extends Controller
 
     public function updatePassword(Request $request)
     {
-        $this->validate($request, [
+        $rules = [
             'email' => 'required|email|exists:users',
             'password' => 'required|string|min:6|confirmed',
             'password_confirmation' => 'required',
-        ], [],[
+            'rs_token' => 'required',
+        ];
+
+        if (!empty(getGeneralSecuritySettings('captcha_for_forgot_pass'))) {
+            $rules['captcha'] = 'required|captcha';
+        }
+
+        $this->validate($request, $rules, [], [
             'email' => trans('auth.email'),
             'password' => trans('auth.password'),
             'password_confirmation' => trans('auth.password_repeat'),
@@ -60,7 +73,7 @@ class ResetPasswordController extends Controller
         $data = $request->all();
 
         $updatePassword = DB::table('password_resets')
-            ->where(['email' => $data['email'], 'token' => $data['token']])
+            ->where(['email' => $data['email'], 'token' => $data['rs_token']])
             ->first();
 
         if (!empty($updatePassword)) {

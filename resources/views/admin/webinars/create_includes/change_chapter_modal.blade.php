@@ -1,5 +1,5 @@
 <div id="changeChapterModalHtml" class="d-none">
-    <div class="custom-modal-body">
+    <div class="custom-modal-body p-16">
         <h2 class="section-title after-line">{{ trans('update.change_chapter') }}</h2>
 
         <div class="js-content-form change-chapter-form mt-20" data-action="{{ getAdminPanelUrl("/chapters/change") }}">

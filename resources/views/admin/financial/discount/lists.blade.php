@@ -91,11 +91,8 @@
                             </div>
 
 
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label class="input-label mb-4"> </label>
-                                    <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                                </div>
+                            <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
                             </div>
                         </div>
                     </form>
@@ -107,7 +104,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th class="text-left" width="150">{{ trans('admin/main.title') }}</th>
                                         @if($isInstructorCoupons)
@@ -140,14 +137,14 @@
                                                             <img src="{{ $discount->creator->getAvatar() }}" alt="{{ $discount->creator->full_name }}">
                                                         </figure>
                                                         <div class="media-body ml-1">
-                                                            <div class="mt-0 mb-1 font-weight-bold">{{ $discount->creator->full_name }}</div>
+                                                            <div class="mt-0 mb-1">{{ $discount->creator->full_name }}</div>
 
                                                             @if($discount->creator->mobile)
-                                                                <div class="text-primary text-small font-600-bold">{{ $discount->creator->mobile }}</div>
+                                                                <div class="text-gray-500 text-small">{{ $discount->creator->mobile }}</div>
                                                             @endif
 
                                                             @if($discount->creator->email)
-                                                                <div class="text-primary text-small font-600-bold">{{ $discount->creator->email }}</div>
+                                                                <div class="text-gray-500 text-small">{{ $discount->creator->email }}</div>
                                                             @endif
                                                         </div>
                                                     </div>
@@ -164,7 +161,7 @@
                                             <td class="text-left">{{ $discount->code }}</td>
                                             <td class="text-left">
                                                 @if($discount->user_type == 'all_users')
-                                                    <span class="text-primary">{{ trans('admin/main.all_users') }}</span>
+                                                    <span>{{ trans('admin/main.all_users') }}</span>
                                                 @elseif(!empty($discount->discountUsers) and !empty($discount->discountUsers->user))
                                                     <span class="">{{ $discount->discountUsers->user->full_name }}</span>
                                                 @endif
@@ -176,8 +173,8 @@
 
                                             <td>
                                                 <div class="media-body">
-                                                    <div class=" mt-0 mb-1 font-weight-bold">{{ $discount->count }}</div>
-                                                    <div class="text-primary text-small">{{ trans('admin/main.remain') }} : {{ $discount->discountRemain() }}</div>
+                                                    <div class=" mt-0 mb-1">{{ $discount->count }}</div>
+                                                    <div class="text-gray-500 text-small">{{ trans('admin/main.remain') }} : {{ $discount->discountRemain() }}</div>
                                                 </div>
                                             </td>
 
@@ -188,22 +185,38 @@
 
                                             <td>
                                                 @if($discount->expired_at < time())
-                                                    <span class="text-danger">{{ trans('panel.expired') }}</span>
+                                                    <span class="badge-status text-danger bg-danger-30">{{ trans('panel.expired') }}</span>
                                                 @else
-                                                    <span class="text-success">{{ trans('admin/main.active') }}</span>
+                                                    <span class="badge-status text-success bg-success-30">{{ trans('admin/main.active') }}</span>
                                                 @endif
                                             </td>
 
                                             <td>
-                                                @can('admin_discount_codes_edit')
-                                                    <a href="{{ getAdminPanelUrl() }}/financial/discounts/{{ $discount->id }}/edit" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                @endcan
+                                                <div class="btn-group dropdown table-actions position-relative">
+                                                    <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                                        <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                                    </button>
 
-                                                @can('admin_discount_codes_delete')
-                                                    @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/financial/discounts/'. $discount->id.'/delete','btnClass' => ''])
-                                                @endcan
+                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                        @can('admin_discount_codes_edit')
+                                                            <a href="{{ getAdminPanelUrl() }}/financial/discounts/{{ $discount->id }}/edit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                                <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                                <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                                                            </a>
+                                                        @endcan
+
+                                                        @can('admin_discount_codes_delete')
+                                                            @include('admin.includes.delete_button',[
+                                                                'url' => getAdminPanelUrl().'/financial/discounts/'.$discount->id.'/delete',
+                                                                'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                                'btnText' => trans("admin/main.delete"),
+                                                                'btnIcon' => 'trash',
+                                                                'iconType' => 'lin',
+                                                                'iconClass' => 'text-danger mr-2',
+                                                            ])
+                                                        @endcan
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach

@@ -9,13 +9,14 @@ use App\Models\InstallmentOrder;
 use App\Models\InstallmentOrderPayment;
 use App\Models\InstallmentStep;
 use App\Models\SelectedInstallmentStep;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class InstallmentsController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize("panel_financial_installments");
 
@@ -25,24 +26,58 @@ class InstallmentsController extends Controller
             ->where('user_id', $user->id)
             ->where('status', '!=', 'paying');
 
-        $openInstallmentsCount = deepClone($query)->where('status', 'open')->count();
-        $pendingVerificationCount = deepClone($query)->where('status', 'pending_verification')->count();
+        $copyQuery = deepClone($query);
+        //$query = $this->handleFilters($request, $query);
+        $getListData = $this->getListsData($request, $query, $user);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
+
+        $openInstallmentsCount = deepClone($copyQuery)->where('status', 'open')->count();
+        $pendingVerificationCount = deepClone($copyQuery)->where('status', 'pending_verification')->count();
         $finishedInstallmentsCount = $this->getFinishedInstallments($user);
 
+        $overdueInstallments = $this->getOverdueInstallments($user);
 
-        $orders = $query->with([
-            'selectedInstallment' => function ($query) {
-                $query->with([
-                    'steps' => function ($query) {
-                        $query->orderBy('deadline', 'asc');
-                    }
-                ]);
-                $query->withCount([
-                    'steps'
-                ]);
-            }
-        ])->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $data = [
+            'pageTitle' => trans('update.installments'),
+            'openInstallmentsCount' => $openInstallmentsCount,
+            'pendingVerificationCount' => $pendingVerificationCount,
+            'finishedInstallmentsCount' => $finishedInstallmentsCount,
+            'overdueInstallments' => $overdueInstallments,
+        ];
+        $data = array_merge($data, $getListData);
+
+        return view('design_1.panel.financial.installments.lists.index', $data);
+    }
+
+    private function getListsData(Request $request, Builder $query, $user)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $orders = $query
+            ->with([
+                'selectedInstallment' => function ($query) {
+                    $query->with([
+                        'steps' => function ($query) {
+                            $query->orderBy('deadline', 'asc');
+                        }
+                    ]);
+                    $query->withCount([
+                        'steps'
+                    ]);
+                }
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         foreach ($orders as $order) {
             $getRemainedInstallments = $this->getRemainedInstallments($order);
@@ -67,18 +102,30 @@ class InstallmentsController extends Controller
 
         }
 
-        $overdueInstallmentsCount = $this->getOverdueInstallments($user);
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $orders, $total, $count);
+        }
 
-        $data = [
-            'pageTitle' => trans('update.installments'),
-            'openInstallmentsCount' => $openInstallmentsCount,
-            'pendingVerificationCount' => $pendingVerificationCount,
-            'finishedInstallmentsCount' => $finishedInstallmentsCount,
-            'overdueInstallmentsCount' => $overdueInstallmentsCount,
+        return [
             'orders' => $orders,
+            'pagination' => $this->makePagination($request, $orders, $total, $count, true),
         ];
+    }
 
-        return view('web.default.panel.financial.installments.lists', $data);
+    private function getAjaxResponse(Request $request, $orders, $total, $count)
+    {
+        $html = "";
+
+        foreach($orders as $orderRow) {
+            $html .= '<div class="col-12 col-lg-3 mt-16">';
+            $html .= (string)view()->make("design_1.panel.financial.installments.lists.grid_card", ['order' => $orderRow]);
+            $html .= '</div>';
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $orders, $total, $count, true)
+        ]);
     }
 
     private function getRemainedInstallments($order)
@@ -164,20 +211,32 @@ class InstallmentsController extends Controller
 
     private function getOverdueInstallments($user)
     {
+        $overdueInstallments = collect();
+
         $orders = InstallmentOrder::query()
             ->where('user_id', $user->id)
             ->where('installment_orders.status', 'open')
+            ->with([
+                'installment',
+                'webinar',
+            ])
             ->get();
-
-        $count = 0;
 
         foreach ($orders as $order) {
             if ($order->checkOrderHasOverdue()) {
-                $count += 1;
+
+                $getOrderOverdueCountAndAmount = $order->getOrderOverdueCountAndAmount();
+                $order->overdue_count = $getOrderOverdueCountAndAmount['count'];
+                $order->overdue_amount = $getOrderOverdueCountAndAmount['amount'];
+                $order->overdue_timestamp = $getOrderOverdueCountAndAmount['firstDueAt'];
+
+
+                $overdueInstallments->add($order);
+
             }
         }
 
-        return $count;
+        return $overdueInstallments;
     }
 
     private function getFinishedInstallments($user)
@@ -243,20 +302,27 @@ class InstallmentsController extends Controller
             $remainedParts = $getRemainedInstallments['total'];
             $remainedAmount = $getRemainedInstallments['amount'];
             $overdueAmount = $getOverdueOrderInstallments['amount'];
+            $overdueParts = $getOverdueOrderInstallments['total'];
+
+            $paidParts = $order->payments()->where('status', 'paid')
+                ->where('type', 'step')
+                ->get();
 
             $data = [
-                'pageTitle' => trans('update.installments'),
+                'pageTitle' => trans('update.installment_overview'),
                 'totalParts' => $totalParts,
                 'remainedParts' => $remainedParts,
                 'remainedAmount' => $remainedAmount,
                 'overdueAmount' => $overdueAmount,
+                'overdueParts' => $overdueParts,
                 'order' => $order,
                 'payments' => $order->payments,
                 'installment' => $order->selectedInstallment,
                 'itemPrice' => $order->getItemPrice(),
+                'paidParts' => $paidParts,
             ];
 
-            return view('web.default.panel.financial.installments.details', $data);
+            return view('design_1.panel.financial.installments.details.index', $data);
         }
 
         abort(404);

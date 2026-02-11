@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Web;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Region;
 use Illuminate\Support\Facades\DB;
 
@@ -52,10 +52,6 @@ class RegionsController extends Controller
             $provinces = $provinces->where($super_region_type, $region_id);
         }
         $provinces = $provinces->get();
-
-        foreach ($provinces as $province) {
-            $province->geo_center = \Geo::get_geo_array($province->geo_center);
-        }
 
         return apiResponse2(1, 'retrieved', trans('api.public.retrieved'),
             $provinces

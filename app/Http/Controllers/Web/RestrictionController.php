@@ -14,6 +14,6 @@ class RestrictionController extends Controller
             'pageRobot' => getPageRobotNoIndex()
         ];
 
-        return view('web.default.restriction.index', $data);
+        return view('design_1.web.restriction.index', $data);
     }
 }

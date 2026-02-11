@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\MorphTypesEnum;
 use App\Http\Controllers\Controller;
+use App\Mixins\Logs\VisitLogMixin;
 use App\Models\Forum;
 use App\Models\ForumFeaturedTopic;
 use App\Models\ForumRecommendedTopic;
@@ -15,6 +17,7 @@ use App\Models\ForumTopicReport;
 use App\Models\Reward;
 use App\Models\RewardAccounting;
 use App\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -23,7 +26,7 @@ class ForumController extends Controller
 {
     public function __construct()
     {
-        $forumsStatus = getFeaturesSettings('forums_status');
+        $forumsStatus = getForumsGeneralSettings('forums_status');
 
         if (empty($forumsStatus) or $forumsStatus == '0') {
             abort(403);
@@ -32,9 +35,26 @@ class ForumController extends Controller
 
     public function index()
     {
-        $forums = Forum::orderBy('order', 'asc')
-            ->whereNull('parent_id')
+        $user = auth()->user();
+        $userGroup = !empty($user) ? $user->getUserGroup() : null;
+
+        $forums = Forum::query()->whereNull('parent_id')
             ->where('status', 'active')
+            ->where(function (Builder $query) use ($userGroup) {
+                $query->whereNull('group_id');
+
+                if (!empty($userGroup)) {
+                    $query->orWhere('group_id', $userGroup->id);
+                }
+            })
+            ->where(function (Builder $query) use ($user) {
+                $query->whereNull('role_id');
+
+                if (!empty($user)) {
+                    $query->orWhere('role_id', $user->role_id);
+                }
+            })
+            ->orderBy('order', 'asc')
             ->with([
                 'subForums' => function ($query) {
                     $query->where('status', 'active');
@@ -68,9 +88,8 @@ class ForumController extends Controller
             ->whereDoesntHave('subForums')
             ->count();
 
-        $topicsCount = ForumTopic::query()->count();
-        $postsCount = ForumTopicPost::query()->count();
-        $membersCount = ForumTopicPost::select(DB::raw('count(distinct user_id) as count'))->first()->count;
+        $activeUsersIds = ForumTopicPost::query()->groupBy('user_id')->inRandomOrder()->limit(9)->pluck('user_id')->toArray();
+        $randomlyActiveUsers = User::query()->select('id', 'full_name', 'username', 'avatar', 'avatar_settings')->whereIn('id', $activeUsersIds)->get();
 
         $data = [
             'pageTitle' => $pageTitle,
@@ -78,14 +97,15 @@ class ForumController extends Controller
             'pageRobot' => $pageRobot,
             'forums' => $forums,
             'forumsCount' => $forumsCount,
-            'topicsCount' => $topicsCount,
-            'postsCount' => $postsCount,
-            'membersCount' => $membersCount,
+            'randomlyActiveUsers' => $randomlyActiveUsers,
             'featuredTopics' => $this->getFeaturedTopics(),
             'recommendedTopics' => $this->getRecommendedTopics(),
+            'heroSettings' => getForumsHomepageSettings(),
+            'forumImagesSettings' => getForumsImagesSettings(),
         ];
+        $data = array_merge($data, $this->getHeroStats());
 
-        return view('web.default.forum.index', $data);
+        return view('design_1.web.forums.homepage.index', $data);
     }
 
     private function getFeaturedTopics()
@@ -95,7 +115,7 @@ class ForumController extends Controller
                 'topic' => function ($query) {
                     $query->with([
                         'creator' => function ($query) {
-                            $query->select('id', 'full_name', 'avatar', 'avatar_settings');
+                            $query->select('id', 'full_name', 'username', 'avatar', 'avatar_settings');
                         },
                         'posts'
                     ]);
@@ -148,20 +168,28 @@ class ForumController extends Controller
 
         $query = ForumTopic::query();
 
-        $resultCount = 0;
-        $topics = $this->handleTopics($request, $query, $resultCount);
+        $topicsData = $this->handleTopics($request, $query);
+
+        if ($request->ajax()) {
+            return $topicsData;
+        }
+
+        $pageRobot = getPageRobot('forum_search_topics');
 
         $data = [
             'pageTitle' => trans('update.search_results_for', ['temp' => $search]),
-            'pageDescription' => '',
-            'pageRobot' => '',
-            'topics' => $topics,
+            'pageDescription' => "",
+            'pageRobot' => $pageRobot,
             'topUsers' => $this->getTopUsers(),
             'popularTopics' => $this->getPopularTopics(),
-            'resultCount' => $resultCount
         ];
 
-        return view('web.default.forum.topics_search', $data);
+        // topics Data
+        $data = array_merge($data, $topicsData);
+        // Hero Stats
+        $data = array_merge($data, $this->getHeroStats());
+
+        return view('design_1.web.forums.search.index', $data);
     }
 
     public function topics(Request $request, $slug)
@@ -173,27 +201,40 @@ class ForumController extends Controller
         if (!empty($forum)) {
             $query = ForumTopic::where('forum_topics.forum_id', $forum->id);
 
-            $resultCount = 0;
-            $topics = $this->handleTopics($request, $query, $resultCount);
+            $topicsData = $this->handleTopics($request, $query);
+
+            if ($request->ajax()) {
+                return $topicsData;
+            }
+
+
+            // Visit Logs
+            $visitLogMixin = new VisitLogMixin();
+            $visitLogMixin->storeVisit($request, null, $forum->id, MorphTypesEnum::FORUM);
+
+            $pageRobot = getPageRobot('forum_topics');
 
             $data = [
                 'pageTitle' => $forum->title,
-                'pageDescription' => $forum->description,
-                'pageRobot' => '',
+                'pageDescription' => !empty($forum->description) ? truncate(strip_tags($forum->description), 160) : '',
+                'pageRobot' => $pageRobot,
                 'forum' => $forum,
-                'topics' => $topics,
                 'topUsers' => $this->getTopUsers(),
                 'popularTopics' => $this->getPopularTopics(),
-                'resultCount' => $resultCount
             ];
 
-            return view('web.default.forum.topics', $data);
+            // topics Data
+            $data = array_merge($data, $topicsData);
+            // Hero Stats
+            $data = array_merge($data, $this->getHeroStats($forum));
+
+            return view('design_1.web.forums.topics.lists.index', $data);
         }
 
         abort(404);
     }
 
-    private function handleTopics(Request $request, $query, &$resultCount)
+    private function handleTopics(Request $request, $query)
     {
         $search = $request->get('search');
         $sort = $request->get('sort');
@@ -225,23 +266,45 @@ class ForumController extends Controller
             $query->orderBy('forum_topics.created_at', 'desc');
         }
 
-        $resultCount = deepClone($query)->count();
+        $count = 6;
+        $page = $request->get('page') ?? 1;
+        $total = $query->count();
 
-        $topics = $query->with([
-            'creator' => function ($query) {
-                $query->select('id', 'full_name', 'avatar', 'avatar_settings');
-            }
-        ])
-            ->withCount([
-                'posts'
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $forumTopics = $query
+            ->with([
+                'creator' => function ($qu) {
+                    $qu->select('id', 'full_name', 'username', 'bio', 'avatar', 'avatar_settings');
+                },
+                'forum'
             ])
-            ->paginate(15);
+            ->withCount([
+                'posts',
+                'likes',
+                'visits',
+            ])
+            ->get();
 
-        foreach ($topics as $topic) {
-            $topic->lastPost = $topic->posts()->orderBy('created_at', 'desc')->first();
+        foreach ($forumTopics as $topic) {
+            $topic->lastActivity = $topic->posts()->orderBy('created_at', 'desc')->first();
         }
 
-        return $topics;
+        if ($request->ajax()) {
+            $html = (string)view()->make('design_1.web.forums.components.cards.topic.index', ['forumTopics' => $forumTopics, 'cardClassName' => "mt-24", 'withoutStyles' => true]);
+
+            return response()->json([
+                'data' => $html,
+                'has_more_item' => (($page * $count) < $total),
+            ]);
+        }
+
+        return [
+            'forumTopics' => $forumTopics,
+            'hasMoreForumTopics' => (($page * $count) < $total),
+            'totalTopicsCount' => $total,
+        ];
     }
 
     private function getTopUsers()
@@ -265,13 +328,43 @@ class ForumController extends Controller
             ->whereHas('creator')
             ->with([
                 'creator' => function ($query) {
-                    $query->select('id', 'full_name', 'avatar', 'avatar_settings');
+                    $query->select('id', 'full_name', 'username', 'avatar', 'avatar_settings');
                 }
             ])
             ->orderBy('posts_count', 'desc')
             ->groupBy('forum_topics.id')
             ->limit(4)
             ->get();
+    }
+
+    private function getHeroStats($forum = null)
+    {
+        $topicsCountQuery = ForumTopic::query();
+        $postsCountQuery = ForumTopicPost::query();
+        $membersCountQuery = ForumTopicPost::query()->select(DB::raw('count(distinct user_id) as count'));
+
+        if (!empty($forum)) {
+            $topicsCountQuery->where('forum_id', $forum->id);
+
+            $postsCountQuery->whereHas('topic', function ($query) use ($forum) {
+                $query->where('forum_id', $forum->id);
+            });
+
+            $membersCountQuery->whereHas('topic', function ($query) use ($forum) {
+                $query->where('forum_id', $forum->id);
+            });
+        }
+
+        $topicsCount = $topicsCountQuery->count();
+        $postsCount = $postsCountQuery->count();
+
+        $membersCount = $membersCountQuery->first()->count;
+
+        return [
+            'topicsCount' => $topicsCount,
+            'postsCount' => $postsCount,
+            'membersCount' => $membersCount,
+        ];
     }
 
     public function createTopic(Request $request)
@@ -295,10 +388,11 @@ class ForumController extends Controller
             'pageTitle' => trans('update.create_new_topic'),
             'pageDescription' => '',
             'pageRobot' => '',
-            'forums' => $forums
+            'forums' => $forums,
         ];
+        $data = array_merge($data, $this->getHeroStats());
 
-        return view('web.default.forum.create_topic', $data);
+        return view('design_1.web.forums.topics.create.index', $data);
     }
 
     public function storeTopic(Request $request)
@@ -322,6 +416,7 @@ class ForumController extends Controller
             ->where('close', false)
             ->first();
 
+
         if (!empty($forum) and $forum->checkUserCanCreateTopic($user)) {
 
             $topic = ForumTopic::create([
@@ -334,7 +429,7 @@ class ForumController extends Controller
                 'created_at' => time(),
             ]);
 
-            $this->handleTopicAttachments($topic, $data);
+            $this->handleTopicCoverAndAttachments($request, $topic);
 
             $buyStoreReward = RewardAccounting::calculateScore(Reward::MAKE_TOPIC);
             RewardAccounting::makeRewardAccounting($topic->creator_id, $buyStoreReward, Reward::MAKE_TOPIC, $topic->id);
@@ -353,7 +448,7 @@ class ForumController extends Controller
                 'status' => 'success'
             ];
 
-            $url = '/forums/' . $topic->forum->slug . '/topics';
+            $url = "/forums/{$topic->forum->slug}/topics/{$topic->slug}/edit";
             return redirect($url)->with(['toast' => $toastData]);
 
         }
@@ -361,26 +456,53 @@ class ForumController extends Controller
         abort(403);
     }
 
-    private function handleTopicAttachments($topic, $data)
+    private function handleTopicCoverAndAttachments(Request $request, $topic)
     {
         $user = auth()->user();
+        $destination = "forums/topics/{$topic->id}";
 
-        ForumTopicAttachment::where('creator_id', $user->id)
-            ->where('topic_id', $topic->id)
-            ->delete();
+        $coverPath = $topic->cover ?? null;
+        $coverFile = $request->file('cover');
 
-        if (!empty($data['attachments']) and count($data['attachments'])) {
+        if (!empty($coverFile)) {
+            $coverPath = $this->uploadFile($coverFile, $destination, 'cover', $user->id);
+        }
 
-            foreach ($data['attachments'] as $attach) {
-                if (!empty($attach)) {
-                    ForumTopicAttachment::create([
+        $topic->update([
+            'cover' => $coverPath,
+        ]);
+
+        $attachmentsFiles = $request->file('attachments');
+
+        if (!empty($attachmentsFiles) and count($attachmentsFiles)) {
+            $destination .= "/attachments";
+            $attachmentsInserts = [];
+
+            foreach ($attachmentsFiles as $attachKey => $attachmentFile) {
+                $checkAttachment = ForumTopicAttachment::query()->where('topic_id', $topic->id)
+                    ->where('id', $attachKey)
+                    ->first();
+
+                $path = $this->uploadFile($attachmentFile, $destination, null, $user->id);
+
+                if (!empty($checkAttachment)) {
+                    $checkAttachment->update([
+                        'path' => $path,
+                    ]);
+                } else {
+                    $attachmentsInserts[] = [
                         'creator_id' => $user->id,
                         'topic_id' => $topic->id,
-                        'path' => $attach,
-                    ]);
+                        'path' => $path,
+                    ];
                 }
             }
+
+            if (count($attachmentsInserts)) {
+                ForumTopicAttachment::query()->insert($attachmentsInserts);
+            }
         }
+
     }
 
     public function topicLikeToggle($forumSlug, $topicSlug)
@@ -456,7 +578,9 @@ class ForumController extends Controller
 
                 return response()->json([
                     'code' => 200,
-                    'add' => $add
+                    'add' => $add,
+                    'title' => trans('public.request_success'),
+                    'msg' => $add ? trans('update.topic_bookmarked_successfully') : trans('update.topic_un_bookmarked_successfully'),
                 ]);
             }
         }
@@ -489,14 +613,15 @@ class ForumController extends Controller
                     ])->get();
 
                 $data = [
-                    'pageTitle' => 'edit topic',
+                    'pageTitle' => trans('update.edit_topic'),
                     'pageDescription' => '',
                     'pageRobot' => '',
                     'forums' => $forums,
                     'topic' => $topic,
                 ];
+                $data = array_merge($data, $this->getHeroStats());
 
-                return view('web.default.forum.create_topic', $data);
+                return view('design_1.web.forums.topics.create.index', $data);
             }
         }
 
@@ -533,7 +658,7 @@ class ForumController extends Controller
                     'close' => false,
                 ]);
 
-                $this->handleTopicAttachments($topic, $data);
+                $this->handleTopicCoverAndAttachments($request, $topic);
 
                 $toastData = [
                     'title' => trans('public.request_success'),
@@ -589,7 +714,29 @@ class ForumController extends Controller
         abort(403);
     }
 
-    public function posts($forumSlug, $topicSlug)
+    public function deleteTopicAttachment($attachmentId)
+    {
+        $user = auth()->user();
+        $attachment = ForumTopicAttachment::where('id', $attachmentId)
+            ->where('creator_id', $user->id)
+            ->first();
+
+        if (!empty($attachment)) {
+            $path = $attachment->path;
+            $attachment->delete();
+            $this->removeFile($path);
+
+            return response()->json([
+                'code' => 200,
+                'title' => trans('public.request_success'),
+                'msg' => trans('update.items_deleted_successful'),
+            ]);
+        }
+
+        return response()->json([], 422);
+    }
+
+    public function posts(Request $request, $forumSlug, $topicSlug)
     {
         $forum = Forum::where('slug', $forumSlug)
             ->where('status', 'active')
@@ -608,7 +755,10 @@ class ForumController extends Controller
                         $query->with([
                             'parent'
                         ]);
-                    }
+                    },
+                    'creator' => function ($query) {
+                        $query->select('id', 'full_name', 'username', 'role_id', 'avatar', 'avatar_settings', 'created_at');
+                    },
                 ])
                 ->first();
 
@@ -631,363 +781,29 @@ class ForumController extends Controller
                     $topic->bookmarked = !empty($bookmarked);
                 }
 
+                $topic->members_count = ForumTopicPost::query()->select(DB::raw('count(distinct user_id) as count'))
+                    ->where('topic_id', $topic->id)
+                    ->first()->count;
+
+
+                // Visit Logs
+                $visitLogMixin = new VisitLogMixin();
+                $visitLogMixin->storeVisit($request, $topic->creator_id, $topic->id, MorphTypesEnum::FORUM_TOPIC);
+
                 $data = [
                     'pageTitle' => $topic->title,
-                    'pageDescription' => $topic->description,
+                    'pageDescription' => !empty($topic->description) ? truncate(strip_tags($topic->description), 160) : '',
                     'pageRobot' => '',
                     'forum' => $forum,
                     'topic' => $topic,
                     'likedPostsIds' => $likedPostsIds,
                 ];
 
-                return view('web.default.forum.posts', $data);
+                return view('design_1.web.forums.posts.index', $data);
             }
         }
 
         abort(404);
     }
 
-    public function storePost(Request $request, $forumSlug, $topicSlug)
-    {
-        $user = auth()->user();
-
-        $forum = Forum::where('slug', $forumSlug)
-            ->where('status', 'active')
-            ->first();
-
-        if (!empty($user) and !empty($forum) and $forum->checkUserCanCreateTopic($user)) {
-            $topic = ForumTopic::where('slug', $topicSlug)
-                ->where('forum_id', $forum->id)
-                ->first();
-
-            if (!empty($topic)) {
-                $forum = $topic->forum;
-
-                if (!$topic->close and !$forum->isClosed()) {
-                    $data = $request->all();
-
-                    $validator = Validator::make($data, [
-                        'description' => 'required|min:3'
-                    ]);
-
-                    if ($validator->fails()) {
-                        return response([
-                            'code' => 422,
-                            'errors' => $validator->errors(),
-                        ], 422);
-                    }
-
-                    $replyPostId = (!empty($data['reply_post_id']) and $data['reply_post_id'] != '') ? $data['reply_post_id'] : null;
-
-                    $post = ForumTopicPost::create([
-                        'user_id' => $user->id,
-                        'topic_id' => $topic->id,
-                        'parent_id' => $replyPostId,
-                        'description' => $data['description'],
-                        'attach' => $data['attach'],
-                        'created_at' => time(),
-                    ]);
-
-                    $buyStoreReward = RewardAccounting::calculateScore(Reward::SEND_TOPIC_POST);
-                    RewardAccounting::makeRewardAccounting($post->user_id, $buyStoreReward, Reward::SEND_TOPIC_POST, $post->id);
-
-                    $notifyOptions = [
-                        '[topic_title]' => $topic->title,
-                        '[u.name]' => $user->full_name
-                    ];
-                    sendNotification('send_post_in_topic', $notifyOptions, $topic->creator_id);
-
-                    return response()->json([
-                        'code' => 200
-                    ]);
-                }
-            }
-        }
-
-        abort(403);
-    }
-
-
-    public function storeTopicReport(Request $request, $forumSlug, $topicSlug)
-    {
-        $user = auth()->user();
-
-
-        if (!empty($user)) {
-            $data = $request->all();
-
-            $validator = Validator::make($data, [
-                'item_id' => 'required',
-                'item_type' => 'required',
-                'message' => 'required|min:3',
-            ]);
-
-            if ($validator->fails()) {
-                return response([
-                    'code' => 422,
-                    'errors' => $validator->errors(),
-                ], 422);
-            }
-
-            ForumTopicReport::create([
-                'user_id' => $user->id,
-                'topic_id' => ($data['item_type'] == 'topic') ? $data['item_id'] : null,
-                'topic_post_id' => ($data['item_type'] == 'topic_post') ? $data['item_id'] : null,
-                'message' => $data['message'],
-                'created_at' => time(),
-            ]);
-
-            $notifyOptions = [
-                '[u.name]' => $user->full_name,
-                '[content_type]' => trans('public.' . $data['item_type'])
-            ];
-            sendNotification("new_report_item_for_admin", $notifyOptions, 1);
-
-
-            return response()->json([
-                'code' => 200
-            ]);
-        }
-
-        abort(403);
-    }
-
-    public function postLikeToggle($forumSlug, $topicSlug, $postId)
-    {
-        $user = auth()->user();
-
-        $forum = Forum::where('slug', $forumSlug)
-            ->where('status', 'active')
-            ->first();
-
-        if (!empty($user) and !empty($forum) and $forum->checkUserCanCreateTopic($user)) {
-            $topic = ForumTopic::where('slug', $topicSlug)
-                ->where('forum_id', $forum->id)
-                ->first();
-
-            if (!empty($topic)) {
-                $post = ForumTopicPost::where('id', $postId)
-                    ->where('topic_id', $topic->id)
-                    ->first();
-
-                if (!empty($post)) {
-                    $like = ForumTopicLike::where('user_id', $user->id)
-                        ->where('topic_post_id', $postId)
-                        ->first();
-
-                    $likeStatus = true;
-                    if (!empty($like)) {
-                        $like->delete();
-                        $likeStatus = false;
-                    } else {
-                        ForumTopicLike::create([
-                            'user_id' => $user->id,
-                            'topic_post_id' => $postId,
-                        ]);
-                    }
-
-                    return response()->json([
-                        'code' => 200,
-                        'likes' => $post->likes->count(),
-                        'status' => $likeStatus
-                    ]);
-                }
-            }
-        }
-
-
-        abort(403);
-    }
-
-
-    public function postUnPin($forumSlug, $topicSlug, $postId)
-    {
-        $user = auth()->user();
-
-        $forum = Forum::where('slug', $forumSlug)
-            ->where('status', 'active')
-            ->first();
-
-        if (!empty($user) and !empty($forum) and $forum->checkUserCanCreateTopic($user)) {
-            $topic = ForumTopic::where('slug', $topicSlug)
-                ->where('forum_id', $forum->id)
-                ->where('creator_id', $user->id)
-                ->first();
-
-            if (!empty($topic)) {
-                $post = ForumTopicPost::where('id', $postId)
-                    ->where('topic_id', $topic->id)
-                    ->first();
-
-                if (!empty($post)) {
-                    $post->update([
-                        'pin' => false
-                    ]);
-
-                    return response()->json([
-                        'code' => 200,
-                    ]);
-                }
-            }
-        }
-
-        abort(403);
-    }
-
-    public function postPin($forumSlug, $topicSlug, $postId)
-    {
-        $user = auth()->user();
-
-        $forum = Forum::where('slug', $forumSlug)
-            ->where('status', 'active')
-            ->first();
-
-        if (!empty($user) and !empty($forum) and $forum->checkUserCanCreateTopic($user)) {
-            $topic = ForumTopic::where('slug', $topicSlug)
-                ->where('forum_id', $forum->id)
-                ->where('creator_id', $user->id)
-                ->first();
-
-            if (!empty($topic)) {
-                $post = ForumTopicPost::where('id', $postId)
-                    ->where('topic_id', $topic->id)
-                    ->first();
-
-                if (!empty($post)) {
-                    $post->update([
-                        'pin' => true
-                    ]);
-
-                    return response()->json([
-                        'code' => 200,
-                    ]);
-                }
-            }
-        }
-
-        abort(403);
-    }
-
-    public function postEdit($forumSlug, $topicSlug, $postId)
-    {
-        $user = auth()->user();
-
-        $forum = Forum::where('slug', $forumSlug)
-            ->where('status', 'active')
-            ->first();
-
-        if (!empty($user) and !empty($forum) and $forum->checkUserCanCreateTopic($user)) {
-            $topic = ForumTopic::where('slug', $topicSlug)
-                ->where('forum_id', $forum->id)
-                ->first();
-
-            if (!empty($topic)) {
-                $post = ForumTopicPost::where('id', $postId)
-                    ->where('user_id', $user->id)
-                    ->where('topic_id', $topic->id)
-                    ->first();
-
-                if (!empty($post)) {
-
-                    return response()->json([
-                        'code' => 200,
-                        'post' => $post
-                    ]);
-                }
-            }
-        }
-
-        abort(403);
-    }
-
-    public function postUpdate(Request $request, $forumSlug, $topicSlug, $postId)
-    {
-        $user = auth()->user();
-
-        $forum = Forum::where('slug', $forumSlug)
-            ->where('status', 'active')
-            ->first();
-
-        if (!empty($user) and !empty($forum) and $forum->checkUserCanCreateTopic($user)) {
-            $topic = ForumTopic::where('slug', $topicSlug)
-                ->where('forum_id', $forum->id)
-                ->first();
-
-            if (!empty($topic)) {
-
-                $post = ForumTopicPost::where('id', $postId)
-                    ->where('user_id', $user->id)
-                    ->where('topic_id', $topic->id)
-                    ->first();
-
-                if (!empty($post)) {
-                    $data = $request->all();
-
-                    $validator = Validator::make($data, [
-                        'description' => 'required|min:3'
-                    ]);
-
-                    if ($validator->fails()) {
-                        return response([
-                            'code' => 422,
-                            'errors' => $validator->errors(),
-                        ], 422);
-                    }
-
-                    $post->update([
-                        'description' => $data['description'],
-                        'attach' => $data['attach'],
-                    ]);
-
-                    return response()->json([
-                        'code' => 200
-                    ]);
-                }
-            }
-        }
-
-        abort(403);
-    }
-
-    public function postDownloadAttachment($forumSlug, $topicSlug, $postId)
-    {
-        $user = auth()->user();
-
-        $forum = Forum::where('slug', $forumSlug)
-            ->where('status', 'active')
-            ->first();
-
-        if (!empty($user) and !empty($forum) and $forum->checkUserCanCreateTopic($user)) {
-            $topic = ForumTopic::where('slug', $topicSlug)
-                ->where('forum_id', $forum->id)
-                ->first();
-
-            if (!empty($topic)) {
-                $post = ForumTopicPost::where('id', $postId)
-                    ->where('topic_id', $topic->id)
-                    ->first();
-
-                if (!empty($post)) {
-                    $filePath = public_path($post->attach);
-
-                    if (file_exists($filePath)) {
-                        $fileInfo = pathinfo($filePath);
-                        $type = (!empty($fileInfo) and !empty($fileInfo['extension'])) ? $fileInfo['extension'] : '';
-
-                        $fileName = str_replace(' ', '-', "attachment-{$post->id}");
-                        $fileName = str_replace('.', '-', $fileName);
-                        $fileName .= '.' . $type;
-
-                        $headers = array(
-                            'Content-Type: application/' . $type,
-                        );
-
-                        return response()->download($filePath, $fileName, $headers);
-                    }
-                }
-            }
-        }
-
-        abort(403);
-    }
 }

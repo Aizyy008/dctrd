@@ -53,7 +53,7 @@ class Channel extends BasePaymentChannel implements IChannel
 
         session()->put($this->order_session_key, $order->id);
 
-        return view('web.default.cart.channels.payhere_checkout_form', $data);
+        return view('design_1.web.cart.payment.channels.payhere_checkout_form', $data);
     }
 
     private function action_url()

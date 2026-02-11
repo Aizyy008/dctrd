@@ -1,4 +1,4 @@
-@extends('web.default.layouts.email')
+@extends('design_1.web.emails.layout')
 
 @section('body')
     <!-- content -->

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Api\Bundle;
 use App\Models\Cart;
 use App\Models\Api\Product;
@@ -36,7 +36,7 @@ class AddCartController extends Controller
             $checkCourseForSale = $webinar->checkWebinarForSale($user, true);
 
             if ($checkCourseForSale != 'ok') {
-                return $checkCourseForSale;
+                return back()->with(['toast' => $checkCourseForSale]);
             }
 
             $activeSpecialOffer = $webinar->activeSpecialOffer();
@@ -73,7 +73,7 @@ class AddCartController extends Controller
             $checkCourseForSale = $bundle->checkWebinarForSale($user);
 
             if ($checkCourseForSale != 'ok') {
-                return $checkCourseForSale;
+                return back()->with(['toast' => $checkCourseForSale]);
             }
 
             $activeSpecialOffer = $bundle->activeSpecialOffer();

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api\Panel;
 
 use App\Http\Controllers\Api\Controller;
@@ -7,35 +8,38 @@ use Illuminate\Http\Request;
 
 class CoursePersonalNotesController extends Controller
 {
-    public function show(Request $request , $id)
+    public function show(Request $request)
     {
         if (!empty(getFeaturesSettings('course_notes_status'))) {
+            $data = $request->all();
+            validateParam($data, [
+                'item' => 'required',
+                'type' => 'required|in:session,file,quiz,text_lesson,assignment',
+            ]);
 
             $user = apiAuth();
+            $type = $this->getMorphByItemType($data['type']);
+            $itemId = $data['item'];
 
             $personalNote = CoursePersonalNote::query()
-                ->where("user_id",$user->id)
-                ->where('targetable_id', $id)
+                ->where("user_id", $user->id)
+                ->where('targetable_id', $itemId)
+                ->where('targetable_type', $type)
                 ->first();
 
             if (!empty($personalNote)) {
                 if (!empty($personalNote->attachment)) {
-                    $attachment = $personalNote->attachment;
-                    $filePath = public_path($attachment);
-
-                    if (file_exists($filePath)) {
-                        $extension = \Illuminate\Support\Facades\File::extension($filePath);
-                        $fileName = "personal_note_{$personalNote->id}." . $extension;
-
-                        $personalNote->attachment = url( $filePath . $fileName );
-                    }
+                    $personalNote->attachment = url($personalNote->attachment);
                 }
-                return apiResponse2(1, 'retrieved', trans('api.public.retrieved'),$personalNote);
+
+                return apiResponse2(1, 'retrieved', trans('api.public.retrieved'), $personalNote);
             }
         }
-        return apiResponse2(1, 'retrieved', trans('api.public.retrieved'),[]);
+
+        return apiResponse2(0, 'not_found', trans('api.not_found'));
     }
-    public function destroy( $id)
+
+    public function destroy($id)
     {
         if (!empty(getFeaturesSettings('course_notes_status'))) {
 
@@ -52,15 +56,64 @@ class CoursePersonalNotesController extends Controller
 
         return apiResponse2(0, 'error', trans('api.public.error'));
     }
-    public function store(Request $request , $id)
+
+    public function store(Request $request)
     {
         $user = apiAuth();
 
         $data = $request->all();
+        validateParam($data, [
+            'item_type' => 'required|in:session,file,quiz,text_lesson,assignment',
+            'item_id' => 'required',
+            'course_id' => 'required',
+            'note' => 'required',
+        ]);
 
+
+        $type = $this->getMorphByItemType($data['item_type']);
+
+
+        $note = CoursePersonalNote::query()->updateOrCreate([
+            'user_id' => $user->id,
+            'course_id' => $data['course_id'],
+            'targetable_id' => $data['item_id'],
+            'targetable_type' => $type,
+        ], [
+            'note' => $data['note'] ?? null,
+            'created_at' => time()
+        ]);
+
+        // Handle Attachment
+        $this->handleUploadAttachment($request, $note, $user);
+
+        if (!empty($note->attachment)) {
+            $note->attachment = url($note->attachment);
+        }
+
+        return apiResponse2(1, 'retrieved', trans('api.public.retrieved'), $note);
+    }
+
+    private function handleUploadAttachment(Request $request, &$coursePersonalNote, $user)
+    {
+        $path = $coursePersonalNote->attachment ?? null;
+
+        $file = $request->file('attachment');
+
+        if (!empty($file)) {
+            $destination = "webinars/personal_notes/{$coursePersonalNote->id}";
+            $path = $this->uploadFile($file, $destination, 'attachment', $user->id);
+        }
+
+        $coursePersonalNote->update([
+            'attachment' => $path
+        ]);
+    }
+
+    private function getMorphByItemType($itemType)
+    {
         $type = "";
 
-        switch ($data['item_type']) {
+        switch ($itemType) {
             case "session":
                 $type = "App\Models\Session";
                 break;
@@ -82,18 +135,6 @@ class CoursePersonalNotesController extends Controller
                 break;
         }
 
-
-        CoursePersonalNote::query()->updateOrCreate([
-            'user_id' => $user->id,
-            'course_id' => $data['course_id'],
-            'targetable_id' => $data['item_id'],
-            'targetable_type' => $type,
-        ], [
-            'note' => $data['note'] ?? null,
-            'attachment' => null,
-            'created_at' => time()
-        ]);
-
-        return apiResponse2(1, 'retrieved', trans('api.public.retrieved'));
+        return $type;
     }
 }

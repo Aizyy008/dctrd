@@ -18,6 +18,6 @@
             @endforeach
         </select>
 
-        <div class="text-muted text-small mt-1">{{ trans('update.select_badges_hint') }}</div>
+        <div class="text-gray-500 text-small mt-1">{{ trans('update.select_badges_hint') }}</div>
     </div>
 @endif

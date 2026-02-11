@@ -91,6 +91,14 @@ class SidebarController extends Controller
 
         return ($count > 0);
     }
+    public function getEventsCommentsBeep()
+    {
+        $count = Comment::whereNotNull('event_id')
+            ->where('status', 'pending')
+            ->count();
+
+        return ($count > 0);
+    }
 
     public function getPayoutRequestBeep()
     {

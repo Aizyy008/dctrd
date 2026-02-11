@@ -48,7 +48,7 @@ class GroupController extends Controller
         $this->authorize('admin_group_create');
 
         $this->validate($request, [
-            'users' => 'required|array',
+            'users' => 'nullable|array',
             'name' => 'required',
         ]);
 
@@ -59,7 +59,7 @@ class GroupController extends Controller
 
         $group = Group::create($data);
 
-        $users = $request->input('users');
+        $users = $request->get('users');
 
         if (!empty($users)) {
             foreach ($users as $userId) {
@@ -81,7 +81,12 @@ class GroupController extends Controller
             }
         }
 
-        return redirect(getAdminPanelUrl() . '/users/groups');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.user_group_created_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/users/groups/{$group->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function edit($id)
@@ -111,7 +116,7 @@ class GroupController extends Controller
         $this->authorize('admin_group_edit');
 
         $this->validate($request, [
-            'users' => 'required|array',
+            'users' => 'nullable|array',
             'percent' => 'nullable',
             'name' => 'required',
         ]);
@@ -126,7 +131,7 @@ class GroupController extends Controller
 
         $group->update($data);
 
-        $users = $request->input('users');
+        $users = $request->get('users');
 
         $group->groupUsers()->delete();
 
@@ -146,7 +151,12 @@ class GroupController extends Controller
             }
         }
 
-        return redirect(getAdminPanelUrl() . '/users/groups');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.user_group_updated_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/users/groups/{$group->id}/edit"))->with(['toast' => $toastData]);
     }
 
     private function storeUserCommissions($group, $data)
@@ -186,7 +196,12 @@ class GroupController extends Controller
 
         Group::find($id)->delete();
 
-        return redirect(getAdminPanelUrl() . '/users/groups');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.user_group_deleted_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/users/groups"))->with(['toast' => $toastData]);
     }
 
     public function groupRegistrationPackage(Request $request, $id)

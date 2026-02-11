@@ -28,7 +28,7 @@
                     <label class="custom-switch-description mb-0 cursor-pointer" for="statusSwitch">{{ trans('admin/main.active') }}</label>
                 </label>
 
-                <div class="text-muted text-small">{{ trans('update.registration_bonus_setting_active_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.registration_bonus_setting_active_hint') }}</div>
             </div>
 
             <div class="form-group custom-switches-stacked ">
@@ -39,7 +39,7 @@
                     <label class="custom-switch-description mb-0 cursor-pointer" for="unlock_registration_bonus_instantlySwitch">{{ trans('update.unlock_registration_bonus_instantly') }}</label>
                 </label>
 
-                <div class="text-muted text-small">{{ trans('update.unlock_registration_bonus_instantly_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.unlock_registration_bonus_instantly_hint') }}</div>
             </div>
 
             <div class="js-unlock-registration-bonus-with-referral-field form-group custom-switches-stacked {{ (!empty($basicValue) and !empty($basicValue['unlock_registration_bonus_instantly'])) ? 'd-none' : '' }}">
@@ -50,13 +50,13 @@
                     <label class="custom-switch-description mb-0 cursor-pointer" for="unlock_registration_bonus_with_referralSwitch">{{ trans('update.unlock_registration_bonus_with_referral') }}</label>
                 </label>
 
-                <div class="text-muted text-small">{{ trans('update.unlock_registration_bonus_with_referral_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.unlock_registration_bonus_with_referral_hint') }}</div>
             </div>
 
             <div class="js-number-of-referred-users-field form-group {{ (!empty($basicValue) and !empty($basicValue['unlock_registration_bonus_with_referral'])) ? '' : 'd-none' }}">
                 <label>{{ trans('update.number_of_referred_users') }}</label>
                 <input type="number" name="value[number_of_referred_users]" value="{{ (!empty($basicValue) and !empty($basicValue['number_of_referred_users'])) ? $basicValue['number_of_referred_users'] : old('number_of_referred_users') }}" class="form-control"/>
-                <div class="text-muted text-small mt-1">{{ trans('update.number_of_referred_users_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.number_of_referred_users_hint') }}</div>
             </div>
 
             <div class="js-enable-referred-users-purchase-field form-group custom-switches-stacked {{ (!empty($basicValue) and !empty($basicValue['unlock_registration_bonus_instantly'])) ? 'd-none' : ((!empty($basicValue) and !empty($basicValue['unlock_registration_bonus_with_referral'])) ? '' : 'd-none') }}">
@@ -67,19 +67,19 @@
                     <label class="custom-switch-description mb-0 cursor-pointer" for="enable_referred_users_purchaseSwitch">{{ trans('update.enable_referred_users_purchase') }}</label>
                 </label>
 
-                <div class="text-muted text-small">{{ trans('update.enable_referred_users_purchase_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.enable_referred_users_purchase_hint') }}</div>
             </div>
 
             <div class="js-purchase-amount-for-unlocking-bonus-field form-group {{ (!empty($basicValue) and !empty($basicValue['enable_referred_users_purchase'])) ? '' : 'd-none' }}">
                 <label>{{ trans('update.purchase_amount_for_unlocking_bonus') }}</label>
                 <input type="number" name="value[purchase_amount_for_unlocking_bonus]" value="{{ (!empty($basicValue) and !empty($basicValue['purchase_amount_for_unlocking_bonus'])) ? $basicValue['purchase_amount_for_unlocking_bonus'] : old('purchase_amount_for_unlocking_bonus') }}" class="form-control"/>
-                <div class="text-muted text-small mt-1">{{ trans('update.purchase_amount_for_unlocking_bonus_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.purchase_amount_for_unlocking_bonus_hint') }}</div>
             </div>
 
             <div class="form-group">
                 <label>{{ trans('update.registration_bonus_amount') }}</label>
                 <input type="number" name="value[registration_bonus_amount]" value="{{ (!empty($basicValue) and !empty($basicValue['registration_bonus_amount'])) ? $basicValue['registration_bonus_amount'] : old('registration_bonus_amount') }}" class="form-control"/>
-                <div class="text-muted text-small mt-1">{{ trans('update.registration_bonus_amount_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.registration_bonus_amount_hint') }}</div>
             </div>
 
             <div class="form-group">
@@ -88,11 +88,13 @@
                     <option value="income_wallet" {{ (!empty($basicValue) and !empty($basicValue['bonus_wallet']) and $basicValue['bonus_wallet'] == "income_wallet") ? 'selected' : '' }}>{{ trans('update.income_wallet') }}</option>
                     <option value="balance_wallet" {{ (!empty($basicValue) and !empty($basicValue['bonus_wallet']) and $basicValue['bonus_wallet'] == "balance_wallet") ? 'selected' : '' }}>{{ trans('update.balance_wallet') }}</option>
                 </select>
-                <div class="text-muted text-small mt-1">{{ trans('update.bonus_wallet_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.bonus_wallet_hint') }}</div>
             </div>
 
-
+            <div class="text-right">
             <button type="submit" class="btn btn-primary mt-1">{{ trans('admin/main.submit') }}</button>
+            </div>
+
         </form>
     </div>
 </div>

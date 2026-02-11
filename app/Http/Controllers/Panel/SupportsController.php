@@ -48,8 +48,7 @@ class SupportsController extends Controller
                     }]);
                 },
                 'conversations' => function ($query) {
-                    $query->orderBy('created_at', 'desc')
-                        ->first();
+                    $query->orderBy('created_at', 'desc');
                 }
             ])->get();
 
@@ -80,7 +79,7 @@ class SupportsController extends Controller
         }
 
         $data = [
-            'pageTitle' => trans('panel.send_new_support'),
+            'pageTitle' => trans('update.classes_support'),
             'supports' => $supports,
             'supportsCount' => $supportsCount,
             'openSupportsCount' => $openSupportsCount,
@@ -124,7 +123,7 @@ class SupportsController extends Controller
             $data['selectSupport'] = $selectSupport;
         }
 
-        return view(getTemplate() . '.panel.support.conversations', $data);
+        return view('design_1.panel.support.conversations.index', $data);
     }
 
     public function tickets(Request $request, $id = null)
@@ -192,7 +191,7 @@ class SupportsController extends Controller
             $data['selectSupport'] = $selectSupport;
         }
 
-        return view(getTemplate() . '.panel.support.ticket_conversations', $data);
+        return view('design_1.panel.support.tickets.index', $data);
     }
 
     private function filters($query, $request, $userWebinarsIds = [])
@@ -270,7 +269,7 @@ class SupportsController extends Controller
             'webinars' => $webinars
         ];
 
-        return view(getTemplate() . '.panel.support.new', $data);
+        return view('design_1.panel.support.create.index', $data);
     }
 
     public function store(Request $request)
@@ -285,7 +284,7 @@ class SupportsController extends Controller
             'department_id' => 'required_if:type,platform_support|exists:support_departments,id',
             'webinar_id' => 'required_if:type,course_support|exists:webinars,id',
             'message' => 'required|min:2',
-            'attach' => 'nullable|string',
+            'attach' => 'nullable|file',
         ]);
 
         $data = $request->all();
@@ -301,13 +300,16 @@ class SupportsController extends Controller
             'updated_at' => time(),
         ]);
 
-        SupportConversation::create([
+        $supportConversation = SupportConversation::create([
             'support_id' => $support->id,
             'sender_id' => $user->id,
             'message' => $data['message'],
-            'attach' => $data['attach'],
+            'attach' => null,
             'created_at' => time(),
         ]);
+
+        // handle Attach
+        $this->handleConversationAttachment($request, $supportConversation, $user);
 
         if (!empty($data['webinar_id'])) {
             $webinar = Webinar::findOrFail($data['webinar_id']);
@@ -333,6 +335,23 @@ class SupportsController extends Controller
         }
 
         return redirect($url);
+    }
+
+    private function handleConversationAttachment(Request $request, $supportConversation, $user)
+    {
+        $path = $supportConversation->attach;
+        $attachFile = $request->file('attach');
+
+        if (!empty($attachFile)) {
+            $destination = "supports/{$supportConversation->support_id}/conversations";
+            $fileName = "attach_{$supportConversation->id}";
+
+            $path = $this->uploadFile($attachFile, $destination, $fileName, $user->id);
+        }
+
+        $supportConversation->update([
+            'attach' => $path,
+        ]);
     }
 
     public function storeConversations(Request $request, $id)
@@ -361,13 +380,16 @@ class SupportsController extends Controller
             'updated_at' => time()
         ]);
 
-        SupportConversation::create([
+        $supportConversation = SupportConversation::create([
             'support_id' => $support->id,
             'sender_id' => $user->id,
             'message' => $data['message'],
-            'attach' => $data['attach'],
+            'attach' => null,
             'created_at' => time(),
         ]);
+
+        // handle Attach
+        $this->handleConversationAttachment($request, $supportConversation, $user);
 
         if (!empty($support->webinar_id)) {
             $webinar = Webinar::findOrFail($support->webinar_id);

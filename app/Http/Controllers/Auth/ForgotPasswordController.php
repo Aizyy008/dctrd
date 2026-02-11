@@ -29,7 +29,12 @@ class ForgotPasswordController extends Controller
 
     public function showLinkRequestForm()
     {
-        return view(getTemplate() . '.auth.forgot_password');
+        $data = [
+            'pageTitle' => trans('auth.forget_password'),
+        ];
+
+        $authTemplate = getThemeAuthenticationPagesStyleName();
+        return view("design_1.web.auth.{$authTemplate}.forgot_password.index", $data);
     }
 
     public function forgot(Request $request)
@@ -116,7 +121,7 @@ class ForgotPasswordController extends Controller
         $senderName = !empty($generalSettings['site_name']) ? $generalSettings['site_name'] : env('MAIL_FROM_NAME');
 
         try {
-            Mail::send('web.default.auth.password_verify', $emailData, function ($message) use ($email, $senderEmail, $senderName) {
+            Mail::send('design_1.web.emails.password_verify', $emailData, function ($message) use ($email, $senderEmail, $senderName) {
                 $message->from($senderEmail, $senderName);
                 $message->to($email);
                 $message->subject(trans('auth.reset_password_notification'));

@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\MorphTypesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\traits\CheckContentLimitationTrait;
+use App\Http\Controllers\Web\traits\CourseShowTrait;
 use App\Http\Controllers\Web\traits\InstallmentsTrait;
 use App\Mixins\Cashback\CashbackRules;
 use App\Mixins\Installment\InstallmentPlans;
+use App\Mixins\Logs\VisitLogMixin;
 use App\Models\AdvertisingBanner;
 use App\Models\Cart;
+use App\Models\Certificate;
 use App\Models\Discount;
 use App\Models\Favorite;
 use App\Models\File;
@@ -20,6 +24,7 @@ use App\Models\CourseLearning;
 use App\Models\WebinarChapter;
 use App\Models\WebinarReport;
 use App\Models\Webinar;
+use App\Models\WebinarReview;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,8 +34,9 @@ class WebinarController extends Controller
 {
     use CheckContentLimitationTrait;
     use InstallmentsTrait;
+    use CourseShowTrait;
 
-    public function course($slug, $justReturnData = false)
+    public function course(Request $request, $slug, $justReturnData = false)
     {
         $user = null;
 
@@ -54,9 +60,9 @@ class WebinarController extends Controller
                 },
                 'tags',
                 'prerequisites' => function ($query) {
-                    $query->with(['prerequisiteWebinar' => function ($query) {
+                    $query->with(['course' => function ($query) {
                         $query->with(['teacher' => function ($qu) {
-                            $qu->select('id', 'full_name', 'avatar');
+                            $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
                         }]);
                     }]);
                     $query->orderBy('order', 'asc');
@@ -124,32 +130,6 @@ class WebinarController extends Controller
                 'teacher',
                 'reviews' => function ($query) {
                     $query->where('status', 'active');
-                    $query->with([
-                        'comments' => function ($query) {
-                            $query->where('status', 'active');
-                        },
-                        'creator' => function ($qu) {
-                            $qu->select('id', 'full_name', 'avatar');
-                        }
-                    ]);
-                },
-                'comments' => function ($query) {
-                    $query->where('status', 'active');
-                    $query->whereNull('reply_id');
-                    $query->with([
-                        'user' => function ($query) {
-                            $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
-                        },
-                        'replies' => function ($query) {
-                            $query->where('status', 'active');
-                            $query->with([
-                                'user' => function ($query) {
-                                    $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
-                                }
-                            ]);
-                        }
-                    ]);
-                    $query->orderBy('created_at', 'desc');
                 },
             ])
             ->withCount([
@@ -173,7 +153,7 @@ class WebinarController extends Controller
                     'pageTitle' => trans('update.access_denied'),
                     'pageRobot' => getPageRobotNoIndex(),
                 ];
-                return view('web.default.course.not_access', $data);
+                return view('design_1.web.courses.not_access.index', $data);
             }
 
             /* Installment Check */
@@ -181,6 +161,14 @@ class WebinarController extends Controller
 
             if ($installmentLimitation != "ok") {
                 return $installmentLimitation;
+            }
+
+            if ($course->only_for_students and (empty($user) or (!$user->isAdmin() and !$course->canAccess($user)))) {
+                $data = [
+                    'pageTitle' => trans('update.access_denied'),
+                    'pageRobot' => getPageRobotNoIndex(),
+                ];
+                return view('design_1.web.courses.not_access.index', $data);
             }
         }
 
@@ -199,13 +187,7 @@ class WebinarController extends Controller
             return $justReturnData ? false : back();
         }
 
-        $isFavorite = false;
-
-        if (!empty($user)) {
-            $isFavorite = Favorite::where('webinar_id', $course->id)
-                ->where('user_id', $user->id)
-                ->first();
-        }
+        $isFavorite = $course->isFavoriteAuthUser();
 
         $webinarContentCount = 0;
         if (!empty($course->sessions)) {
@@ -305,6 +287,12 @@ class WebinarController extends Controller
                 ->get();
         }
 
+        $webinarReviewController = new WebinarReviewController();
+        $courseReviews = $webinarReviewController->getReviewsByCourseSlug($request, $course->slug);
+
+        $commentController = new CommentController();
+        $courseComments = $commentController->getComments($request, 'webinar', $course->id);
+
         $data = [
             'pageTitle' => $course->title,
             'pageDescription' => $course->seo_description,
@@ -325,6 +313,9 @@ class WebinarController extends Controller
             'installments' => $installments ?? null,
             'cashbackRules' => $cashbackRules ?? null,
             'instructorDiscounts' => $instructorDiscounts,
+            'courseReviews' => $courseReviews,
+            'courseComments' => $courseComments,
+            'recentReviews' => $this->getCourseRecentReviews($course->id),
         ];
 
         // check for certificate
@@ -336,9 +327,33 @@ class WebinarController extends Controller
             return $data;
         }
 
-        // $data['cross_sellings'] = crossSelling($course->teacher_id, $course, 'single')->getItems();
+        $visitLogMixin = new VisitLogMixin();
+        $visitLogMixin->storeVisit($request, $course->creator_id, $course->id, MorphTypesEnum::WEBINAR);
 
-        return view('web.default.course.index', $data);
+        return view('design_1.web.courses.show.index', $data);
+    }
+
+    private function getCourseRecentReviews($courseId)
+    {
+        $recentReviews = null;
+
+        if (!empty(getFeaturesSettings("course_recent_reviews_status"))) {
+            $recentReviews = WebinarReview::query()
+                ->where('webinar_id', $courseId)
+                ->where('status', 'active')
+                ->whereNotNull('rates')
+                ->orderBy('rates', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->with([
+                    'creator' => function ($query) {
+                        $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio', 'about');
+                    }
+                ])
+                ->limit(5)
+                ->get();
+        }
+
+        return $recentReviews;
     }
 
     private function checkQuizzesResults($user, $quizzes)
@@ -489,7 +504,7 @@ class WebinarController extends Controller
                             'pageTitle' => $file->title,
                             'path' => url($filePath)
                         ];
-                        return view('web.default.course.learningPage.interactive_file', $data);
+                        return view('design_1.web.courses.free_contents.interactive_file', $data);
                     }
 
                     abort(404);
@@ -589,7 +604,7 @@ class WebinarController extends Controller
                             'iframe' => $file->file
                         ];
 
-                        return view('web.default.course.learningPage.interactive_file', $data);
+                        return view('design_1.web.courses.free_contents.interactive_file', $data);
                     } else if ($file->isVideo()) {
                         return response()->file(public_path($file->file));
                     }
@@ -630,7 +645,8 @@ class WebinarController extends Controller
                 ->first();
 
             if (!empty($textLesson)) {
-                $canAccess = $course->checkUserHasBought();
+                $userHasBought = $course->checkUserHasBought($user);
+                $canAccess = $userHasBought;
 
                 if ($textLesson->accessibility == 'paid' and !$canAccess) {
                     $toastData = [
@@ -671,9 +687,10 @@ class WebinarController extends Controller
                     'course' => $course,
                     'nextLesson' => $nextLesson,
                     'previousLesson' => $previousLesson,
+                    'userHasBought' => $userHasBought,
                 ];
 
-                return view(getTemplate() . '.course.text_lesson', $data);
+                return view('design_1.web.courses.free_contents.text_lesson', $data);
             }
         }
 
@@ -693,10 +710,10 @@ class WebinarController extends Controller
                 $checkCourseForSale = checkCourseForSale($course, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
-                if (!empty($course->price) and $course->price > 0) {
+                if (!isFreeModeEnabled() and !empty($course->price) and $course->price > 0) {
                     $toastData = [
                         'title' => trans('cart.fail_purchase'),
                         'msg' => trans('cart.course_not_free'),
@@ -718,6 +735,7 @@ class WebinarController extends Controller
 
                 $notifyOptions = [
                     '[u.name]' => $user->full_name,
+                    '[u.mobile]' => $user->mobile,
                     '[c.title]' => $course->title,
                     '[amount]' => trans('public.free'),
                     '[time.date]' => dateTimeFormat(time(), 'j M Y H:i'),
@@ -738,63 +756,12 @@ class WebinarController extends Controller
         }
     }
 
-    public function reportWebinar(Request $request, $id)
+    public function learningStatus(Request $request, $slug)
     {
         if (auth()->check()) {
             $user = auth()->user();
 
-            $data = $request->all();
-
-            $validator = Validator::make($data, [
-                'reason' => 'required|string',
-                'message' => 'required|string',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'code' => 422,
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-
-            $webinar = Webinar::select('id', 'status')
-                ->where('id', $id)
-                ->where('status', 'active')
-                ->first();
-
-            if (!empty($webinar)) {
-                WebinarReport::create([
-                    'user_id' => $user->id,
-                    'webinar_id' => $webinar->id,
-                    'reason' => $data['reason'],
-                    'message' => $data['message'],
-                    'created_at' => time()
-                ]);
-
-                $notifyOptions = [
-                    '[u.name]' => $user->full_name,
-                    '[content_type]' => trans('product.course')
-                ];
-                sendNotification("new_report_item_for_admin", $notifyOptions, 1);
-
-                return response()->json([
-                    'code' => 200
-                ], 200);
-            }
-        }
-
-        return response()->json([
-            'code' => 401
-        ], 200);
-    }
-
-    public function learningStatus(Request $request, $id)
-    {
-        if (auth()->check()) {
-            $user = auth()->user();
-
-            $course = Webinar::where('id', $id)->first();
+            $course = Webinar::where('slug', $slug)->first();
 
             if (!empty($course) and $course->checkUserHasBought($user)) {
                 $data = $request->all();
@@ -818,74 +785,54 @@ class WebinarController extends Controller
                 // check for certificate
                 $course->makeCertificateForUser($user);
 
-                return response()->json([], 200);
+                $percent = $course->getProgress(true);
+
+                return response()->json([
+                    'code' => 200,
+                    'learning_progress_percent' => $percent,
+                    'title' => trans('public.request_success'),
+                    'msg' => trans('update.section_learning_status_changed_successful'),
+                ]);
             }
         }
 
         abort(403);
     }
 
-    public function buyWithPoint($slug)
+    public function learningStatusCompletedModal($slug)
     {
         if (auth()->check()) {
             $user = auth()->user();
 
-            $course = Webinar::where('slug', $slug)
-                ->where('status', 'active')
-                ->first();
+            $course = Webinar::where('slug', $slug)->first();
 
-            if (!empty($course)) {
-                if (empty($course->points)) {
-                    $toastData = [
-                        'title' => '',
-                        'msg' => trans('update.can_not_buy_this_course_with_point'),
-                        'status' => 'error'
+            if (!empty($course) and $course->checkUserHasBought($user)) {
+                $percent = $course->getProgress(true);
+
+                if ($percent >= 100) {
+                    $courseCertificate = Certificate::where('type', 'course')
+                        ->where('student_id', $user->id)
+                        ->where('webinar_id', $course->id)
+                        ->first();
+
+                    $data = [
+                        'course' => $course,
+                        'courseCertificate' => $courseCertificate,
+                        'percent' => $percent,
+                        'user' => $user,
                     ];
-                    return back()->with(['toast' => $toastData]);
+
+                    $html = (string)view()->make("design_1.web.courses.learning_page.includes.modals.learning_status_completed_modal", $data);
+
+                    return response()->json([
+                        'code' => 200,
+                        'html' => $html,
+                    ]);
                 }
-
-                $availablePoints = $user->getRewardPoints();
-
-                if ($availablePoints < $course->points) {
-                    $toastData = [
-                        'title' => '',
-                        'msg' => trans('update.you_have_no_enough_points_for_this_course'),
-                        'status' => 'error'
-                    ];
-                    return back()->with(['toast' => $toastData]);
-                }
-
-                $checkCourseForSale = checkCourseForSale($course, $user);
-
-                if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
-                }
-
-                Sale::create([
-                    'buyer_id' => $user->id,
-                    'seller_id' => $course->creator_id,
-                    'webinar_id' => $course->id,
-                    'type' => Sale::$webinar,
-                    'payment_method' => Sale::$credit,
-                    'amount' => 0,
-                    'total_amount' => 0,
-                    'created_at' => time(),
-                ]);
-
-                RewardAccounting::makeRewardAccounting($user->id, $course->points, 'withdraw', null, false, RewardAccounting::DEDUCTION);
-
-                $toastData = [
-                    'title' => '',
-                    'msg' => trans('update.success_pay_course_with_point_msg'),
-                    'status' => 'success'
-                ];
-                return back()->with(['toast' => $toastData]);
             }
-
-            abort(404);
-        } else {
-            return redirect('/login');
         }
+
+        return response()->json([], 403);
     }
 
     public function directPayment(Request $request)
@@ -912,7 +859,7 @@ class WebinarController extends Controller
                 $checkCourseForSale = checkCourseForSale($webinar, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
                 $fakeCarts = collect();

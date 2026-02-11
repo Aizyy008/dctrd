@@ -68,7 +68,7 @@ class WebinarChapter extends Model implements TranslatableContract
 
     public function webinar()
     {
-        return $this->hasOne('App\Models\Webinar', 'webinar_id', 'id');
+        return $this->belongsTo('App\Models\Webinar', 'webinar_id', 'id');
     }
 
     public function getDuration()
@@ -95,8 +95,6 @@ class WebinarChapter extends Model implements TranslatableContract
         if ($withQuiz) {
             $count += $this->quizzes->where('status', 'active')->count();
         }
-
-
 
         return $count;
     }

@@ -61,49 +61,30 @@ class AiContentGenerator
         $maxToken = $settings['max_tokens'] ?? null;
         $countText = !empty($settings['number_of_text_generated_per_request']) ? $settings['number_of_text_generated_per_request'] : 1;
 
-        if (in_array($model, AiTextServices::completionsEndpoint)) {
-            try {
-                $result = $client->completions()->create([
-                    'model' => $model,//$serviceType,
-                    'prompt' => $prompt,
-                    'max_tokens' => isset($maxToken) ? (int)$maxToken : null,
-                    'temperature' => 0,
-                    'n' => (int)$countText,
-                ]);
+        if (!in_array($model, AiTextServices::chatCompletionsEndpoint)) {
+            throw new \Exception("Model not supported or deprecated: " . $model);
+        }
 
-                if (!empty($result['choices']) and count($result['choices'])) {
-                    foreach ($result['choices'] as $choice) {
-                        if (!empty($choice['text'])) {
-                            $contents[] = $this->trimText($choice['text']);
-                        }
+        try {
+            $result = $client->chat()->create([
+                'model' => $model,
+                'max_tokens' => isset($maxToken) ? (int)$maxToken : null,
+                'n' => (int)$countText,
+                'messages' => [
+                    ["role" => "user", "content" => $prompt],
+                ],
+            ]);
+
+            if (!empty($result['choices']) and count($result['choices'])) {
+                foreach ($result['choices'] as $choice) {
+                    if (!empty($choice['message']['content'])) {
+                        $contents[] = $this->trimText($choice['message']['content']);
                     }
                 }
-            } catch (\Exception $exception) {
-                dd($exception);
             }
-        } elseif (in_array($model, AiTextServices::chatCompletionsEndpoint)) {
 
-            try {
-                $result = $client->chat()->create([
-                    'model' => $model,
-                    'max_tokens' => isset($maxToken) ? (int)$maxToken : null,
-                    'n' => (int)$countText,
-                    'messages' => [
-                        ["role" => "user", "content" => $prompt],
-                    ],
-                ]);
-
-                if (!empty($result['choices']) and count($result['choices'])) {
-                    foreach ($result['choices'] as $choice) {
-                        if (!empty($choice['message']['content'])) {
-                            $contents[] = $this->trimText($choice['message']['content']);
-                        }
-                    }
-                }
-
-            } catch (\Exception $exception) {
-                dd($exception);
-            }
+        } catch (\Exception $exception) {
+            dd($exception);
         }
 
         return $contents;

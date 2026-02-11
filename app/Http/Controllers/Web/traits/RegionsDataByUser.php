@@ -18,24 +18,15 @@ trait RegionsDataByUser
             ->get();
 
         if (!empty($user->country_id)) {
-            $provinces = Region::select(DB::raw('*, ST_AsText(geo_center) as geo_center'))
-                ->where('type', Region::$province)
-                ->where('country_id', $user->country_id)
-                ->get();
+            $provinces = Region::getRegionsByTypeAndColumn(Region::$province, 'country_id', $user->country_id);
         }
 
         if (!empty($user->province_id)) {
-            $cities = Region::select(DB::raw('*, ST_AsText(geo_center) as geo_center'))
-                ->where('type', Region::$city)
-                ->where('province_id', $user->province_id)
-                ->get();
+            $cities = Region::getRegionsByTypeAndColumn(Region::$city, 'province_id', $user->province_id);
         }
 
         if (!empty($user->city_id)) {
-            $districts = Region::select(DB::raw('*, ST_AsText(geo_center) as geo_center'))
-                ->where('type', Region::$district)
-                ->where('city_id', $user->city_id)
-                ->get();
+            $districts = Region::getRegionsByTypeAndColumn(Region::$district, 'city_id', $user->city_id);
         }
 
         return [

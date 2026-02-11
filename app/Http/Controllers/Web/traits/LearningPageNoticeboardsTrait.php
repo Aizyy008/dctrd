@@ -37,11 +37,14 @@ trait LearningPageNoticeboardsTrait
             'pageTitle' => $course->title,
             'pageDescription' => $course->seo_description,
             'course' => $course,
-            'noticeboards' => true,
-            'dontAllowLoadFirstContent' => true,
             'user' => $user,
         ];
 
-        return view('web.default.course.learningPage.index', $data);
+        $html = (string)view()->make("design_1.web.courses.learning_page.noticeboards.body", $data);
+
+        return response()->json([
+            'code' => 200,
+            'html' => $html,
+        ]);
     }
 }

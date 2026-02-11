@@ -53,7 +53,7 @@ trait CheckForSaleTrait
         $prerequisites = $this->prerequisites;
         if (!empty($prerequisites)) {
             foreach ($prerequisites as $prerequisite) {
-                $prerequisiteWebinar = $prerequisite->prerequisiteWebinar;
+                $prerequisiteWebinar = $prerequisite->course;
 
                 if ($prerequisite->required and !empty($prerequisiteWebinar) and !$prerequisiteWebinar->checkUserHasBought($user)) {
                     $isRequiredPrerequisite = true;

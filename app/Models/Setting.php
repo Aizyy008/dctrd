@@ -29,39 +29,37 @@ class Setting extends Model implements TranslatableContract
     // The result is stored in these variables
     // If you use each function more than once per page, the database will be requested only once.
     static $seoMetas, $socials,
-        $footer, $general, $homeSections, $features,
-        $financial, $offlineBanks, $referral, $currencySettings,
-        $homeHero, $homeHero2, $homeVideoOrImage,
-        $pageBackground, $customCssJs,
+        $general, $features,
+        $financial, $offlineBanks, $referral, $referralHowWork, $currencySettings,
         $reportReasons, $notificationTemplates,
-        $contactPage, $Error404Page, $navbarLink, $panelSidebar, $findInstructors, $rewardProgram, $rewardsSettings, $storeSettings,
+        $contactPage, $Error404Page, $Error500Page, $Error419Page, $Error403Page, $navbarLink, $panelSidebar, $findInstructors, $rewardProgram, $rewardsSettings, $storeSettings,
         $registrationPackagesGeneral, $registrationPackagesInstructors, $registrationPackagesOrganizations, $becomeInstructorSection,
-        $themeColors, $themeFonts, $forumHomeSection, $cookieSettings, $mobileAppSettings, $remindersSettings, $generalSecuritySettings, $advertisingModal,
+        $cookieSettings, $mobileAppSettings, $remindersSettings, $generalSecuritySettings, $advertisingModal,
         $othersPersonalization, $installmentsSettings, $installmentsTermsSettings, $registrationBonusSettings, $registrationBonusTermsSettings, $statisticsSettings,
         $maintenanceSettings, $restrictionSettings, $generalOptions, $giftsGeneralSettings, $aiContentsSettings, $certificateSettings, $abandonedCartSettings, $smsChannelsSettings,
-        $commissionSettings;
+        $commissionSettings, $instructorFinderSettings, $becomeInstructorSettings, $forumsHomepageSettings, $forumsHomepageRevolverSettings, $forumsCtaSectionSettings, $forumsGeneralSettings, $forumsImagesSettings, $guarantyTextSettings, $contentReviewInformationSettings, $blogFeaturedContentsSettings,
+        $storeFeaturedProductsSettings, $userDashboardDataSettings, $mobileAppGeneralSettings, $attendanceSettings, $eventsSettings, $meetingPackagesSettings;
 
     // settings name , Using these keys, values are taken from the settings table
     static $seoMetasName = 'seo_metas';
     static $socialsName = 'socials';
-    static $footerName = 'footer';
     static $generalName = 'general';
     static $featuresName = 'features';
-    static $homeSectionsName = 'home_sections';
     static $financialName = 'financial';
     static $offlineBanksName = 'offline_banks';
     static $referralName = 'referral';
+    static $referralHowWorkName = 'referral_how_work';
     static $currencySettingsName = 'currency_settings';
     static $commissionSettingsName = 'commission_settings';
-    static $homeHeroName = 'home_hero';
-    static $homeHeroName2 = 'home_hero2';
-    static $homeVideoOrImageName = 'home_video_or_image_box';
-    static $pageBackgroundName = 'page_background';
-    static $customCssJsName = 'custom_css_js';
+    static $guarantyTextSettingsName = 'guaranty_text';
+    static $contentReviewInformationSettingsName = 'content_review_information';
     static $reportReasonsName = 'report_reasons';
     static $notificationTemplatesName = 'notifications';
     static $contactPageName = 'contact_us';
     static $Error404PageName = '404';
+    static $Error500PageName = '500';
+    static $Error419PageName = '419';
+    static $Error403PageName = '403';
     static $navbarLinkName = 'navbar_links';
     static $panelSidebarName = 'panel_sidebar';
     static $findInstructorsName = 'find_instructors';
@@ -72,9 +70,6 @@ class Setting extends Model implements TranslatableContract
     static $registrationPackagesInstructorsName = 'registration_packages_instructors';
     static $registrationPackagesOrganizationsName = 'registration_packages_organizations';
     static $becomeInstructorSectionName = 'become_instructor_section';
-    static $themeColorsName = 'theme_colors';
-    static $themeFontsName = 'theme_fonts';
-    static $forumHomeSectionName = 'forums_section';
     static $cookieSettingsName = 'cookie_settings';
     static $mobileAppSettingsName = 'mobile_app';
     static $remindersSettingsName = 'reminders';
@@ -94,23 +89,32 @@ class Setting extends Model implements TranslatableContract
     static $abandonedCartSettingsName = 'abandoned_cart_settings';
     static $certificateSettingsName = 'certificate_settings';
     static $smsChannelsSettingName = 'sms_channels';
+    static $instructorFinderSettingsName = 'instructor_finder_settings';
+    static $becomeInstructorSettingsName = 'become_instructor_settings';
+
+    static $forumsHomepageSettingsName = 'forum_homepage_settings';
+    static $forumsGeneralSettingsName = 'forum_general_settings';
+    static $forumsImagesSettingsName = 'forum_images_settings';
+    static $forumsHomepageRevolverSettingsName = 'forum_homepage_revolver_settings';
+    static $forumsCtaSectionSettingsName = 'forum_cta_section_settings';
+    static $blogFeaturedContentsSettingsName = 'blog_featured_contents_settings';
+    static $storeFeaturedProductsSettingsName = 'store_featured_products_settings';
+    static $userDashboardDataSettingsName = 'user_dashboard_data';
+    static $mobileAppGeneralSettingsName = 'mobile_app_general_settings';
+    static $attendanceSettingsName = 'attendances_settings';
+    static $eventsSettingsName = 'events_settings';
+    static $meetingPackagesSettingsName = 'meeting_packages_settings';
 
     //statics
     static $pagesSeoMetas = ['home', 'search', 'tags', 'categories', 'classes', 'login', 'register', 'contact', 'blog', 'certificate_validation',
         'instructors', 'organizations', 'instructor_finder_wizard', 'instructor_finder', 'reward_courses', 'products_lists', 'reward_products',
-        'forum', 'upcoming_courses_lists'
+        'forum', 'upcoming_courses_lists', 'bundles_lists', 'event_ticket_validation', 'events_lists', 'meeting_packages_lists',
     ];
-    static $mainSettingSections = ['general', 'financial', 'payment', 'home_hero', 'home_hero2', 'page_background', 'home_video_or_image_box'];
+    static $mainSettingSections = ['general', 'financial', 'payment'];
     static $mainSettingPages = ['general', 'financial', 'personalization', 'notifications', 'seo', 'customization', 'other'];
 
     static $defaultSettingsLocale = 'en'; // Because the settings table uses translation and some settings do not need to be translated, so we save them with a default locale
 
-    static $rootColors = ['primary', "primary-border", "primary-hover", "primary-border-hover",
-        "primary-btn-shadow", "primary-btn-shadow-hover", "primary-btn-color", "primary-btn-color-hover",
-        'secondary', "secondary-border", "secondary-hover", "secondary-border-hover", "secondary-btn-shadow", "secondary-btn-shadow-hover",
-        "secondary-btn-color", "secondary-btn-color-hover"];
-
-    static $rootAdminColors = ['primary'];
 
     static function getSettingsWithDefaultLocal(): array
     {
@@ -121,11 +125,7 @@ class Setting extends Model implements TranslatableContract
             self::$financialName,
             self::$offlineBanksName,
             self::$referralName,
-            self::$pageBackgroundName,
-            self::$homeSectionsName,
             self::$notificationTemplatesName,
-            self::$customCssJsName,
-            self::$Error404PageName,
             self::$contactPageName,
         ];
     }
@@ -175,15 +175,6 @@ class Setting extends Model implements TranslatableContract
     static function getSocials()
     {
         return self::getSetting(self::$socials, self::$socialsName);
-    }
-
-
-    /**
-     * @return array [title, items => [title, link]]
-     */
-    static function getFooterColumns()
-    {
-        return self::getSetting(self::$footer, self::$footerName);
     }
 
 
@@ -243,47 +234,6 @@ class Setting extends Model implements TranslatableContract
 
 
     /**
-     * @param string $section
-     * @return array|[title, description, hero_background]
-     */
-    static function getHomeHeroSettings($section = '1')
-    {
-        if ($section == "2") {
-            return self::getSetting(self::$homeHero2, self::$homeHeroName2);
-        }
-
-        return self::getSetting(self::$homeHero, self::$homeHeroName);
-    }
-
-    /**
-     * @return array|[title, description, background]
-     */
-    static function getHomeVideoOrImageBoxSettings()
-    {
-        return self::getSetting(self::$homeVideoOrImage, self::$homeVideoOrImageName);
-    }
-
-
-    /**
-     * @param null $page => login, register, remember_pass, search, categories, become_instructor, blog, instructors, user_avatar, user_cover
-     * @return string|array => [all pages]
-     */
-    static function getPageBackgroundSettings($page = null)
-    {
-        return self::getSetting(self::$pageBackground, self::$pageBackgroundName, $page);
-    }
-
-
-    /**
-     * @param null $key => css, js
-     * @return string|array => {css, js}
-     */
-    static function getCustomCssAndJs($key = null)
-    {
-        return self::getSetting(self::$customCssJs, self::$customCssJsName, $key);
-    }
-
-    /**
      * @return array
      */
     static function getReportReasons()
@@ -317,6 +267,14 @@ class Setting extends Model implements TranslatableContract
     }
 
     /**
+     * @return array
+     */
+    static function getReferralHowWorkSettings($key = null)
+    {
+        return self::getSetting(self::$referralHowWork, self::$referralHowWorkName, $key);
+    }
+
+    /**
      * @param $key
      * @return array
      */
@@ -338,10 +296,29 @@ class Setting extends Model implements TranslatableContract
      * @param $key
      * @return array
      */
-    static function getHomeSectionsSettings($key = null)
+    static function get500ErrorPageSettings($key = null)
     {
-        return self::getSetting(self::$homeSections, self::$homeSectionsName, $key);
+        return self::getSetting(self::$Error500Page, self::$Error500PageName, $key);
     }
+
+    /**
+     * @param $key
+     * @return array
+     */
+    static function get419ErrorPageSettings($key = null)
+    {
+        return self::getSetting(self::$Error419Page, self::$Error419PageName, $key);
+    }
+
+    /**
+     * @param $key
+     * @return array
+     */
+    static function get403ErrorPageSettings($key = null)
+    {
+        return self::getSetting(self::$Error403Page, self::$Error403PageName, $key);
+    }
+
 
     /**
      * @param $key
@@ -397,11 +374,6 @@ class Setting extends Model implements TranslatableContract
         return self::getSetting(self::$becomeInstructorSection, self::$becomeInstructorSectionName);
     }
 
-    static function getForumSectionSettings()
-    {
-        return self::getSetting(self::$forumHomeSection, self::$forumHomeSectionName);
-    }
-
     static function getRegistrationPackagesGeneralSettings($key = null)
     {
         return self::getSetting(self::$registrationPackagesGeneral, self::$registrationPackagesGeneralName, $key);
@@ -415,16 +387,6 @@ class Setting extends Model implements TranslatableContract
     static function getRegistrationPackagesOrganizationsSettings($key = null)
     {
         return self::getSetting(self::$registrationPackagesOrganizations, self::$registrationPackagesOrganizationsName, $key);
-    }
-
-    static function getThemeColorsSettings()
-    {
-        return self::getSetting(self::$themeColors, self::$themeColorsName);
-    }
-
-    static function getThemeFontsSettings()
-    {
-        return self::getSetting(self::$themeFonts, self::$themeFontsName);
     }
 
     static function getMobileAppSettings($key = null)
@@ -515,5 +477,85 @@ class Setting extends Model implements TranslatableContract
     static function getAbandonedCartSettings($key = null)
     {
         return self::getSetting(self::$abandonedCartSettings, self::$abandonedCartSettingsName, $key);
+    }
+
+    static function getInstructorFinderSettings($key = null)
+    {
+        return self::getSetting(self::$instructorFinderSettings, self::$instructorFinderSettingsName, $key);
+    }
+
+    static function getBecomeInstructorSettings($key = null)
+    {
+        return self::getSetting(self::$becomeInstructorSettings, self::$becomeInstructorSettingsName, $key);
+    }
+
+    static function getForumsHomepageSettings($key = null)
+    {
+        return self::getSetting(self::$forumsHomepageSettings, self::$forumsHomepageSettingsName, $key);
+    }
+
+    static function getForumsHomepageRevolverSettings($key = null)
+    {
+        return self::getSetting(self::$forumsHomepageRevolverSettings, self::$forumsHomepageRevolverSettingsName, $key);
+    }
+
+    static function getForumsCtaSectionSettings($key = null)
+    {
+        return self::getSetting(self::$forumsCtaSectionSettings, self::$forumsCtaSectionSettingsName, $key);
+    }
+
+    static function getForumsGeneralSettings($key = null)
+    {
+        return self::getSetting(self::$forumsGeneralSettings, self::$forumsGeneralSettingsName, $key);
+    }
+
+    static function getForumsImagesSettings($key = null)
+    {
+        return self::getSetting(self::$forumsImagesSettings, self::$forumsImagesSettingsName, $key);
+    }
+
+    static function getGuarantyTextSettings($key = null)
+    {
+        return self::getSetting(self::$guarantyTextSettings, self::$guarantyTextSettingsName, $key);
+    }
+
+    static function getContentReviewInformationSettings($key = null)
+    {
+        return self::getSetting(self::$contentReviewInformationSettings, self::$contentReviewInformationSettingsName, $key);
+    }
+
+    static function getBlogFeaturedContentsSettings($key = null)
+    {
+        return self::getSetting(self::$blogFeaturedContentsSettings, self::$blogFeaturedContentsSettingsName, $key);
+    }
+
+    static function getStoreFeaturedProductsSettings($key = null)
+    {
+        return self::getSetting(self::$storeFeaturedProductsSettings, self::$storeFeaturedProductsSettingsName, $key);
+    }
+
+    static function getUserDashboardDataSettings($key = null)
+    {
+        return self::getSetting(self::$userDashboardDataSettings, self::$userDashboardDataSettingsName, $key);
+    }
+
+    static function getMobileAppGeneralSettings($key = null)
+    {
+        return self::getSetting(self::$mobileAppGeneralSettings, self::$mobileAppGeneralSettingsName, $key);
+    }
+
+    static function getAttendanceSettings($key = null)
+    {
+        return self::getSetting(self::$attendanceSettings, self::$attendanceSettingsName, $key);
+    }
+
+    static function getEventsSettings($key = null)
+    {
+        return self::getSetting(self::$eventsSettings, self::$eventsSettingsName, $key);
+    }
+
+    static function getMeetingPackagesSettings($key = null)
+    {
+        return self::getSetting(self::$meetingPackagesSettings, self::$meetingPackagesSettingsName, $key);
     }
 }

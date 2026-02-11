@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Api\Auth\VerificationController;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Controllers\Web\traits\UserFormFieldsTrait;
 use App\Mixins\RegistrationBonus\RegistrationBonusAccounting;
 use App\Models\Affiliate;
@@ -66,15 +66,18 @@ class RegisterController extends Controller
         ];
 
         validateParam($data, $rules);
+
         if ($username == 'mobile') {
             $data[$username] = ltrim($data['country_code'], '+') . ltrim($data[$username], '0');
-
         }
+
+        $verificationValue = ($registerMethod == "mobile") ? "+{$data[$username]}" : $data[$username];
+
         $userCase = User::where($username, $data[$username])->first();
+
         if ($userCase) {
-            //  $userCase->update(['password' => Hash::make($data['password'])]);
             $verificationController = new VerificationController();
-            $checkConfirmed = $verificationController->checkConfirmed($userCase, $username, $data[$username]);
+            $checkConfirmed = $verificationController->checkConfirmed($userCase, $username, $verificationValue);
 
             if ($checkConfirmed['status'] == 'verified') {
                 if ($userCase->full_name) {
@@ -140,7 +143,7 @@ class RegisterController extends Controller
         $this->storeFormFields($data, $user);
 
         $verificationController = new VerificationController();
-        $verificationController->checkConfirmed($user, $username, $data[$username]);
+        $verificationController->checkConfirmed($user, $username, $verificationValue);
 
 
         return apiResponse2('1', 'stored', trans('api.public.stored'), [

@@ -2,16 +2,11 @@
 
 namespace App\Models\Api;
 
-use App\Models\Api\Meeting;
-use App\Models\Region;
-use App\Models\UserOccupation;
+
+use App\Models\Api\Webinar;
 use App\User as Model;
 use App\Models\ReserveMeeting;
-use App\Models\Api\Follow;
 use App\Models\Role;
-use App\Models\Api\Sale;
-use App\Models\Api\Subscribe;
-use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Model implements JWTSubject
@@ -32,6 +27,7 @@ class User extends Model implements JWTSubject
 
         return [
             'id' => $this->id,
+            'username' => $this->username,
             'full_name' => $this->full_name,
             'role_name' => $this->role_name,
             'bio' => $this->bio,
@@ -51,6 +47,18 @@ class User extends Model implements JWTSubject
 
     public function getDetailsAttribute()
     {
+        $myWebinarsQuery = Webinar::where('status', Webinar::$active)
+            ->where('private', false)
+            ->where(function ($query) {
+                $query->where('creator_id', $this->id)
+                    ->orWhere('teacher_id', $this->id);
+            })
+            ->orderBy('updated_at', 'desc')
+            ->with(['teacher' => function ($qu) {
+                $qu->select('id', 'full_name', 'avatar');
+            }, 'reviews', 'tickets', 'feature']);
+
+
         $details = [
             'organ_id' => $this->organ_id,
             'timezone' => $this->timezone,
@@ -96,7 +104,7 @@ class User extends Model implements JWTSubject
             }),
             'about' => $this->about,
 
-            'webinars' => $this->webinars->map(function ($webinar) {
+            'webinars' => $myWebinarsQuery->get()->map(function ($webinar) {
                 return $webinar->brief;
             }),
 

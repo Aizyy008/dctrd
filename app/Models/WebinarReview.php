@@ -21,6 +21,11 @@ class WebinarReview extends Model
         return $this->belongsTo('App\Models\Bundle', 'bundle_id', 'id');
     }
 
+    public function event()
+    {
+        return $this->belongsTo('App\Models\Event', 'event_id', 'id');
+    }
+
     public function creator()
     {
         return $this->belongsTo('App\User', 'creator_id', 'id');

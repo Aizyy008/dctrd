@@ -15,11 +15,16 @@ class Page extends Model implements TranslatableContract
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 
-    public $translatedAttributes = ['title', 'seo_description', 'content'];
+    public $translatedAttributes = ['title', 'subtitle', 'seo_description', 'content'];
 
     public function getTitleAttribute()
     {
         return getTranslateAttributeValue($this, 'title');
+    }
+
+    public function getSubtitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'subtitle');
     }
 
     public function getSeoDescriptionAttribute()

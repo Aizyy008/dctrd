@@ -1,4 +1,4 @@
-<li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion-row bg-white rounded-sm border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
+<li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion-row bg-white rounded-12 border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
     <div class="d-flex align-items-center justify-content-between " role="tab" id="quiz_{{ !empty($quizInfo) ? $quizInfo->id :'record' }}">
         <div class="d-flex align-items-center" href="#collapseQuiz{{ !empty($quizInfo) ? $quizInfo->id :'record' }}" aria-controls="collapseQuiz{{ !empty($quizInfo) ? $quizInfo->id :'record' }}" data-parent="#{{ !empty($chapter) ? 'chapterContentAccordion'.$chapter->id : 'quizzesAccordion' }}" role="button" data-toggle="collapse" aria-expanded="true">
             <span class="chapter-icon chapter-content-icon mr-10">
@@ -15,7 +15,7 @@
             @endif
 
             @if(!empty($quizInfo) and !empty($chapterItem))
-                <button type="button" data-item-id="{{ $quizInfo->id }}" data-item-type="{{ \App\Models\WebinarChapterItem::$chapterQuiz }}" data-chapter-id="{{ !empty($chapter) ? $chapter->id : '' }}" class="js-change-content-chapter btn btn-sm btn-transparent text-gray mr-10">
+                <button type="button" data-item-id="{{ $quizInfo->id }}" data-item-type="{{ \App\Models\WebinarChapterItem::$chapterQuiz }}" data-chapter-id="{{ !empty($chapter) ? $chapter->id : '' }}" class="js-change-content-chapter btn btn-sm btn-transparent text-gray-500 mr-10">
                     <i data-feather="grid" class="" height="20"></i>
                 </button>
             @endif
@@ -25,7 +25,7 @@
             @endif
 
             @if(!empty($quizInfo))
-                <a href="{{ getAdminPanelUrl() }}/quizzes/{{ $quizInfo->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray">
+                <a href="{{ getAdminPanelUrl() }}/quizzes/{{ $quizInfo->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray-500">
                     <i data-feather="trash-2" class="mr-10 cursor-pointer" height="20"></i>
                 </a>
             @endif
@@ -35,7 +35,7 @@
     </div>
 
     <div id="collapseQuiz{{ !empty($quizInfo) ? $quizInfo->id :'record' }}" aria-labelledby="quiz_{{ !empty($quizInfo) ? $quizInfo->id :'record' }}" class=" collapse @if(empty($quizInfo)) show @endif" role="tabpanel">
-        <div class="panel-collapse text-gray">
+        <div class="panel-collapse text-gray-500">
             @include('admin.quizzes.create_quiz_form',
                     [
                         'inWebinarPage' => true,

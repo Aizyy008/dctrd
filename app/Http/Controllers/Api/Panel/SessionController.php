@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Controllers\Panel\AgoraController;
 use App\Http\Resources\SessionResource;
+use App\Mixins\Logs\UserLoginHistoryMixin;
 use App\Models\AgoraHistory;
 use App\Models\Api\WebinarChapter;
 use App\Models\File;
@@ -32,7 +33,10 @@ class SessionController extends Controller
     {
 
         $user = apiAuth();
-        Auth::login($user);
+        Auth::login($user, true);
+
+        $userLoginHistoryMixin = new UserLoginHistoryMixin();
+        $userLoginHistoryMixin->storeUserLoginHistory($user);
 
         return redirect(url('panel/sessions/' . $session_id . '/joinToBigBlueButton'));
 
@@ -42,7 +46,10 @@ class SessionController extends Controller
     {
 
         $user = apiAuth();
-        Auth::login($user);
+        Auth::login($user, true);
+
+        $userLoginHistoryMixin = new UserLoginHistoryMixin();
+        $userLoginHistoryMixin->storeUserLoginHistory($user);
 
         return redirect(url('panel/sessions/' . $session_id . '/joinToAgora'));
     }

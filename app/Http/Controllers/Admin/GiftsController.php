@@ -29,10 +29,10 @@ class GiftsController extends Controller
         $gifts = $this->handleFilters($request, $query)->with([
             'sale',
             'user' => function ($query) {
-                $query->select('id', 'full_name', 'role_name', 'role_id', 'mobile', 'email');
+                $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'mobile', 'email');
             },
             'receipt' => function ($query) {
-                $query->select('id', 'full_name', 'role_name', 'role_id', 'mobile', 'email');
+                $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'mobile', 'email');
             },
             'webinar' => function ($query) {
                 $query->select('id', 'creator_id', 'teacher_id', 'category_id', 'slug', 'status');
@@ -74,10 +74,10 @@ class GiftsController extends Controller
         $gifts = $this->handleFilters($request, $query)->with([
             'sale',
             'user' => function ($query) {
-                $query->select('id', 'full_name', 'role_name', 'role_id', 'mobile', 'email');
+                $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'mobile', 'email');
             },
             'receipt' => function ($query) {
-                $query->select('id', 'full_name', 'role_name', 'role_id', 'mobile', 'email');
+                $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'mobile', 'email');
             },
             'webinar' => function ($query) {
                 $query->select('id', 'creator_id', 'teacher_id', 'category_id', 'slug', 'status');

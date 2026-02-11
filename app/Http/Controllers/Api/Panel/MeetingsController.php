@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Panel;
 
 use App\Models\Sale;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Cart;
 use App\Models\Meeting;
 use App\Models\MeetingTime;

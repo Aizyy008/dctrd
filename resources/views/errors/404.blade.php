@@ -1,18 +1,53 @@
-@extends(getTemplate().'.layouts.app')
+@extends("design_1.web.layouts.app")
 
-@section('content')
-    @php
-        $get404ErrorPageSettings = get404ErrorPageSettings();
-    @endphp
+@push("styles_top")
+    <link rel="stylesheet" href="{{ getDesign1StylePath("system_status_pages") }}">
+@endpush
 
-    <section class="my-50 container text-center">
-        <div class="row justify-content-md-center">
-            <div class="col col-md-6">
-                <img src="{{ $get404ErrorPageSettings['error_image'] ?? '' }}" class="img-cover " alt="">
+@php
+    $errorSettings = get404ErrorPageSettings();
+@endphp
+
+@section("content")
+    <section class="container mt-96 mb-104 position-relative">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <div class="system-status-page-section position-relative">
+                    <div class="system-status-page-section__mask"></div>
+
+                    <div class="position-relative d-flex-center flex-column bg-white rounded-32 p-24 pt-64 p-lg-40 text-center z-index-2">
+
+                        @if(!empty($errorSettings['right_float_image']))
+                            <div class="system-status-page-right-float-image">
+                                <img src="{{ $errorSettings['right_float_image'] }}" alt="{{ trans('update.right_float_image') }}" class="img-cover">
+                            </div>
+                        @endif
+
+                        @if(!empty($errorSettings['image']))
+                            <div class="system-status-page-image">
+                                <img src="{{ $errorSettings['image'] }}" alt="{{ $errorSettings['title'] ?? '' }}" class="img-cover">
+                            </div>
+                        @endif
+
+                        @if(!empty($errorSettings['title']))
+                            <h1 class="font-16 font-weight-bold mt-16">{{ $errorSettings['title'] }}</h1>
+                        @endif
+
+                        @if(!empty($errorSettings['description']))
+                            <p class="font-14 text-gray-500 mt-4">{!! nl2br($errorSettings['description']) !!}</p>
+                        @endif
+
+                        @if(!empty($errorSettings['button']) and !empty($errorSettings['button']['title']) and !empty($errorSettings['button']['link']))
+                            <a href="{{ $errorSettings['button']['link'] }}" class="btn btn-primary btn-lg mt-24">{{ $errorSettings['button']['title'] }}</a>
+                        @endif
+
+                    </div>
+                </div>
             </div>
         </div>
-
-        <h2 class="mt-25 font-36">{{ $get404ErrorPageSettings['error_title'] ?? '' }}</h2>
-        <p class="mt-25 font-16">{{ $get404ErrorPageSettings['error_description'] ?? '' }}</p>
     </section>
 @endsection
+
+@push('scripts_bottom')
+
+@endpush

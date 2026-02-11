@@ -185,7 +185,7 @@ class OrderController extends Controller
                 'buyer' => $productOrder->buyer,
             ];
 
-            return view('web.default.panel.store.invoice', $data);
+            return view('design_1.panel.store.invoice.index', $data);
         }
 
         abort(404);
@@ -236,13 +236,20 @@ class OrderController extends Controller
 
         if (!empty($order)) {
             $buyer = $order->buyer;
-
             $order->address = $buyer->getAddress(true);
+
+            $html = (string)view()->make("admin.store.orders.modals.enter_tracking_code", [
+                'order' => $order,
+                'saleId' => $saleId,
+            ]);
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html,
+            ]);
         }
 
-        return response()->json([
-            'order' => $order
-        ]);
+        return response()->json([], 422);
     }
 
     public function setTrackingCode(Request $request, $saleId, $orderId)

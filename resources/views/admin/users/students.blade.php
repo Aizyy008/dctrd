@@ -4,6 +4,10 @@
 
 @endpush
 
+@php
+    $registerMethod = getGeneralSettings('register_method') ?? 'mobile';
+@endphp
+
 @section('content')
     <section class="section">
         <div class="section-header">
@@ -17,67 +21,70 @@
 
     <div class="section-body">
         <div class="row">
+
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-primary">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{ trans('admin/main.total_students') }}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('admin/main.total_students') }}</span>
+                            <div class="d-flex-center size-48 bg-primary-30 rounded-12">
+                                <x-iconsax-bul-profile-2user class="icons text-primary" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $totalStudents }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-success">
-                        <i class="fas fa-briefcase"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{ trans('admin/main.organizations_students') }}</h4>
-                        </div>
-                        <div class="card-body">
-                            {{ $totalOrganizationsStudents }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalStudents }}</h5>
                     </div>
                 </div>
             </div>
+
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-warning">
-                        <i class="fas fa-info-circle"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{ trans('admin/main.inactive_students') }}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap"> 
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('admin/main.organizations_students') }}</span>
+                            <div class="d-flex-center size-48 bg-success-30 rounded-12">
+                                <x-iconsax-bul-courthouse class="icons text-success" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $inactiveStudents }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalOrganizationsStudents }}</h5>
                     </div>
                 </div>
             </div>
+
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-danger">
-                        <i class="fas fa-ban"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{ trans('admin/main.ban_students') }}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('admin/main.inactive_students') }}</span>
+                            <div class="d-flex-center size-48 bg-accent-30 rounded-12">
+                                <x-iconsax-bul-user-remove class="icons text-accent" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $banStudents }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $inactiveStudents }}</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('admin/main.ban_students') }}</span>
+                            <div class="d-flex-center size-48 bg-danger-30 rounded-12">
+                                <x-iconsax-bul-user-minus class="icons text-danger" width="24px" height="24px"/>
+                            </div>
+                        </div> 
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $banStudents }}</h5>
                     </div>
                 </div>
             </div>
         </div>
 
-        <section class="card">
-            <div class="card-body">
+        <section class="card mt-32">
+            <div class="card-body pb-4">
                 <form method="get" class="mb-0">
 
                     <div class="row">
@@ -170,12 +177,9 @@
                         </div>
 
 
-                        <div class="col-md-3">
-                            <div class="form-group mt-1">
-                                <label class="input-label mb-4"> </label>
-                                <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                            </div>
-                        </div>
+   <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
+                            </div> 
                     </div>
                 </form>
             </div>
@@ -183,19 +187,43 @@
     </div>
 
     <div class="card">
-        <div class="card-header">
-            @can('admin_users_export_excel')
-                <a href="{{ getAdminPanelUrl() }}/students/excel?{{ http_build_query(request()->all()) }}" class="btn btn-primary">{{ trans('admin/main.export_xls') }}</a>
-            @endcan
-            <div class="h-10"></div>
-        </div>
+
+
+    <div class="card-header justify-content-between">
+                            
+                            <div>
+                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_students_in_a_single_place') }}</p>
+                           </div>
+                           
+                            <div class="d-flex align-items-center gap-12">
+
+                            @can('admin_users_export_excel')
+                                   <a href="{{ getAdminPanelUrl() }}/students/excel?{{ http_build_query(request()->all()) }}" class="btn bg-white bg-hover-gray-100 border-gray-400 text-gray-500">
+                                       <x-iconsax-lin-import-2 class="icons text-gray-500" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.export_xls') }}</span>
+                                   </a>
+                               @endcan
+
+                               @can('admin_quizzes_create')
+                                   <a href="{{ getAdminPanelUrl() }}/users/create" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.new') }} {{ trans('admin/main.user') }}</span>
+                                   </a>
+                               @endcan
+
+                            </div>
+                           
+                       </div>
+
+
 
         <div class="card-body">
             <div class="table-responsive text-center">
-                <table class="table table-striped font-14">
+                <table class="table custom-table font-14">
                     <tr>
                         <th>ID</th>
-                        <th>{{ trans('admin/main.name') }}</th>
+                        <th class="text-left">{{ trans('admin/main.name') }}</th>
                         <th>{{ trans('admin/main.classes') }}</th>
                         <th>{{ trans('admin/main.appointments') }}</th>
                         <th>{{ trans('admin/main.wallet_charge') }}</th>
@@ -209,21 +237,26 @@
                     @foreach($users as $user)
 
                         <tr>
-                            <td>{{ $user->id }}</td>
+                            <td>
+                                <a href="{{ $user->getProfileUrl() }}" class="text-dark" target="_blank">{{ $user->id }}</a>
+                            </td>
+
                             <td class="text-left">
                                 <div class="d-flex align-items-center">
                                     <figure class="avatar mr-2">
                                         <img src="{{ $user->getAvatar() }}" alt="{{ $user->full_name }}">
                                     </figure>
                                     <div class="media-body ml-1">
-                                        <div class="mt-0 mb-1 font-weight-bold">{{ $user->full_name }}</div>
+                                        <div class="mt-0 mb-1">{{ $user->full_name }}</div>
 
+                                        @if($registerMethod == 'mobile')
                                         @if($user->mobile)
-                                            <div class="text-primary text-small font-600-bold">{{ $user->mobile }}</div>
+                                            <div class="text-small font-12 text-gray-500">{{ $user->mobile }}</div>
                                         @endif
-
+                                        @else
                                         @if($user->email)
-                                            <div class="text-primary text-small font-600-bold">{{ $user->email }}</div>
+                                            <div class="text-small font-12 text-gray-500">{{ $user->email }}</div>
+                                        @endif
                                         @endif
                                     </div>
                                 </div>
@@ -231,15 +264,15 @@
 
                             <td>
                                 <div class="media-body">
-                                    <div class="text-primary mt-0 mb-1 font-weight-bold">{{ $user->classesPurchasedsCount }}</div>
-                                    <div class="text-small font-600-bold">{{ handlePrice($user->classesPurchasedsSum) }}</div>
+                                    <div class="text-dark mt-0 mb-1 ">{{ $user->classesPurchasedsCount }}</div>
+                                    <div class="text-small font-12 text-gray-500">{{ handlePrice($user->classesPurchasedsSum) }}</div>
                                 </div>
                             </td>
 
                             <td>
                                 <div class="media-body">
-                                    <div class="text-primary mt-0 mb-1 font-weight-bold">{{ $user->meetingsPurchasedsCount }}</div>
-                                    <div class="text-small font-600-bold">{{ handlePrice($user->meetingsPurchasedsSum) }}</div>
+                                    <div class="text-dark mt-0 mb-1">{{ $user->meetingsPurchasedsCount }}</div>
+                                    <div class="text-small font-12 text-gray-500">{{ handlePrice($user->meetingsPurchasedsSum) }}</div>
                                 </div>
                             </td>
 
@@ -255,30 +288,51 @@
 
                             <td>
                                 @if($user->ban and !empty($user->ban_end_at) and $user->ban_end_at > time())
-                                    <div class="mt-0 mb-1 font-weight-bold text-danger">{{ trans('admin/main.ban') }}</div>
-                                    <div class="text-small font-600-bold">Until {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
+                                    <span class="badge-status text-danger bg-danger-30">{{ trans('admin/main.ban') }}</span>
+                                    <div class="text-small font-12 text-gray-500">Until {{ dateTimeFormat($user->ban_end_at, 'Y/m/j') }}</div>
                                 @else
-                                    <div class="mt-0 mb-1 font-weight-bold {{ ($user->status == 'active') ? 'text-success' : 'text-warning' }}">{{ trans('admin/main.'.$user->status) }}</div>
+                                    <span class="badge-status {{ ($user->status == 'active') ? 'text-success bg-success-30' : 'text-warning bg-warning-30' }}">{{ trans('admin/main.'.$user->status) }}</span>
                                 @endif
                             </td>
 
-                            <td class="text-center mb-2" width="120">
-                                @can('admin_users_impersonate')
-                                    <a href="{{ getAdminPanelUrl() }}/users/{{ $user->id }}/impersonate" target="_blank" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.login') }}">
-                                        <i class="fa fa-user-shield"></i>
-                                    </a>
-                                @endcan
+                            <td class="text-center" width="120">
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                @can('admin_users_edit')
-                                    <a href="{{ getAdminPanelUrl() }}/users/{{ $user->id }}/edit" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                        <i class="fa fa-edit"></i>
-                                    </a>
-                                @endcan
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_users_impersonate')
+                <a href="{{ getAdminPanelUrl() }}/users/{{ $user->id }}/impersonate" 
+                   target="_blank"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-user-square class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.login') }}</span>
+                </a>
+            @endcan
 
-                                @can('admin_users_delete')
-                                    @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/users/'.$user->id.'/delete' , 'btnClass' => '', 'deleteConfirmMsg' => trans('update.user_delete_confirm_msg')])
-                                @endcan
-                            </td>
+            @can('admin_users_edit')
+                <a href="{{ getAdminPanelUrl() }}/users/{{ $user->id }}/edit"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                </a>
+            @endcan
+
+            @can('admin_users_delete')
+                @include('admin.includes.delete_button',[
+                    'url' => getAdminPanelUrl().'/users/'.$user->id.'/delete',
+                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                    'btnText' => trans('admin/main.delete'),
+                    'btnIcon' => 'trash',
+                    'iconType' => 'lin',
+                    'iconClass' => 'text-danger mr-2',
+                    'deleteConfirmMsg' => trans('update.user_delete_confirm_msg')
+                ])
+            @endcan
+        </div>
+    </div>
+</td>
 
                         </tr>
                     @endforeach
@@ -292,84 +346,34 @@
     </div>
 
 
-        {{-- +++++++++++++++++++++ alerts +++++++++++++++++ --}}
-        @if (session('success'))
-            <div class="alert alert-success my-25 text-white bg-success" style="background-color: #47c363 !important;">
-                {{ session('success') }}
-            </div>
-        @endif
-        @if ($errors->any())
-            <div class="alert alert-danger text-white">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-        {{-- +++++++++++++++++++++ import Excel +++++++++++++++++ --}}
-        {{-- <div class="col-12 col-md-12"> --}}
-        <section class="card">
-            <!-- Form and Download Button -->
-            <div class="card-body">
-                <!-- Separate Form for Excel Import -->
-                <form method="post" action="{{ route('students.import') }}" enctype="multipart/form-data" class="mt-3" id="excelImportForm">
-                    {{ csrf_field() }}
-                    <section>
-                        <h6 class="section-title">{{ trans('admin/main.upload_excel') }}</h6>
-                        <div class="row">
-                            <div class="col-8">
-                                <div class="form-group mt-15">
-                                    <label>{{ trans('admin/main.upload_excel') }}</label>
-                                    <input type="file" name="excel_file" class="form-control @error('excel_file') is-invalid @enderror" accept=".xlsx,.xls">
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <button type="submit" class="btn btn-primary" style="margin-top:42px !important;">
-                                    {{ trans('admin/main.upload') }}
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-                    <!-- Download Template Button -->
-                    <div class="mt-3">
-                        <a href="{{ route('students.download.template') }}" class="btn btn-success btn-sm">
-                            {{ trans('admin/main.download_template') }}
-                        </a>
+    <section class="card">
+        <div class="card-body">
+            <div class="section-title ml-0 mt-0 mb-3"><h5>{{trans('admin/main.hints')}}</h5></div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="media-body">
+                        <div class="text-primary mt-0 mb-1 font-weight-bold">{{trans('admin/main.students_hint_title_1')}}</div>
+                        <div class=" text-small font-600-bold">{{trans('admin/main.students_hint_description_1')}}</div>
                     </div>
-                </form>
-            </div>
-        </section>
-        {{-- +++++++++++++++++++++ download Excel template +++++++++++++++++ --}}
-        @include('admin.users.users_excel_instructions')
-        <section class="card">
-            <div class="card-body m-3 p-3">
-                <div class="section-title ml-0 mt-0 mb-3"><h5>{{trans('admin/main.hints')}}</h5></div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="media-body">
-                            <div class="text-primary mt-0 mb-1 font-weight-bold">{{trans('admin/main.students_hint_title_1')}}</div>
-                            <div class=" text-small font-600-bold">{{trans('admin/main.students_hint_description_1')}}</div>
-                        </div>
-                    </div>
-    
-                    <div class="col-md-4">
-                        <div class="media-body">
-                            <div class="text-primary mt-0 mb-1 font-weight-bold">{{trans('admin/main.students_hint_title_2')}}</div>
-                            <div class=" text-small font-600-bold">{{trans('admin/main.students_hint_description_2')}}</div>
-                        </div>
-                    </div>
-    
-    
-                    <div class="col-md-4">
-                        <div class="media-body">
-                            <div class="text-primary mt-0 mb-1 font-weight-bold">{{trans('admin/main.students_hint_title_3')}}</div>
-                            <div class="text-small font-600-bold">{{trans('admin/main.students_hint_description_3')}}</div>
-                        </div>
-                    </div>
-    
-    
                 </div>
+
+                <div class="col-md-4">
+                    <div class="media-body">
+                        <div class="text-primary mt-0 mb-1 font-weight-bold">{{trans('admin/main.students_hint_title_2')}}</div>
+                        <div class=" text-small font-600-bold">{{trans('admin/main.students_hint_description_2')}}</div>
+                    </div>
+                </div>
+
+
+                <div class="col-md-4">
+                    <div class="media-body">
+                        <div class="text-primary mt-0 mb-1 font-weight-bold">{{trans('admin/main.students_hint_title_3')}}</div>
+                        <div class="text-small font-600-bold">{{trans('admin/main.students_hint_description_3')}}</div>
+                    </div>
+                </div>
+
+
             </div>
-        </section>
+        </div>
+    </section>
 @endsection

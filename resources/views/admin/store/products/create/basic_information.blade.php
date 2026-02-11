@@ -73,7 +73,7 @@
             <div class="form-group">
                 <label class="input-label">{{ trans('update.product_url') }}</label>
                 <input type="text" name="slug" value="{{ !empty($product) ? $product->slug : old('slug') }}" class="form-control @error('slug')  is-invalid @enderror" placeholder=""/>
-                <div class="text-muted text-small mt-1">{{ trans('update.product_url_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.product_url_hint') }}</div>
                 @error('slug')
                 <div class="invalid-feedback">
                     {{ $message }}
@@ -84,7 +84,7 @@
             <div class="form-group">
                 <label class="input-label">{{ trans('update.required_points') }}</label>
                 <input type="number" name="point" value="{{ !empty($product) ? $product->point : old('point') }}" class="form-control @error('point')  is-invalid @enderror"/>
-                <div class="text-muted text-small mt-1">{{ trans('update.product_points_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.product_points_hint') }}</div>
                 @error('point')
                 <div class="invalid-feedback">
                     {{ $message }}
@@ -95,7 +95,7 @@
             <div class="form-group">
                 <label class="input-label">{{ trans('admin/main.tax') }}</label>
                 <input type="text" name="tax" value="{{ !empty($product) ? $product->tax : old('tax') }}" class="form-control @error('tax')  is-invalid @enderror" placeholder=""/>
-                <div class="text-muted text-small mt-1">{{ trans('update.product_tax_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.product_tax_hint') }}</div>
                 @error('tax')
                 <div class="invalid-feedback">
                     {{ $message }}
@@ -128,7 +128,7 @@
                     </div>
                 </div>
 
-                <div class="text-muted text-small mt-1">{{ trans('update.product_commission_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.product_commission_hint') }}</div>
                 @error('commission')
                 <div class="invalid-feedback">
                     {{ $message }}
@@ -185,7 +185,7 @@
                 </div>
             </div>
 
-            <p class="text-gray font-12">{{ trans('update.create_product_enable_ordering_hint') }}</p>
+            <p class="text-gray-500 font-12">{{ trans('update.create_product_enable_ordering_hint') }}</p>
         </div>
     </div>
 </section>

@@ -89,7 +89,7 @@ class ChannelCopy extends BasePaymentChannel implements IChannel
             'preference_id' => $preference->id,
         ];
 
-        return view('web.default.cart.channels.mercado', $data);
+        return view('design_1.web.cart.payment.channels.mercado', $data);
     }
 
     private function makeCallbackUrl($order)

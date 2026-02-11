@@ -27,22 +27,12 @@
                     <input type="text" name="value[site_phone]" value="{{ (!empty($itemValue) and !empty($itemValue['site_phone'])) ? $itemValue['site_phone'] : old('site_phone') }}" class="form-control "/>
                 </div>
 
-                <div class="form-group">
-                    <label class="input-label d-block">{{ trans('admin/main.site_language') }}</label>
-                    <select name="value[site_language]" class="form-control select2" data-placeholder="{{ trans('admin/main.site_language') }}">
-                        <option value=""></option>
-                        @foreach(getLanguages() as $key => $language)
-                            <option value="{{ $key }}" @if((!empty($itemValue) and !empty($itemValue['site_language'])) and $itemValue['site_language'] == $key) selected @endif >{{ $language }}</option>
-                        @endforeach
-                    </select>
-                    <div class="text-muted text-small mt-1">{{ trans('admin/main.default_language_hint') }}</div>
-                </div>
 
                 <div class="form-group">
                     <label class="input-label d-block">{{ trans('admin/main.register_method') }}</label>
                     <select name="value[register_method]" class="form-control">
-                        <option value="mobile" @if(!empty($itemValue) and !empty($itemValue['register_method']) and $itemValue['register_method'] == 'mobile') selected @endif>{{ trans('admin/main.sms') }}</option>
                         <option value="email" @if(!empty($itemValue) and !empty($itemValue['register_method']) and $itemValue['register_method'] == 'email') selected @endif>{{ trans('admin/main.email') }}</option>
+                        <option>{{ trans('admin/main.sms') }} (Paid Plugin)</option>
                     </select>
                 </div>
 
@@ -72,6 +62,26 @@
                     </select>
                 </div>
 
+                   <div class="form-group">
+                    <label class="input-label d-block">{{ trans('admin/main.site_language') }}</label>
+                    <select name="value[site_language]" class="form-control select2" data-placeholder="{{ trans('admin/main.site_language') }}">
+                        <option value=""></option>
+                        @foreach(getLanguages() as $key => $language)
+                            <option value="{{ $key }}" @if((!empty($itemValue) and !empty($itemValue['site_language'])) and $itemValue['site_language'] == $key) selected @endif >{{ $language }}</option>
+                        @endforeach
+                    </select>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.default_language_hint') }}</div>
+                </div>
+
+                 <div class="form-group">
+                    <label class="input-label d-block">{{ trans('admin/main.guest_default_language') }}</label>
+                    <select name="value[visitors_default_language]" class="form-control">
+                        <option value="default" @if(empty($itemValue) or empty($itemValue['visitors_default_language']) or $itemValue['visitors_default_language'] == 'default') selected @endif>{{ trans('admin/main.use_default_language') }}</option>
+                        <option>{{ trans('admin/main.use_ip_language') }} (Paid Plugin)</option>
+                    </select>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.guest_default_language_hint') }}</div>
+                </div>
+
                 <div class="form-group">
                     <label class="input-label d-block">{{ trans('admin/main.user_languages_lists') }}</label>
                     <select name="value[user_languages][]" multiple class="form-control select2" data-placeholder="{{ trans('admin/main.user_languages_lists') }}">
@@ -80,9 +90,8 @@
                             <option value="{{ $key }}" @if((!empty($itemValue) and !empty($itemValue['user_languages']) and is_array($itemValue['user_languages'])) and in_array($key, $itemValue['user_languages'])) selected @endif >{{ $language }}</option>
                         @endforeach
                     </select>
-                    <div class="text-muted text-small mt-1">{{ trans('admin/main.user_languages_lists_hint') }}</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.user_languages_lists_hint') }}</div>
                 </div>
-
 
                 <div class="form-group">
                     <label class="input-label d-block">{{ trans('admin/main.rtl_languages') }}</label>
@@ -92,7 +101,7 @@
                             <option value="{{ $key }}" @if((!empty($itemValue) and !empty($itemValue['rtl_languages']) and is_array($itemValue['rtl_languages'])) and in_array($key, $itemValue['rtl_languages'])) selected @endif >{{ $language }}</option>
                         @endforeach
                     </select>
-                    <div class="text-muted text-small mt-1">{{ trans('admin/main.rtl_languages_hint') }}</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.rtl_languages_hint') }}</div>
                 </div>
 
                 <div class="form-group">
@@ -120,16 +129,17 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="input-label">{{ trans('admin/main.footer_logo') }}</label>
+                    <label class="input-label">{{ trans('update.dark_mode_logo') }}</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                            <button type="button" class="input-group-text admin-file-manager" data-input="footer_logo" data-preview="holder">
+                            <button type="button" class="input-group-text admin-file-manager" data-input="dark_mode_logo" data-preview="holder">
                                 <i class="fa fa-upload"></i>
                             </button>
                         </div>
-                        <input type="text" name="value[footer_logo]" id="footer_logo" value="{{ (!empty($itemValue) and !empty($itemValue['footer_logo'])) ? $itemValue['footer_logo'] : old('footer_logo') }}" class="form-control" placeholder="{{ trans('admin/main.footer_logo_placeholder') }}"/>
+                        <input type="text" name="value[dark_mode_logo]" id="dark_mode_logo" value="{{ (!empty($itemValue) and !empty($itemValue['dark_mode_logo'])) ? $itemValue['dark_mode_logo'] : old('dark_mode_logo') }}" class="form-control" placeholder="{{ trans('admin/main.logo_placeholder') }}"/>
                     </div>
                 </div>
+
 
                 <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
@@ -149,34 +159,16 @@
                     </label>
                 </div>
 
-                <div class="form-group custom-switches-stacked">
-                    <label class="custom-switch pl-0">
-                        <input type="hidden" name="value[hero_section1]" value="0">
-                        <input type="checkbox" name="value[hero_section1]" id="heroSection1" value="1" {{ (!empty($itemValue) and !empty($itemValue['hero_section1']) and $itemValue['hero_section1']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                        <span class="custom-switch-indicator"></span>
-                        <label class="custom-switch-description mb-0 cursor-pointer" for="heroSection1">{{ trans('admin/main.main_home_hero') }}</label>
-                    </label>
-                </div>
-
-                <div class="form-group custom-switches-stacked">
-                    <label class="custom-switch pl-0">
-                        <input type="hidden" name="value[hero_section2]" value="0">
-                        <input type="checkbox" name="value[hero_section2]" id="heroSection2" value="1" {{ (!empty($itemValue) and !empty($itemValue['hero_section2']) and $itemValue['hero_section2']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                        <span class="custom-switch-indicator"></span>
-                        <label class="custom-switch-description mb-0 cursor-pointer" for="heroSection2">{{ trans('admin/main.main_home_hero2') }}</label>
-                    </label>
-                </div>
 
                 <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
                         <input type="hidden" name="value[content_translate]" value="0">
-                        <input type="checkbox" name="value[content_translate]" id="contentTranslate" value="1" {{ (!empty($itemValue) and !empty($itemValue['content_translate']) and $itemValue['content_translate']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.multi_language_content') }}</label>
                     </label>
-                    <div class="text-muted text-small mt-1">{{ trans('update.multi_language_content_hint') }}</div>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
-
+                
                 <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
                         <input type="hidden" name="value[app_debugbar]" value="0">
@@ -184,7 +176,7 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="appDebugbarSwitch">{{ trans('update.app_debugbar') }}</label>
                     </label>
-                    <div class="text-muted text-small mt-1">{{ trans('update.app_debugbar_hint') }}</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('update.app_debugbar_hint') }}</div>
                 </div>
 
 

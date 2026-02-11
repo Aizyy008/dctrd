@@ -86,7 +86,7 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group mt-15">
+                                <div class="form-group mb-0 mt-15">
                                     <label class="input-label">{{ trans('public.description') }}</label>
                                     <textarea id="summernote" name="description" class="summernote form-control @error('description')  is-invalid @enderror" placeholder="{{ trans('admin/main.description_placeholder') }}">{{ old('description') }}</textarea>
                                     @error('description')
@@ -95,7 +95,7 @@
                                     </div>
                                     @enderror
                                 </div>
-                                <div class="text-muted text-small mb-3">{{ trans('update.send_newsletter_description_hint') }}</div>
+                                <div class="text-gray-500 text-small mt-0 mb-3">{{ trans('update.send_newsletter_description_hint') }}</div>
                                 <button type="submit" class="btn btn-primary mt-3">{{ trans('admin/main.send') }}</button>
                             </form>
                         </div>
@@ -108,5 +108,5 @@
 
 @push('scripts_bottom')
     <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
-    <script src="/assets/default/js/admin/newsletter.min.js"></script>
+    <script src="/assets/admin/js/parts/newsletter.min.js"></script>
 @endpush

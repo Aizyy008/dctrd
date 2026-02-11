@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Web;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\BundleResource;
 use App\Models\AdvertisingBanner;
 use App\Models\Api\Bundle;
@@ -65,7 +65,7 @@ class BundleController extends Controller
                             $query->where('status', 'active');
                         },
                         'creator' => function ($qu) {
-                            $qu->select('id', 'full_name', 'avatar');
+                            $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
                         }
                     ]);
                 },
@@ -74,13 +74,13 @@ class BundleController extends Controller
                     $query->whereNull('reply_id');
                     $query->with([
                         'user' => function ($query) {
-                            $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
+                            $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings');
                         },
                         'replies' => function ($query) {
                             $query->where('status', 'active');
                             $query->with([
                                 'user' => function ($query) {
-                                    $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
+                                    $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings');
                                 }
                             ]);
                         }

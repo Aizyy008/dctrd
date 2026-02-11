@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Instructor;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\WebinarResource;
 use App\Models\Quiz;
 use App\Models\Role;
@@ -314,10 +314,15 @@ class QuizzesController extends Controller
 
                                     $results[$questionId]['status'] = false;
                                     $results[$questionId]['grade'] = $question->grade;
+                                    $results[$questionId]['negative_grade'] = $question->negative_grade ?? null;
 
                                     if ($answer and $answer->correct) {
                                         $results[$questionId]['status'] = true;
                                         $totalMark += (int)$question->grade;
+                                    } else {
+                                        if ($question->type === 'multiple' && !empty($question->negative_grade)) {
+                                            $totalMark -= (int) $question->negative_grade;
+                                        }
                                     }
 
                                     if ($question->type == 'descriptive') {

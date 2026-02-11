@@ -8,10 +8,10 @@
             <form action="{{ getAdminPanelUrl() }}/users/{{ $user->id }}/meetingSettings" method="Post">
                 {{ csrf_field() }}
 
-                <div class="row mt-20">
+                <div class="row mt-0">
                     <div class="col-12 col-lg-4">
 
-                        <div class="form-group mb-30 mt-30">
+                        <div class="form-group mb-30 mt-0">
                             <label class="input-label">{{ trans('update.gender') }}:</label>
 
                             <div class="d-flex align-items-center">
@@ -88,10 +88,6 @@
 
                                 @if(!empty($countries))
                                     @foreach($countries as $country)
-                                        @php
-                                            $country->geo_center = \Geo::get_geo_array($country->geo_center);
-                                        @endphp
-
                                         <option value="{{ $country->id }}" data-center="{{ implode(',', $country->geo_center) }}" {{ (($user->country_id == $country->id) or old('country_id') == $country->id) ? 'selected' : '' }}>{{ $country->title }}</option>
                                     @endforeach
                                 @endif
@@ -106,10 +102,6 @@
 
                                 @if(!empty($provinces))
                                     @foreach($provinces as $province)
-                                        @php
-                                            $province->geo_center = \Geo::get_geo_array($province->geo_center);
-                                        @endphp
-
                                         <option value="{{ $province->id }}" data-center="{{ implode(',', $province->geo_center) }}" {{ (($user->province_id == $province->id) or old('province_id') == $province->id) ? 'selected' : '' }}>{{ $province->title }}</option>
                                     @endforeach
                                 @endif
@@ -124,10 +116,6 @@
 
                                 @if(!empty($cities))
                                     @foreach($cities as $city)
-                                        @php
-                                            $city->geo_center = \Geo::get_geo_array($city->geo_center);
-                                        @endphp
-
                                         <option value="{{ $city->id }}" data-center="{{ implode(',', $city->geo_center) }}" {{ (($user->city_id == $city->id) or old('city_id') == $city->id) ? 'selected' : '' }}>{{ $city->title }}</option>
                                     @endforeach
                                 @endif
@@ -142,10 +130,6 @@
 
                                 @if(!empty($districts))
                                     @foreach($districts as $district)
-                                        @php
-                                            $district->geo_center = \Geo::get_geo_array($district->geo_center);
-                                        @endphp
-
                                         <option value="{{ $district->id }}" data-center="{{ implode(',', $district->geo_center) }}" {{ (($user->district_id == $district->id) or old('district_id') == $district->id) ? 'selected' : '' }}>{{ $district->title }}</option>
                                     @endforeach
                                 @endif
@@ -158,10 +142,20 @@
                         </div>
                     </div>
 
+                    @php
+                        $latitude = getDefaultMapsLocation()['lat'];
+                        $longitude = getDefaultMapsLocation()['lon'];
+
+                        if(!empty($user->location)) {
+                            $latitude = $user->location[0];
+                            $longitude = $user->location[1];
+                        }
+                    @endphp
+
                     <div class="col-12 col-lg-8">
                         <div class="form-group">
-                            <input type="hidden" id="LocationLatitude" name="latitude" value="{{ (!empty($user->location)) ? $user->location[0] : '' }}">
-                            <input type="hidden" id="LocationLongitude" name="longitude" value="{{ (!empty($user->location)) ? $user->location[1] : '' }}">
+                            <input type="hidden" id="LocationLatitude" name="latitude" value="{{ $latitude }}">
+                            <input type="hidden" id="LocationLongitude" name="longitude" value="{{ $longitude }}">
 
                             <div id="mapContainer" class="d-none">
                                 <label class="input-label">{{ trans('update.select_location') }}</label>
@@ -195,5 +189,5 @@
         var leafletApiPath = '{{ getLeafletApiPath() }}';
     </script>
 
-    <script src="/assets/default/js/panel/user_settings_tab.min.js"></script>
+    <script src="/assets/admin/js/parts/user_settings_tab.min.js"></script>
 @endpush

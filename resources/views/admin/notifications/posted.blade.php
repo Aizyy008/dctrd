@@ -17,17 +17,29 @@
 
         <div class="section-body">
             <div class="card">
-                <div class="card-header">
-                    @can('admin_notifications_send')
-                        <div class="text-right">
-                            <a href="{{ getAdminPanelUrl() }}/notifications/send" class="btn btn-primary">{{ trans('notification.send_notification') }}</a>
-                        </div>
-                    @endcan
-                </div>
+
+            <div class="card-header justify-content-between">
+                            <div>
+                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_items_in_a_single_place') }}</p>
+                           </div>
+
+                            <div class="d-flex align-items-center gap-12">
+
+                            @can('admin_notifications_send')
+                                   <a href="{{ getAdminPanelUrl("/notifications/send") }}" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('notification.send_notification') }}</span>
+                                   </a>
+                               @endcan
+
+                            </div>
+            </div>
+
 
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-striped font-14" id="datatable-basic">
+                        <table class="table custom-table font-14" id="datatable-basic">
 
                             <tr>
                                 <th class="text-left">{{ trans('admin/main.title') }}</th>
@@ -37,7 +49,7 @@
                                 <th class="text-center">{{ trans('admin/main.type') }}</th>
                                 <th class="text-center">{{ trans('admin/main.status') }}</th>
                                 <th class="text-center">{{ trans('admin/main.created_at') }}</th>
-                                <th>{{ trans('public.controls') }}</th>
+                                <th width="80px">{{ trans('public.controls') }}</th>
                             </tr>
 
                             @foreach($notifications as $notification)
@@ -48,32 +60,40 @@
                                     <td class="text-center">
                                         @if(!empty($notification->user))
                                             <span class="d-block">{{ $notification->user->full_name }}</span>
-                                            <span class="font-12 d-block">ID: {{ $notification->user->id }}</span>
+                                            <span class="text-gray-500 font-12">ID: {{ $notification->user->id }}</span>
                                         @else
                                             -
                                         @endif
                                     </td>
 
                                     <td class="text-center">
-                                        <button type="button" data-item-id="{{ $notification->id }}" class="js-show-description btn btn-outline-primary">{{ trans('admin/main.show') }}</button>
+                                        <button type="button" data-item-id="{{ $notification->id }}" class="js-show-description btn btn-sm btn-outline-primary">{{ trans('admin/main.show') }}</button>
                                         <input type="hidden" value="{{ nl2br($notification->message) }}">
                                     </td>
                                     <td class="text-center">{{ trans('admin/main.notification_'.$notification->type) }}</td>
                                     <td class="text-center">
                                         @if(empty($notification->notificationStatus))
-                                            <span class="text-danger">{{ trans('admin/main.unread') }}</span>
+                                            <span class="badge-status text-danger bg-danger-30">{{ trans('admin/main.unread') }}</span>
                                         @else
-                                            <span class="text-success">{{ trans('admin/main.read') }}</span>
+                                        <span class="badge-status text-success bg-success-30">{{ trans('admin/main.read') }}</span>
                                         @endif
                                     </td>
-                                    <td class="text-center">{{ dateTimeFormat($notification->created_at,'j M Y | H:i') }}</td>
+                                    <td class="text-center font-12">{{ dateTimeFormat($notification->created_at,'j M Y | H:i') }}</td>
 
-                                    <td width="100">
+
+
+                                    <td class="text-center">
 
                                         @can('admin_notifications_delete')
-                                            @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/notifications/'. $notification->id.'/delete','btnClass' => ''])
+                                        @include('admin.includes.delete_button',[
+                                                           'url' => getAdminPanelUrl().'/notifications/'. $notification->id.'/delete','btnClass',
+                                                           'btnIcon' => 'trash',
+                                                           'iconType' => 'lin',
+                                                           'iconClass' => 'text-danger ml-10',
+                                                        ])
                                         @endcan
                                     </td>
+
                                 </tr>
                             @endforeach
 
@@ -110,5 +130,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/notifications.min.js"></script>
+    <script src="/assets/admin/js/parts/notifications.min.js"></script>
 @endpush

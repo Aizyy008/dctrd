@@ -1,4 +1,4 @@
-<div class="tab-pane mt-3 fade" id="purchased_products" role="tabpanel" aria-labelledby="purchased_products-tab">
+<div class="tab-pane mt-0 fade" id="purchased_products" role="tabpanel" aria-labelledby="purchased_products-tab">
     <div class="row">
 
         @can('admin_enrollment_add_student_to_items')
@@ -30,7 +30,7 @@
                 <h5 class="section-title after-line">{{ trans('update.manual_added_products') }}</h5>
 
                 <div class="table-responsive mt-3">
-                    <table class="table table-striped table-md">
+                    <table class="table custom-table table-md">
                         <tr>
                             <th>{{ trans('update.product') }}</th>
                             <th>{{ trans('admin/main.type') }}</th>
@@ -71,20 +71,35 @@
                                     </td>
 
                                     <td class="text-center">{{ dateTimeFormat($manualAddedProduct->created_at,'j M Y | H:i') }}</td>
+
                                     <td class="text-right">
-                                        @can('admin_enrollment_block_access')
-                                            @include('admin.includes.delete_button',[
+                                        <div class="btn-group dropdown table-actions position-relative">
+                                            <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                                <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                            </button>
+                                    
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                            @can('admin_enrollment_block_access')
+                                                @include('admin.includes.delete_button',[
                                                     'url' => getAdminPanelUrl().'/enrollments/'. $manualAddedProduct->id .'/block-access',
-                                                    'tooltip' => trans('update.block_access'),
-                                                    'btnIcon' => 'fa-times-circle'
+                                                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                    'btnText' => trans('update.block_access'),
+                                                    'btnIcon' => 'close-circle',
+                                                    'iconType' => 'lin',
+                                                    'iconClass' => 'text-danger mr-2',
                                                 ])
-                                        @endcan
+                                            @endcan
+                                            </div>
+                                        </div>
                                     </td>
+
+                                    
+
                                 </tr>
                             @endforeach
                         @endif
                     </table>
-                    <p class="font-12 text-gray mt-1 mb-0">{{ trans('update.manual_add_hint') }}</p>
+                    <p class="font-12 text-gray-500 mt-1 mb-0">{{ trans('update.manual_add_hint') }}</p>
                 </div>
             </div>
         </div>
@@ -95,7 +110,7 @@
                 <h5 class="section-title after-line">{{ trans('update.manual_disabled_products') }}</h5>
 
                 <div class="table-responsive mt-3">
-                    <table class="table table-striped table-md">
+                    <table class="table custom-table table-md">
                         <tr>
                             <th>{{ trans('update.product') }}</th>
                             <th>{{ trans('admin/main.type') }}</th>
@@ -135,18 +150,31 @@
                                     </td>
 
                                     <td class="text-right">
-                                        @can('admin_enrollment_block_access')
-                                            @include('admin.includes.delete_button',[
+                                        <div class="btn-group dropdown table-actions position-relative">
+                                            <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                                <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                            </button>
+                                    
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                            @can('admin_enrollment_block_access')
+                                                @include('admin.includes.delete_button',[
                                                     'url' => getAdminPanelUrl().'/enrollments/'. $manualDisabledProduct->id .'/enable-access',
-                                                    'tooltip' => trans('update.enable-student-access'),
+                                                    'btnClass' => 'dropdown-item text-success mb-0 py-3 px-0 font-14',
+                                                    'btnText' => trans('update.enable-student-access'),
+                                                    'btnIcon' => 'tick-circle',
+                                                    'iconType' => 'lin',
+                                                    'iconClass' => 'text-success mr-2',
                                                 ])
-                                        @endcan
+                                            @endcan
+                                            </div>
+                                        </div>
                                     </td>
+
                                 </tr>
                             @endforeach
                         @endif
                     </table>
-                    <p class="font-12 text-gray mt-1 mb-0">{{ trans('update.manual_remove_hint') }}</p>
+                    <p class="font-12 text-gray-500 mt-1 mb-0">{{ trans('update.manual_remove_hint') }}</p>
                 </div>
             </div>
         </div>
@@ -157,14 +185,14 @@
                 <h5 class="section-title after-line">{{ trans('panel.purchased') }}</h5>
 
                 <div class="table-responsive mt-3">
-                    <table class="table table-striped table-md">
+                    <table class="table custom-table table-md">
                         <tr>
                             <th>{{ trans('update.product') }}</th>
                             <th>{{ trans('admin/main.type') }}</th>
                             <th>{{ trans('admin/main.price') }}</th>
                             <th>{{ trans('update.seller') }}</th>
                             <th class="text-center">{{ trans('panel.purchase_date') }}</th>
-                            <th>{{ trans('admin/main.actions') }}</th>
+                            <th class="right">{{ trans('admin/main.actions') }}</th>
                         </tr>
 
                         @if(!empty($purchasedProducts))
@@ -200,19 +228,33 @@
                                     </td>
 
                                     <td class="text-right">
-                                        @can('admin_enrollment_block_access')
-                                            @include('admin.includes.delete_button',[
+                                        <div class="btn-group dropdown table-actions position-relative">
+                                            <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                                <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                            </button>
+                                    
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                            @can('admin_enrollment_block_access')
+                                                @include('admin.includes.delete_button',[
                                                     'url' => getAdminPanelUrl().'/enrollments/'. $purchasedProduct->id .'/block-access',
-                                                    'tooltip' => trans('update.block_access'),
-                                                    'btnIcon' => 'fa-times-circle'
+                                                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                    'btnText' => trans('update.block_access'),
+                                                    'btnIcon' => 'close-circle',
+                                                    'iconType' => 'lin',
+                                                    'iconClass' => 'text-danger mr-2',
                                                 ])
-                                        @endcan
+                                            @endcan
+                                            </div>
+                                        </div>
                                     </td>
+
+
+                                
                                 </tr>
                             @endforeach
                         @endif
                     </table>
-                    <p class="font-12 text-gray mt-1 mb-0">{{ trans('update.purchased_hint') }}</p>
+                    <p class="font-12 text-gray-500 mt-1 mb-0">{{ trans('update.purchased_hint') }}</p>
                 </div>
             </div>
         </div>

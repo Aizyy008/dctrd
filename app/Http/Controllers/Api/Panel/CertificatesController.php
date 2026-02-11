@@ -23,7 +23,9 @@ class CertificatesController extends Controller
         $user = apiAuth();
 
         $quizzes = Quiz::where('creator_id', $user->id)
-            ->where('status', Quiz::ACTIVE)->handleFilters()->get();
+            ->where('status', Quiz::ACTIVE)
+            ->handleFilters()
+            ->get();
 
         return apiResponse2(1, 'retrieved', trans('public.retrieved'), [
             'certificates' => CertificateResource::collection($quizzes),

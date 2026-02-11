@@ -232,7 +232,7 @@
                                                 <span class="custom-switch-indicator"></span>
                                                 <label class="custom-switch-description mb-0 cursor-pointer" for="fixedSwitch">{{ trans('update.fixed') }}</label>
                                             </label>
-                                            <div class="text-muted text-small mt-1">{{ trans('update.top_bottom_bar_fixed_hint') }}</div>
+                                            <div class="text-gray-500 text-small mt-1">{{ trans('update.top_bottom_bar_fixed_hint') }}</div>
                                         </div>
 
                                         <div class="form-group custom-switches-stacked">
@@ -247,7 +247,7 @@
                                     </div>
                                 </div>
 
-                                <div class="">
+                                <div class="text-right col-6">
                                     <button type="button" class="js-submit-form btn btn-primary">{{ trans('admin/main.save_change') }}</button>
                                     <button type="button" class="js-preview-bar btn btn-warning ml-2">{{ trans('update.preview') }}</button>
                                 </div>
@@ -262,5 +262,5 @@
 
 @push('scripts_bottom')
     <script src="/assets/admin/vendor/bootstrap-colorpicker/bootstrap-colorpicker.min.js"></script>
-    <script src="/assets/default/js/admin/floating_bar.min.js"></script>
+    <script src="/assets/admin/js/parts/floating_bar.min.js"></script>
 @endpush

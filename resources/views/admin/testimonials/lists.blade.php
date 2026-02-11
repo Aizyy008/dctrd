@@ -5,7 +5,6 @@
 @endpush
 
 @section('content')
-
     <section class="section">
         <div class="section-header">
             <h1>{{ trans('admin/main.testimonials') }}</h1>
@@ -21,27 +20,32 @@
             <div class="row">
                 <div class="col-12 col-md-12">
                     <div class="card">
-                        <div class="card-header">
-                            @can('admin_testimonials_create')
-                                <a href="{{ getAdminPanelUrl() }}/testimonials/create" class="btn btn-primary">
-                                    {{ trans('admin/main.add_new') }}
-                                </a>
-                            @endcan
 
-                            <!-- Bulk Export Button -->
+                        <div class="card-header justify-content-between">
+                            
+                            <div>
+                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_items_in_a_single_place') }}</p>
+                           </div>
+                           
+                            <div class="d-flex align-items-center gap-12">
+
                             @can('admin_testimonials_create')
-                                <a href="{{ route('admin.testimonials.export') }}" class="btn btn-success ml-2">
-                                    {{ trans('admin/main.bulk_export') }}
-                                </a>
-                            @endcan
-                        </div>
+                                   <a href="{{ getAdminPanelUrl("/testimonials/create") }}" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.add_new') }}</span>
+                                   </a>
+                               @endcan
+
+                            </div>
+                           
+                       </div>
 
 
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                                <table class="table custom-table font-14">
                                     <tr>
-                                        <th>#</th>
                                         <th>{{ trans('admin/main.user_name') }}</th>
                                         <th>{{ trans('admin/main.rate') }}</th>
                                         <th class="text-center">{{ trans('admin/main.content') }}</th>
@@ -51,33 +55,56 @@
                                     </tr>
                                     @foreach($testimonials as $testimonial)
                                         <tr>
-                                            <td>
-                                                <img src="{{ $testimonial->user_avatar }}" alt="" width="56" height="56" class="rounded-circle">
-                                            </td>
-                                            <td>{{ $testimonial->user_name }}</td>
+
+                                        <td class="text-left">
+                                                   <div class="d-flex align-items-center">
+                                                       <figure class="avatar mr-2">
+                                                           <img src="{{ $testimonial->user_avatar }}" alt="{{ $testimonial->user_name }}">
+                                                       </figure>
+                                                       <div class="media-body ml-1">
+                                                           <div class="mt-0 mb-1">{{ $testimonial->user_name }}</div>                                       
+                                                       </div>
+                                                   </div>
+                                        </td>          
                                             <td>{{ $testimonial->rate }}</td>
                                             <td class="text-center" width="30%">{{ nl2br(truncate($testimonial->comment, 150, true)) }}</td>
 
                                             <td class="text-center">
                                                 @if($testimonial->status == 'active')
-                                                    <span class="text-success">{{ trans('admin/main.active') }}</span>
+                                                    <span class="badge-status text-success bg-success-30">{{ trans('admin/main.active') }}</span>
                                                 @else
-                                                    <span class="text-warning">{{ trans('admin/main.disable') }}</span>
+                                                    <span class="badge-status text-danger bg-danger-30">{{ trans('admin/main.disable') }}</span>
                                                 @endif
                                             </td>
                                             <td>{{ dateTimeFormat($testimonial->created_at, 'j M Y | H:i') }}</td>
                                             <td width="150px">
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                                @can('admin_supports_reply')
-                                                    <a href="{{ getAdminPanelUrl() }}/testimonials/{{ $testimonial->id }}/edit" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                @endcan
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_supports_reply')
+                <a href="{{ getAdminPanelUrl() }}/testimonials/{{ $testimonial->id }}/edit"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                </a>
+            @endcan
 
-                                                @can('admin_supports_delete')
-                                                    @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/testimonials/'.$testimonial->id.'/delete' , 'btnClass' => ''])
-                                                @endcan
-                                            </td>
+            @can('admin_supports_delete')
+                @include('admin.includes.delete_button',[
+                    'url' => getAdminPanelUrl().'/testimonials/'.$testimonial->id.'/delete',
+                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                    'btnText' => trans('admin/main.delete'),
+                    'btnIcon' => 'trash',
+                    'iconType' => 'lin',
+                    'iconClass' => 'text-danger mr-2'
+                ])
+            @endcan
+        </div>
+    </div>
+</td>
                                         </tr>
                                     @endforeach
                                 </table>
@@ -93,127 +120,6 @@
             </div>
         </div>
     </section>
-
-    @if ($errors->any())
-    <div class="alert alert-danger">
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-@if (session('error'))
-    <div class="alert alert-danger">
-        {{ session('error') }}
-    </div>
-@endif
-
-@if (session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-@endif
-
-
-    <section class="section">
-        <div class="row">
-            <!-- Form and Download Button -->
-            <div class="col-12 col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>{{ trans('admin/main.upload_excel') }}</h4>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('admin.testimonials.import') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            <div class="form-group">
-                                <label>{{ trans('admin/main.upload_excel') }}</label>
-                                <div class="d-flex align-items-center">
-                                    <input type="file" name="excel_file" class="form-control col-md-6 mr-2" required>
-                                    <button type="submit" class="btn btn-primary">{{ trans('admin/main.upload') }}</button>
-                                </div>
-                            </div>
-                            <div class="mt-5">
-                                <a href="{{ route('admin.testimonials.download-template') }}" class="btn btn-success">{{ trans('admin/main.download_template') }}</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-            <!-- Instructions Table -->
-            <div class="col-12 col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>{{ trans('admin/main.instructions') }}</h4>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>{{ trans('admin/main.column_number') }}</th>
-                                    <th>{{ trans('admin/main.column_name') }}</th>
-                                    <th>{{ trans('admin/main.instructions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>{{ trans('admin/main.user_avatar') }}
-                                        <span class="badge badge-success">{{ trans('admin/main.required') }}</span>
-                                    </td>
-                                    <td>{{ trans('admin/main.user_avatar_description') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>{{ trans('admin/main.user_name') }}
-                                        <span class="badge badge-success">{{ trans('admin/main.required') }}</span>
-                                    </td>
-                                    <td>{{ trans('admin/main.user_name_description') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>{{ trans('admin/main.job_title') }}
-                                        <span class="badge badge-success">{{ trans('admin/main.required') }}</span>
-                                    </td>
-                                    <td>{{ trans('admin/main.job_itle_description') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>4</td>
-                                    <td>{{ trans('admin/main.rate') }}
-                                        <span class="badge badge-info">{{ trans('admin/main.optional') }}</span>
-                                    </td>
-                                    <td>{{ trans('admin/main.rate_description') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>5</td>
-                                    <td>{{ trans('admin/main.comment') }}
-                                        <span class="badge badge-success">{{ trans('admin/main.required') }}</span>
-                                    </td>
-                                    <td>{{ trans('admin/main.comment_description') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>6</td>
-                                    <td>{{ trans('admin/main.status') }}
-                                        <span class="badge badge-info">{{ trans('admin/main.optional') }}</span>
-                                    </td>
-                                    <td>{{ trans('admin/main.status_description') }}</td>
-                                </tr>
-                            </tbody>
-
-
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
-    </section>
-
 @endsection
 
 @push('scripts_bottom')

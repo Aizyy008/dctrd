@@ -197,7 +197,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-
+        App\Providers\RuntimeOptimizationServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Mews\Captcha\CaptchaServiceProvider::class,
         Jorenvh\Share\Providers\ShareServiceProvider::class,
@@ -215,6 +215,11 @@ return [
         Paytabscom\Laravel_paytabs\PaypageServiceProvider::class,
         PayMob\PayMobServiceProvider::class,
         Clickpaysa\Laravel_package\PaypageServiceProvider::class,
+        \App\Providers\LandingBuilderProvider::class,
+        App\Providers\LicenseEventServiceProvider::class,
+        App\Providers\PluginBundleLicenseServiceProvider::class,
+        App\Providers\ThemeBuilderLicenseServiceProvider::class,
+        App\Providers\MobileAppLicenseServiceProvider::class,
     ],
 
     /*

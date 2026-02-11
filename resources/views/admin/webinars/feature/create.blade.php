@@ -93,7 +93,9 @@
                                             </select>
                                         </div>
 
+                                        <div class="text-right">
                                         <button type="submit" class="btn btn-primary">{{ trans('admin/main.save_change') }}</button>
+                                        </div>
                                     </form>
                                 </div>
                             </div>

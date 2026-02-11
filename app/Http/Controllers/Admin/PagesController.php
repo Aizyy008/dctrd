@@ -44,38 +44,27 @@ class PagesController extends Controller
             'locale' => 'required',
             'name' => 'required',
             'link' => 'required|unique:pages,link',
-            'title' => 'required',
+            'title' => 'required|string',
+            'subtitle' => 'required|string',
+            'icon' => 'required|string',
+            'cover' => 'required|string',
+            'header_icon' => 'required|string',
             'seo_description' => 'nullable|string|max:255',
             'content' => 'required',
         ]);
 
-        $data = $request->all();
 
-        $firstCharacter = substr($data['link'], 0, 1);
-        if ($firstCharacter !== '/') {
-            $data['link'] = '/' . $data['link'];
-        }
+        $storeData = $this->makeStoreData($request);
+        $page = Page::create($storeData);
 
-        $data['robot'] = (!empty($data['robot']) and $data['robot'] == '1');
+        $this->handleExtraData($request, $page);
 
-        $page = Page::create([
-            'link' => $data['link'],
-            'name' => $data['name'],
-            'robot' => $data['robot'],
-            'status' => $data['status'],
-            'created_at' => time(),
-        ]);
-
-        PageTranslation::updateOrCreate([
-            'page_id' => $page->id,
-            'locale' => mb_strtolower($data['locale'])
-        ], [
-            'title' => $data['title'],
-            'seo_description' => $data['seo_description'] ?? null,
-            'content' => $data['content'],
-        ]);
-
-        return redirect(getAdminPanelUrl().'/pages');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.new_page_created_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/pages/{$page->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function edit(Request $request, $id)
@@ -106,11 +95,30 @@ class PagesController extends Controller
             'locale' => 'required',
             'name' => 'required',
             'link' => 'required|unique:pages,link,' . $page->id,
-            'title' => 'required',
+            'title' => 'required|string',
+            'subtitle' => 'required|string',
+            'icon' => 'required|string',
+            'cover' => 'required|string',
+            'header_icon' => 'required|string',
             'seo_description' => 'nullable|string|max:255',
             'content' => 'required',
         ]);
 
+        $storeData = $this->makeStoreData($request);
+        $page->update($storeData);
+
+        $this->handleExtraData($request, $page);
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.the_page_updated_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/pages/{$page->id}/edit"))->with(['toast' => $toastData]);
+    }
+
+    private function makeStoreData(Request $request, $page = null)
+    {
         $data = $request->all();
 
         $firstCharacter = substr($data['link'], 0, 1);
@@ -118,28 +126,31 @@ class PagesController extends Controller
             $data['link'] = '/' . $data['link'];
         }
 
-        $data['robot'] = (!empty($data['robot']) and $data['robot'] == '1');
-
-        $page->update([
+        return [
             'link' => $data['link'],
             'name' => $data['name'],
-            'robot' => $data['robot'],
+            'icon' => $data['icon'],
+            'cover' => $data['cover'],
+            'header_icon' => $data['header_icon'],
+            'robot' => $data['robot'] == '1',
             'status' => $data['status'],
-            'created_at' => time(),
-        ]);
+            'created_at' => !empty($page) ? $page->created_at : time(),
+        ];
+    }
+
+    private function handleExtraData(Request $request, $page)
+    {
+        $data = $request->all();
 
         PageTranslation::updateOrCreate([
             'page_id' => $page->id,
             'locale' => mb_strtolower($data['locale'])
         ], [
             'title' => $data['title'],
+            'subtitle' => $data['subtitle'],
             'seo_description' => $data['seo_description'] ?? null,
             'content' => $data['content'],
         ]);
-
-        removeContentLocale();
-
-        return redirect(getAdminPanelUrl().'/pages');
     }
 
     public function delete($id)
@@ -150,7 +161,12 @@ class PagesController extends Controller
 
         $page->delete();
 
-        return redirect(getAdminPanelUrl().'/pages');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.the_page_deleted_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/pages"))->with(['toast' => $toastData]);
     }
 
     public function statusTaggle($id)
@@ -163,6 +179,6 @@ class PagesController extends Controller
             'status' => ($page->status == 'draft') ? 'publish' : 'draft'
         ]);
 
-        return redirect(getAdminPanelUrl().'/pages');
+        return redirect(getAdminPanelUrl() . '/pages');
     }
 }

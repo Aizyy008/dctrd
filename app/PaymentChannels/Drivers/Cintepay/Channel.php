@@ -73,7 +73,7 @@ class Channel extends BasePaymentChannel implements IChannel
                 'cinetpay' => $cinetpay,
             ];
 
-            return view('web.default.cart.channels.cinetpay', $data);
+            return view('design_1.web.cart.payment.channels.cinetpay', $data);
         } catch (\Exception $e) {
             dd($e->getMessage());
         }

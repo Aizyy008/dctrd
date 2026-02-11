@@ -19,6 +19,6 @@ class MaintenanceController extends Controller
             'pageRobot' => getPageRobotNoIndex()
         ];
 
-        return view('web.default.maintenance.index', $data);
+        return view('design_1.web.maintenance.index', $data);
     }
 }

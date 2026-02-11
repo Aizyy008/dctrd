@@ -19,6 +19,7 @@ class TextLessonsController extends Controller
     {
         $user = auth()->user();
         $data = $request->get('ajax')['new'];
+        $imageFileUpload = $request->file('ajax.new.image');
 
         $validator = Validator::make($data, [
             'webinar_id' => 'required',
@@ -51,6 +52,11 @@ class TextLessonsController extends Controller
         if (!empty($webinar) and $webinar->canAccess($user)) {
             $lessonsCount = TextLesson::where('webinar_id', $data['webinar_id'])->count();
 
+
+            if (!empty($imageFileUpload)) {
+                $data['image'] = $this->uploadFile($imageFileUpload, "webinars/{$webinar->id}/text_lessons", null, $webinar->creator_id);
+            }
+
             $textLesson = TextLesson::create([
                 'creator_id' => $user->id,
                 'webinar_id' => $data['webinar_id'],
@@ -66,9 +72,11 @@ class TextLessonsController extends Controller
             ]);
 
             if ($textLesson) {
+                $locale = $request->get('locale', getDefaultLocale());
+
                 TextLessonTranslation::updateOrCreate([
                     'text_lesson_id' => $textLesson->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                     'summary' => $data['summary'],
@@ -83,6 +91,10 @@ class TextLessonsController extends Controller
                 WebinarChapterItem::makeItem($textLesson->creator_id, $textLesson->chapter_id, $textLesson->id, WebinarChapterItem::$chapterTextLesson);
             }
 
+            $webinar->update([
+                'updated_at' => time()
+            ]);
+
             return response()->json([
                 'code' => 200,
             ], 200);
@@ -95,6 +107,7 @@ class TextLessonsController extends Controller
     {
         $user = auth()->user();
         $data = $request->get('ajax')[$id];
+        $imageFileUpload = $request->file("ajax.{$id}.image");
 
         $validator = Validator::make($data, [
             'webinar_id' => 'required',
@@ -137,6 +150,13 @@ class TextLessonsController extends Controller
                 $changeChapter = ($data['chapter_id'] != $textLesson->chapter_id);
                 $oldChapterId = $textLesson->chapter_id;
 
+                if (!empty($imageFileUpload)) {
+                    $data['image'] = $this->uploadFile($imageFileUpload, "webinars/{$webinar->id}/text_lessons", null, $webinar->creator_id);
+                } else {
+                    $data['image'] = $textLesson->image;
+                }
+
+
                 $textLesson->update([
                     'chapter_id' => $data['chapter_id'],
                     'image' => $data['image'] ?? null,
@@ -152,9 +172,11 @@ class TextLessonsController extends Controller
                     WebinarChapterItem::changeChapter($textLesson->creator_id, $oldChapterId, $textLesson->chapter_id, $textLesson->id, WebinarChapterItem::$chapterTextLesson);
                 }
 
+                $locale = $request->get('locale', getDefaultLocale());
+
                 TextLessonTranslation::updateOrCreate([
                     'text_lesson_id' => $textLesson->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                     'summary' => $data['summary'],
@@ -167,6 +189,10 @@ class TextLessonsController extends Controller
                     $attachments = $data['attachments'];
                     $this->saveAttachments($textLesson, $attachments);
                 }
+
+                $webinar->update([
+                    'updated_at' => time()
+                ]);
 
                 return response()->json([
                     'code' => 200,

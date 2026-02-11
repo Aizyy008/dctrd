@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Panel\Store;
 
-use App\Exports\StoreProduct\StoreProductsExport;
+use App\Enums\UploadSource;
 use App\Http\Controllers\Controller;
-use App\Imports\Instructor_Organization_Dashboard\StoreProduct\ProductsImport;
+use App\Http\Controllers\Panel\Store\Traits\MyProductsListsTrait;
 use App\Mixins\RegistrationPackage\UserPackage;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -13,19 +13,16 @@ use App\Models\ProductOrder;
 use App\Models\ProductSelectedFilterOption;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationCategory;
-use App\Models\ProductVariant;
-use App\Models\Role;
 use App\Models\Translation\ProductTranslation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class ProductController extends Controller
 {
-    public function index()
+    use MyProductsListsTrait;
+
+    public function index(Request $request)
     {
         $this->authorize("panel_products_lists");
 
@@ -35,51 +32,32 @@ class ProductController extends Controller
             abort(403);
         }
 
-        $query = Product::where('creator_id', $user->id);
+        $query = Product::query()->where('creator_id', $user->id);
+        $query = $this->handleFilters($request, $query);
 
-        $physicalProducts = deepClone($query)->where('type', Product::$physical)->count();;
-        $virtualProducts = deepClone($query)->where('type', Product::$virtual)->count();
+        $pageListData = $this->getPageListData($request, $query);
 
-        $totalPhysicalSales = deepClone($query)->where('products.type', Product::$physical)
-            ->join('product_orders', 'products.id', 'product_orders.product_id')
-            ->leftJoin('sales', function ($join) {
-                $join->on('product_orders.id', '=', 'sales.product_order_id')
-                    ->whereNull('sales.refund_at');
-            })
-            ->select(DB::raw('sum(sales.total_amount) as total_sales'))
-            ->whereNotNull('product_orders.sale_id')
-            ->whereNotIn('product_orders.status', [ProductOrder::$canceled, ProductOrder::$pending])
-            ->first();
+        if ($request->ajax()) {
+            return $pageListData;
+        }
 
-        $totalVirtualSales = deepClone($query)->where('products.type', Product::$virtual)
-            ->join('product_orders', 'products.id', 'product_orders.product_id')
-            ->leftJoin('sales', function ($join) {
-                $join->on('product_orders.id', '=', 'sales.product_order_id')
-                    ->whereNull('sales.refund_at');
-            })
-            ->select(DB::raw('sum(sales.total_amount) as total_sales'))
-            ->whereNotNull('product_orders.sale_id')
-            ->whereNotIn('product_orders.status', [ProductOrder::$canceled, ProductOrder::$pending])
-            ->first();
+        $topStats = $this->handlePageTopStats($user);
 
-
-        $products = deepClone($query)
-            ->with([
-                'productOrders'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        $data = [
-            'pageTitle' => trans('update.my_products'),
-            'products' => $products,
-            'physicalProducts' => $physicalProducts,
-            'virtualProducts' => $virtualProducts,
-            'physicalSales' => !empty($totalPhysicalSales) ? $totalPhysicalSales->total_sales : 0,
-            'virtualSales' => !empty($totalVirtualSales) ? $totalVirtualSales->total_sales : 0,
+        $pageTitle = trans('panel.my_purchases');
+        $breadcrumbs = [
+            ['text' => trans('update.platform'), 'url' => '/'],
+            ['text' => trans('panel.dashboard'), 'url' => '/panel'],
+            ['text' => $pageTitle, 'url' => null],
         ];
 
-        return view('web.default.panel.store.products.lists', $data);
+        $data = [
+            'pageTitle' => $pageTitle,
+            'breadcrumbs' => $breadcrumbs,
+            ...$topStats,
+            ...$pageListData,
+        ];
+
+        return view('design_1.panel.store.my_products.index', $data);
     }
 
     public function create()
@@ -108,9 +86,10 @@ class ProductController extends Controller
         $data = [
             'pageTitle' => trans('update.new_product_page_title'),
             'currentStep' => 1,
+            'stepCount' => 5,
         ];
 
-        return view('web.default.panel.store.products.create', $data);
+        return view('design_1.panel.store.create_product.index', $data);
     }
 
     public function store(Request $request)
@@ -179,33 +158,6 @@ class ProductController extends Controller
             ]);
         }
 
-        if (isset($request->variant_name) && is_array($request->variant_name)) {
-            foreach ($request->variant_name as $key => $name) {
-                $checkVariation = ProductVariant::where('product_id',$product->id)
-                                                ->where('name',$name)
-                                                ->first();
-                if (!$checkVariation) {
-                    ProductVariant::updateOrCreate(
-                        [
-                            'product_id' => $product->id,
-                            'id' => $request->variant_id[$key] ?? null,
-                        ],
-                        [
-                            'name' => $name,
-                            'price' => $request->variant_price[$key],
-                            'stock' => $request->variant_stock[$key],
-                            'initial_price' => $request->variant_initial_price[$key],
-                            'discount' => $request->variant_discount[$key],
-                            'sku' => $request->variant_sku[$key],
-                            'image' => $request->variant_image[$key],
-                        ]
-                    );
-                }
-
-            }
-
-        }
-
         $notifyOptions = [
             '[u.name]' => $user->full_name,
             '[item_title]' => $product->title,
@@ -233,6 +185,12 @@ class ProductController extends Controller
 
         if (!$user->isTeacher() and !$user->isOrganization()) {
             abort(404);
+        }
+
+        $stepCount = 5;
+
+        if ($step > $stepCount) {
+            return redirect("/panel/store/products/{$id}/step/{$stepCount}");
         }
 
         $locale = $request->get('locale', app()->getLocale());
@@ -276,6 +234,7 @@ class ProductController extends Controller
             'currentStep' => $step,
             'locale' => mb_strtolower($locale),
             'defaultLocale' => getDefaultLocale(),
+            'stepCount' => $stepCount,
         ];
 
         if ($step == 2) {
@@ -304,7 +263,7 @@ class ProductController extends Controller
                 ->get();
         }
 
-        return view('web.default.panel.store.products.create', $data);
+        return view('design_1.panel.store.create_product.index', $data);
     }
 
     public function update(Request $request, $id)
@@ -347,21 +306,6 @@ class ProductController extends Controller
             ];
 
             $data['unlimited_inventory'] = (!empty($data['unlimited_inventory']) and $data['unlimited_inventory'] == 'on');
-        } elseif ($currentStep == 3) {
-            $data['images'] = array_filter($data['images']);
-
-            if (empty($data['images']) or !count($data['images'])) {
-                $data['images'] = [];
-            }
-
-            $request->merge([ // for validation check
-                'images' => $data['images']
-            ]);
-
-            $rules = [
-                'thumbnail' => 'required',
-                'images' => 'required|array|min:1|max:4',
-            ];
         }
 
         $this->validate($request, $rules);
@@ -409,7 +353,7 @@ class ProductController extends Controller
                 }
             }
         } elseif ($currentStep == 3) {
-            $this->handleProductImages($product, $data);
+            $this->handleProductImages($request, $product);
         }
 
         unset($data['_token'],
@@ -439,34 +383,6 @@ class ProductController extends Controller
 
         $product->update($data);
 
-
-        if (isset($request->variant_name) && is_array($request->variant_name)) {
-            foreach ($request->variant_name as $key => $name) {
-                $checkVariation = ProductVariant::where('product_id',$product->id)
-                                                ->where('name',$name)
-                                                ->first();
-                if (!$checkVariation) {
-                    ProductVariant::updateOrCreate(
-                        [
-                            'product_id' => $product->id,
-                            'id' => $request->variant_id[$key] ?? null,
-                        ],
-                        [
-                            'name' => $name,
-                            'price' => $request->variant_price[$key],
-                            'stock' => $request->variant_stock[$key],
-                            'initial_price' => $request->variant_initial_price[$key],
-                            'discount' => $request->variant_discount[$key],
-                            'sku' => $request->variant_sku[$key],
-                            'image' => $request->variant_image[$key],
-                        ]
-                    );
-                }
-
-            }
-
-        }
-
         $url = '/panel/store/products';
         if ($getNextStep) {
             $nextStep = (!empty($getStep) and $getStep > 0) ? $getStep : $currentStep + 1;
@@ -489,52 +405,70 @@ class ProductController extends Controller
             sendNotification("content_review_request", $notifyOptions, 1);
         }
 
-
-
         return redirect($url);
     }
 
-    private function handleProductImages($product, $data)
+    private function handleProductImages(Request $request, $product)
     {
         $user = auth()->user();
 
-        if (!empty($data['thumbnail'])) {
+        if (!empty($request->file('thumbnail'))) {
+            $thumbnail = $this->uploadFile($request->file('thumbnail'), "products/{$product->id}", 'thumbnail', $product->creator_id);
+
             ProductMedia::updateOrCreate([
                 'creator_id' => $user->id,
                 'product_id' => $product->id,
                 'type' => ProductMedia::$thumbnail,
             ], [
-                'path' => $data['thumbnail'],
+                'path' => $thumbnail,
                 'created_at' => time(),
             ]);
         }
 
-        if (!empty($data['images']) and count($data['images'])) {
+        if (!empty($request->file('images'))) {
             ProductMedia::where('creator_id', $user->id)
                 ->where('product_id', $product->id)
                 ->where('type', ProductMedia::$image)
                 ->delete();
 
-            foreach ($data['images'] as $image) {
+            foreach ($request->file('images') as $k => $image) {
                 if (!empty($image)) {
+                    $name = "image_" . $k + 1;
+                    $path = $this->uploadFile($image, "products/{$product->id}", $name, $product->creator_id);
+
                     ProductMedia::create([
                         'creator_id' => $user->id,
                         'product_id' => $product->id,
                         'type' => ProductMedia::$image,
-                        'path' => $image,
+                        'path' => $path,
                         'created_at' => time(),
                     ]);
                 }
             }
         }
 
-        if (!empty($data['video_demo'])) {
+        $videoDemo = null;
+
+        ProductMedia::where('creator_id', $user->id)
+            ->where('product_id', $product->id)
+            ->where('type', ProductMedia::$video)
+            ->delete();
+
+        if (in_array($request->get('video_demo_source'), UploadSource::urlPathItems) and !empty($request->get('demo_video_path'))) {
+            $videoDemo = $request->get('demo_video_path');
+        } elseif ($request->get('video_demo_source') == UploadSource::UPLOAD and !empty($request->file('demo_video_local'))) {
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "products/{$product->id}", 'video', $product->creator_id);
+        } elseif ($request->get('video_demo_source') == UploadSource::S3 and !empty($request->file('demo_video_local'))) {
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "products/{$product->id}", 'video', $product->creator_id, 'minio');
+        }
+
+        if (!empty($videoDemo)) {
             ProductMedia::updateOrCreate([
                 'creator_id' => $user->id,
                 'product_id' => $product->id,
                 'type' => ProductMedia::$video,
             ], [
-                'path' => $data['video_demo'],
+                'path' => $videoDemo,
                 'created_at' => time(),
             ]);
         }
@@ -581,6 +515,42 @@ class ProductController extends Controller
             'code' => 200,
             'redirect_to' => $request->get('redirect_to')
         ], 200);
+    }
+
+    public function deleteMediaById(Request $request, $productId, $mediaId)
+    {
+        $this->authorize("panel_products_delete");
+
+        $user = auth()->user();
+
+        if (!$user->checkCanAccessToStore()) {
+            abort(403);
+        }
+
+        if (!$user->isTeacher() and !$user->isOrganization()) {
+            abort(404);
+        }
+
+        $product = Product::query()->where('id', $productId)
+            ->where('creator_id', $user->id)
+            ->first();
+
+        if (!empty($product)) {
+            $media = $product->media()->where('type', ProductMedia::$image)
+                ->where('id', $mediaId)
+                ->first();
+
+            if (!empty($media)) {
+                $media->delete();
+
+                return response()->json([
+                    'code' => 200,
+                    'redirect_to' => $request->get('redirect_to')
+                ], 200);
+            }
+        }
+
+        return response()->json([], 422);
     }
 
     public function getContentItemByLocale(Request $request, $id)
@@ -656,191 +626,35 @@ class ProductController extends Controller
         return response()->json([], 422);
     }
 
-    public function save_product_variants(Request $request)
+    public function search(Request $request)
     {
-        $validatedData = $request->validate([
-            'variant.id' => 'nullable|exists:product_variants,id',
-            'variant.name' => 'nullable|string|max:255',
-            'variant.price' => 'nullable|numeric|min:0',
-            'variant.stock' => 'nullable|integer|min:0',
-            'variant.sku' => 'nullable|string|max:255',
-            'variant.initial_price' => 'nullable|numeric|min:0',
-            'variant.discount' => 'nullable|numeric|min:0|max:100',
-            'variant.image' => 'nullable|string',
-            'variant.product_id' => 'nullable|exists:products,id',
-        ]);
+        $term = $request->get('term', null);
+        $option = $request->get('option', null);
+        $itemId = $request->get('item_id', null);
 
-        $variant = ProductVariant::updateOrCreate(
-            ['id' => $validatedData['variant']['id'] ?? null], // Search by ID (if exists)
-            $validatedData['variant'] // Update existing or create new record
-        );
+        if (!empty($term)) {
+            $query = Product::query()->select('id', 'creator_id')
+                ->where('status', 'active')
+                ->whereTranslationLike('title', '%' . $term . '%')
+                ->with([
+                    'creator' => function ($query) {
+                        $query->select('id', 'full_name');
+                    }
+                ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Variants saved successfully!',
-            'id' => $variant->id
-        ]);
-    }
-
-    public function update_product_variants(Request $request)
-    {
-        $variant = ProductVariant::find($request->id);
-
-        if (!$variant) {
-            return response()->json(['success' => false, 'message' => 'Variant not found'], 404);
-        }
-
-        $variant->price = $request->price;
-        $variant->stock = $request->stock;
-        $variant->initial_price = $request->initial_price;
-        $variant->discount = $request->discount;
-        $variant->sku = $request->sku;
-        $variant->image = $request->image;
-
-        $variant->save();
-
-        return response()->json(['success' => true, 'message' => 'Variant updated successfully']);
-    }
-
-    public function delete_product_variants($id)
-    {
-        $variant = ProductVariant::findOrFail($id);
-        $variant->delete();
-
-        return back();
-    }
-    // +++++++++++++++++ import() ++++++++++++++++
-    public function import(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,csv',
-        ]);
-        Excel::import(new ProductsImport, $request->file('file'));
-        return redirect()->back()->with('success', 'Products imported successfully.');
-    }
-    // +++++++++++++++++ downloadTemplate() ++++++++++++++++
-    public function downloadTemplate()
-    {
-        return Excel::download(new class implements FromArray, WithHeadings {
-            public function headings(): array
-            {
-                return [
-                    'type',
-                    'locale',
-                    'title',
-                    'category_id',
-                    'price',
-                    'point',
-                    'unlimited_inventory',
-                    'ordering',
-                    'inventory',
-                    'inventory_warning',
-                    'delivery_fee',
-                    'delivery_estimated_time',
-                    'message_for_reviewer',
-                    'tax',
-                    'commission_type',
-                    'commission',
-                    'seo_description',
-                    'summary',
-                    'description',
-                    'variants', // New
-                    'media',    // New
-                    'filter_options', // New
-                ];
+            if (!empty($itemId)) {
+                $query->where('id', '!=', $itemId);
             }
 
-            public function array(): array
-            {
-                // ++++++++++++ Optional: Include a sample row to guide users ++++++++++++
-                // return [
-                //     [
-                //         'physical',                          // type
-                //         'en,ar',                            // locale
-                //         'Product Title|عنوان المنتج',       // title
-                //         '1',                                // category_id
-                //         '99.99',                            // price
-                //         '60',                               // point
-                //         '0',                                // unlimited_inventory
-                //         '1',                                // ordering
-                //         '100',                              // inventory
-                //         '10',                               // inventory_warning
-                //         '5.00',                             // delivery_fee
-                //         '2',                                // delivery_estimated_time
-                //         'Please review this product',       // message_for_reviewer
-                //         '15',                               // tax
-                //         'fixed_amount',                     // commission_type
-                //         '87',                               // commission
-                //         'SEO Desc EN|وصف SEO AR',           // seo_description
-                //         'Summary EN|ملخص AR',               // summary
-                //         'Description EN|وصف AR',            // description
-                //         'Size S:10:50|Size M:15:30',        // variants (name:price:inventory)
-                //         '/images/1.jpg|/images/2.jpg',      // media
-                //         '[1,2]',                          // filter_options
-                //     ],
-                // ];
-                // ++++++++++++ If you prefer an empty template, return []; ++++++++++++
-                return [];
+            $products = $query->get();
+
+            foreach ($products as $product) {
+                $product->title .= ' - ' . $product->creator->full_name;
             }
-        }, 'product_template.xlsx');
-    }
-    // +++++++++++++++++ exportExcel() ++++++++++++++++
-    public function exportExcel(Request $request)
-    {
-        // Define base query for products
-        $query = Product::query();
-    
-        // Get authenticated user
-        $user = auth()->user();
-    
-        // Get role IDs for instructors and organizations
-        $instructorRoleIds = Role::where(['is_admin' => false, 'name' => 'teacher'])->pluck('id')->toArray();
-        $organizationRoleIds = Role::where(['is_admin' => false, 'name' => 'organization'])->pluck('id')->toArray();
-    
-        // Filter products based on user role
-        $query->whereHas('creator', function ($query) use ($instructorRoleIds, $organizationRoleIds, $user) {
-            $query->where(function ($subQuery) use ($instructorRoleIds, $organizationRoleIds, $user) {
-                if (in_array($user->role_id, $instructorRoleIds)) {
-                    // If the user is an instructor, get only their products
-                    $subQuery->where('id', $user->id);
-                } elseif (in_array($user->role_id, $organizationRoleIds)) {
-                    // If the user is from an organization, get all products of users in the same organization
-                    $subQuery->where('id', $user->id);
-                }
-            });
-        });
-    
-        // Apply additional filters (assuming handleFilters() exists)
-        $products = $this->handleFilters($query, $request)
-            ->with([
-                'category',
-                'creator' => function ($query) {
-                    $query->select('id', 'full_name');
-                },
-                'translations', // For multilingual fields
-                'variants',     // ProductVariant relationship
-                'media',        // ProductMedia relationship
-                'selectedFilterOptions' // ProductSelectedFilterOption relationship
-            ])
-            ->get();
-    
-        // Export using StoreProductsExport class
-        $export = new StoreProductsExport($products);
-        return Excel::download($export, 'storeProducts.xlsx');
-    }
-    
-    
-    // Placeholder for handleFilters (implement based on your needs)
-    protected function handleFilters($query, Request $request)
-    {
-        // Example: Filter by status, type, etc., based on $request
-        if ($request->has('status')) {
-            $query->where('status', $request->input('status'));
+            return response()->json($products, 200);
         }
-        if ($request->has('type')) {
-            $query->where('type', $request->input('type'));
-        }
-        // Add more filters as needed
-        return $query;
+
+        return response('', 422);
     }
+
 }

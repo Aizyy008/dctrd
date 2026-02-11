@@ -62,15 +62,21 @@ class ReserveMeeting extends Model
     {
         $day = $this->day;
         $times = $this->meetingTime->time;
-        $times = explode('-', $times);
-        $start_time = date("H:i", strtotime($times[0]));
-        $end_time = date("H:i", strtotime($times[1]));
 
-        $startDate = \DateTime::createFromFormat('Y-m-d H:i', $day . ' ' . $start_time);
-        $endDate = \DateTime::createFromFormat('Y-m-d H:i', $day . ' ' . $end_time);
+        if (!empty($day) and !empty($times)) {
+            $day = str_replace('/', '-', $day);
+            $times = explode('-', $times);
+            $start_time = date("H:i", strtotime($times[0]));
+            $end_time = date("H:i", strtotime($times[1]));
 
-        $link = Link::create('Meeting', $startDate, $endDate); //->description('Cookies & cocktails!')
+            $startDate = \DateTime::createFromFormat('Y-m-d H:i', $day . ' ' . $start_time);
+            $endDate = \DateTime::createFromFormat('Y-m-d H:i', $day . ' ' . $end_time);
 
-        return $link->google();
+            $link = Link::create('Meeting', $startDate, $endDate); //->description('Cookies & cocktails!')
+
+            return $link->google();
+        }
+
+        return null;
     }
 }

@@ -74,7 +74,7 @@ class Channel extends BasePaymentChannel implements IChannel
         $data['ppmpf_1'] = $order->id;
         $data['ppmpf_2'] = $order->user_id;
 
-        return view('web.default.cart.channels.jazzCash', ['data' => $data]);
+        return view('design_1.web.cart.payment.channels.jazzCash', ['data' => $data]);
     }
 
     private function makeCallbackUrl($order, $status)

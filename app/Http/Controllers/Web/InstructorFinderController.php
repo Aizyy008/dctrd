@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Web;
 
 use App\Bitwise\UserLevelOfTraining;
 use App\Http\Controllers\Controller;
+use App\Mixins\Geo\Geo;
 use App\Models\Category;
 use App\Models\Meeting;
 use App\Models\MeetingTime;
 use App\Models\Region;
+use App\Models\ReserveMeeting;
 use App\Models\Role;
 use App\Models\UserMeta;
 use App\Models\UserOccupation;
+use App\Models\Webinar;
 use App\User;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
@@ -23,7 +26,7 @@ class InstructorFinderController extends Controller
 
     public function index(Request $request)
     {
-        $query = User::where('users.status', 'active')
+        $query = User::query()->where('users.status', 'active')
             ->where(function ($query) {
                 $query->where('users.ban', false)
                     ->orWhere(function ($query) {
@@ -44,10 +47,7 @@ class InstructorFinderController extends Controller
         $query = $query->addSelect(DB::raw('ST_AsText(location) as userLocation'));
 
         $instructors = deepClone($query)->paginate(6);
-
-        foreach ($instructors as $instructor) {
-            $instructor->location = $instructor->userLocation;
-        }
+        $instructors = $this->handleExtraInstructorData($instructors);
 
         if ($request->ajax()) {
             return $this->handleLoadMoreHtml($instructors);
@@ -61,7 +61,7 @@ class InstructorFinderController extends Controller
             $mapUser->rate = $mapUser->rates();
             $mapUser->profileUrl = url($mapUser->getProfileUrl());
 
-            $mapUser->location = \Geo::get_geo_array($mapUser->userLocation);
+            $mapUser->location = Geo::get_geo_array($mapUser->userLocation);
         }
 
         $seoSettings = getSeoMetas('instructor_finder');
@@ -69,18 +69,23 @@ class InstructorFinderController extends Controller
         $pageDescription = !empty($seoSettings['description']) ? $seoSettings['description'] : trans('home.instructors');
         $pageRobot = getPageRobot('instructor_finder');
 
+        $instructorFinderSettings = getInstructorFinderSettings();
+
         $data = [
             'pageTitle' => $pageTitle,
             'pageDescription' => $pageDescription,
             'pageRobot' => $pageRobot,
             'mapUsers' => $mapUsers,
             'instructors' => $instructors,
+            'instructorFinderSettings' => $instructorFinderSettings,
+            'filterMaxPrice' => $this->getFilterMaxPrice(),
         ];
 
         $locationData = $this->getLocationData($request);
         $data = array_merge($data, $locationData);
+        $data = array_merge($data, $this->getFeaturedAndTopMentorsInstructors($instructorFinderSettings));
 
-        return view('web.default.instructorFinder.index', $data);
+        return view('design_1.web.instructor_finder.lists.index', $data);
     }
 
     private function handleLoadMoreHtml($instructors)
@@ -89,7 +94,7 @@ class InstructorFinderController extends Controller
         $html = null;
 
         foreach ($instructors as $instructor) {
-            $html .= (string)view()->make('web.default.instructorFinder.components.instructor_card', ['instructor' => $instructor]);
+            $html .= (string)view()->make('design_1.web.instructor_finder.lists.instructor_card', ['instructor' => $instructor]);
         }
 
         return response()->json([
@@ -98,23 +103,87 @@ class InstructorFinderController extends Controller
         ], 200);
     }
 
+    private function getFilterMaxPrice()
+    {
+        $prices = [];
+
+        $prices[] = Meeting::query()->max('amount');
+        $prices[] = Meeting::query()->max('in_person_amount');
+        $prices[] = Meeting::query()->max('in_person_group_amount');
+        $prices[] = Meeting::query()->max('online_group_amount');
+
+        return max($prices) + 1000;
+    }
+
+    private function handleExtraInstructorData($instructors)
+    {
+
+        foreach ($instructors as $instructor) {
+            $instructor->location = $instructor->userLocation ?? null;
+
+            $instructor->webinars_count = Webinar::query()->where('status', 'active')
+                ->where(function ($query) use ($instructor) {
+                    $query->where('creator_id', $instructor->id)
+                        ->orWhere('teacher_id', $instructor->id);
+                })->count();
+
+            $meetingIds = Meeting::where('creator_id', $instructor->id)->pluck('id');
+            $reserveMeetingsQuery = ReserveMeeting::whereIn('meeting_id', $meetingIds)
+                ->where(function ($query) {
+                    $query->whereHas('sale', function ($query) {
+                        $query->whereNull('refund_at');
+                    });
+
+                    $query->orWhere(function ($query) {
+                        $query->whereIn('status', ['canceled']);
+                        $query->whereHas('sale');
+                    });
+                });
+
+            $instructor->total_meetings = deepClone($reserveMeetingsQuery)->count();
+
+            $activeHoursCount = 0;
+
+            $activeMeetingTimeIds = deepClone($reserveMeetingsQuery)->pluck('meeting_time_id')->toArray();
+
+            if (!empty($activeMeetingTimeIds)) {
+                $activeMeetingTimes = MeetingTime::whereIn('id', $activeMeetingTimeIds)->get();
+
+                foreach ($activeMeetingTimes as $time) {
+                    $explodeTime = explode('-', $time->time);
+                    $activeHoursCount += strtotime($explodeTime[1]) - strtotime($explodeTime[0]);
+                }
+
+                if ($activeHoursCount > 0) {
+                    $activeHoursCount = round($activeHoursCount / 3600, 2);
+                }
+            }
+
+            $instructor->meeting_hours = $activeHoursCount;
+        }
+
+        return $instructors;
+    }
+
+
     private function handleFilters($query, Request $request)
     {
-        $categoryId = $request->get('category_id', null);
-        $levelOfTraining = $request->get('level_of_training', null);
-        $gender = $request->get('gender', null);
-        $meetingSupport = $request->get('meeting_type', null);
-        $population = $request->get('population', null);
-        $countryId = $request->get('country_id', null);
-        $provinceId = $request->get('province_id', null);
-        $cityId = $request->get('city_id', null);
-        $districtId = $request->get('district_id', null);
-        $sort = $request->get('sort', null);
-        $availableForMeetings = $request->get('available_for_meetings', null);
-        $hasFreeMeetings = $request->get('free_meetings', null);
-        $withDiscount = $request->get('discount', null);
+        $categoryId = $request->get('category_id');
+        $levelOfTraining = $request->get('level_of_training');
+        $gender = $request->get('gender');
+        $meetingSupport = $request->get('meeting_type');
+        $population = $request->get('population');
+        $countryId = $request->get('country_id');
+        $provinceId = $request->get('province_id');
+        $cityId = $request->get('city_id');
+        $districtId = $request->get('district_id');
+        $sort = $request->get('sort');
+        $availableForMeetings = $request->get('available_for_meetings');
+        $hasFreeMeetings = $request->get('free_meetings');
+        $withDiscount = $request->get('discount');
+        $rating = $request->get('rating');
 
-        if (empty($request->get('role', null))) {
+        if (empty($request->get('role'))) {
             $role = [Role::$organization, Role::$teacher];
         } else {
             $role = [$request->get('role')];
@@ -143,8 +212,8 @@ class InstructorFinderController extends Controller
             $query->whereIn('users.id', $userIds);
         }
 
-        if (!empty($meetingSupport) and $meetingSupport != 'all') {
-            $query->where('users.meeting_type', $meetingSupport);
+        if (!empty($meetingSupport) and is_array($meetingSupport)) {
+            $query->whereIn('users.meeting_type', $meetingSupport);
         }
 
         if (!empty($population) and in_array($population, ['single', 'group'])) {
@@ -190,11 +259,16 @@ class InstructorFinderController extends Controller
             $query = $this->handleWithDiscount($query);
         }
 
+        if (!empty($rating)) {
+            $roleForSort = ($request->get('role') == Role::$organization) ? Role::$organization : Role::$teacher;
+            $query = $this->getBestRateUsers($query, $roleForSort, $rating);
+        }
+
         if (!empty($sort)) {
             if ($sort == 'top_rate') {
                 $roleForSort = ($request->get('role') == Role::$organization) ? Role::$organization : Role::$teacher;
 
-                $query = $this->getBestRateUsers($query, $roleForSort);
+                $query = $this->getBestRateUsers($query, $roleForSort, 'top');
             }
 
             if ($sort == 'top_sale') {
@@ -212,7 +286,27 @@ class InstructorFinderController extends Controller
         return $query;
     }
 
-    private function getBestRateUsers($query, $role)
+    private function getFeaturedAndTopMentorsInstructors($settings)
+    {
+        $featuredInstructors = $topMentorsInstructors = collect();
+
+        if (!empty($settings) and !empty($settings['featured_instructors_ids']) and is_array($settings['featured_instructors_ids'])) {
+            $featuredInstructors = User::query()->whereIn('id', $settings['featured_instructors_ids'])->get();
+        }
+
+        if (!empty($settings) and !empty($settings['top_mentors_ids']) and is_array($settings['top_mentors_ids'])) {
+            $topMentorsInstructors = User::query()->whereIn('id', $settings['top_mentors_ids'])->get();
+        }
+
+        $topMentorsInstructors = $this->handleExtraInstructorData($topMentorsInstructors);
+
+        return [
+            'featuredInstructors' => $featuredInstructors,
+            'topMentorsInstructors' => $topMentorsInstructors,
+        ];
+    }
+
+    private function getBestRateUsers($query, $role, $rating)
     {
         $query->leftJoin('webinars', function ($join) use ($role) {
             if ($role == Role::$organization) {
@@ -226,9 +320,14 @@ class InstructorFinderController extends Controller
             $join->on('webinars.id', '=', 'webinar_reviews.webinar_id');
             $join->where('webinar_reviews.status', 'active');
         })
-            ->whereNotNull('rates')
-            ->select('users.*', DB::raw('avg(rates) as rates'))
-            ->orderBy('rates', 'desc');
+            ->select('users.*', DB::raw('avg(webinar_reviews.rates) as rates_avg'));
+
+        if ($rating == "top") {
+            $query->orderBy('rates_avg', 'desc');
+        } else {
+            $query->where('rates_avg', '>=', $rating);
+            $query->where('rates_avg', '<', $rating + 1);
+        }
 
         if ($role == Role::$organization) {
             $query->groupBy('webinars.creator_id');
@@ -241,14 +340,18 @@ class InstructorFinderController extends Controller
 
     private function getTopSalesUsers($query)
     {
-        $query->leftJoin('sales', function ($join) {
+        $query->join('sales', function ($join) {
             $join->on('users.id', '=', 'sales.seller_id')
                 ->whereNull('refund_at');
         })
             ->whereNotNull('sales.seller_id')
-            ->whereNotNull('sales.meeting_id')
+            ->where(function ($query) {
+                $query->whereNotNull('sales.meeting_id');
+                $query->orWhereNotNull('sales.webinar_id');
+                $query->orWhereNotNull('sales.bundle_id');
+            })
             ->select('users.*', 'sales.seller_id', DB::raw('count(sales.seller_id) as counts'))
-            ->groupBy('sales.seller_id')
+            ->groupBy('users.id')
             ->orderBy('counts', 'desc');
 
         return $query;
@@ -312,17 +415,20 @@ class InstructorFinderController extends Controller
         $minTime = $request->get('min_time');
         $maxTime = $request->get('max_time');
 
-        if (!empty($minTime) and $minTime < 0) {
-            $minTime = 0;
-        }
+        if (!empty($days) and is_array($days)) {
+            if (!empty($minTime) and $minTime < 0) {
+                $minTime = 0;
+            }
 
-        if (!empty($maxTime) and $maxTime > 23) {
-            $maxTime = 23;
+            if (!empty($maxTime) and $maxTime > 23) {
+                $maxTime = 23;
+            }
         }
 
         if ($maxTime == 23) {
             $maxTime = '23:59';
         }
+
 
         if (isset($minTime) and isset($maxTime)) {
 
@@ -420,7 +526,7 @@ class InstructorFinderController extends Controller
         $provinces = null;
         $cities = null;
         $districts = null;
-        $mapCenter = [37.718590, 37.617188]; // default Location
+        $mapCenter = array_values(getDefaultMapsLocation()); // default Location
         $mapZoom = 3;
 
         if ($request->get('country_id')) {
@@ -432,7 +538,7 @@ class InstructorFinderController extends Controller
             $country = $countries->where('id', $request->get('country_id'))->first();
 
             if ($country) {
-                $mapCenter = \Geo::get_geo_array($country->geo_center);
+                $mapCenter = $country->geo_center;
                 $mapZoom = 5;
             }
         }
@@ -443,7 +549,7 @@ class InstructorFinderController extends Controller
                 $province = $provinces->where('id', $request->get('province_id'))->first();
 
                 if ($province) {
-                    $mapCenter = \Geo::get_geo_array($province->geo_center);
+                    $mapCenter = $province->geo_center;
                     $mapZoom = 7;
                 }
             }
@@ -460,7 +566,7 @@ class InstructorFinderController extends Controller
                 $city = $cities->where('id', $request->get('city_id'))->first();
 
                 if ($city) {
-                    $mapCenter = \Geo::get_geo_array($city->geo_center);
+                    $mapCenter = $city->geo_center;
                     $mapZoom = 12;
                 }
             }
@@ -476,7 +582,7 @@ class InstructorFinderController extends Controller
             $district = $districts->where('id', $request->get('district_id'))->first();
 
             if ($district) {
-                $mapCenter = \Geo::get_geo_array($district->geo_center);
+                $mapCenter = $district->geo_center;
                 $mapZoom = 14;
             }
         }
@@ -542,6 +648,7 @@ class InstructorFinderController extends Controller
         $pageTitle = !empty($seoSettings['title']) ? $seoSettings['title'] : trans('home . instructors');
         $pageDescription = !empty($seoSettings['description']) ? $seoSettings['description'] : trans('home . instructors');
         $pageRobot = getPageRobot('instructor_finder_wizard');
+        $instructorFinderSettings = getInstructorFinderSettings();
 
         $data = [
             'pageTitle' => $pageTitle,
@@ -552,8 +659,9 @@ class InstructorFinderController extends Controller
             'instructorsCount' => $instructorsCount,
             'organizationsCount' => $organizationsCount,
             'citiesCount' => $citiesCount,
+            'instructorFinderSettings' => $instructorFinderSettings,
         ];
 
-        return view('web.default.instructorFinder.wizard', $data);
+        return view('design_1.web.instructor_finder.wizard.index', $data);
     }
 }

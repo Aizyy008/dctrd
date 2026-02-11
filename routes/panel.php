@@ -1,8 +1,5 @@
 <?php
 
-use App\Http\Controllers\Panel\CrossSellingRelationController;
-use App\Http\Controllers\Panel\Store\ProductController;
-use App\Http\Controllers\Panel\WebinarController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,12 +10,18 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['impersonate', 'panel', 'share', 'check_maintenance', 'check_restriction']], function () {
 
-    Route::get('/', 'DashboardController@dashboard');
+    /* Dashboard */
+    Route::get('/', 'DashboardController@index');
+
+    /* Events Calender */
+    Route::group(['prefix' => 'events-calender'], function () {
+        Route::get('/', 'EventsCalendarController@index');
+        Route::post('/get-by-day', 'EventsCalendarController@getEventsByDay');
+    });
+
     Route::post('/content-delete-request', 'ContentDeleteRequestController@store');
 
     Route::group(['prefix' => 'users'], function () {
-        Route::post('/search', 'UserController@search');
-        Route::post('/contact-info', 'UserController@contactInfo');
         Route::post('/offlineToggle', 'UserController@offlineToggle');
         Route::get('/{id}/getInfo', 'UserController@getUserInfo');
 
@@ -26,11 +29,13 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/login-history/{session_id}/end-session', 'UserLoginHistoryController@endSession');
     });
 
-    Route::group(['prefix' => 'webinars'], function () {
+    Route::group(['prefix' => 'courses'], function () {
         Route::group(['middleware' => 'user.not.access'], function () {
-            Route::get('/', 'WebinarController@index');
+
+            Route::get('/', 'MyCoursesController@index');
+            Route::get('/invitations', 'MyCoursesController@invitations');
+
             Route::get('/new', 'WebinarController@create');
-            Route::get('/invitations', 'WebinarController@invitations');
             Route::post('/store', 'WebinarController@store');
             Route::get('/{id}/step/{step?}', 'WebinarController@edit');
             Route::get('/{id}/edit', 'WebinarController@edit')->name('panel_edit_webinar');
@@ -41,39 +46,37 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::post('/order-items', 'WebinarController@orderItems');
             Route::post('/{id}/getContentItemByLocale', 'WebinarController@getContentItemByLocale');
 
-            Route::group(['prefix' => '{webinar_id}/statistics'], function () {
+            Route::group(['prefix' => '{course_id}/statistics'], function () {
                 Route::get('/', 'WebinarStatisticController@index');
             });
 
-             // ++++++++++++++++++++++++++++++++ Start : Excel ++++++++++++++++++++++++++++++++
-             Route::get('/download-template', [WebinarController::class, 'downloadTemplate'])
-                        ->name('organization_instructor.webinars.download.template');
-            Route::post('/import', [WebinarController::class, 'importExcel'])->name('organization_instructor.webinars.import');
-            Route::get('/excel', [WebinarController::class,'exportExcel'])->name('organization_instructor.webinars.export');
-            // ++++++++++++++++++++++++++++++++ End : Excel ++++++++++++++++++++++++++++++++
+            Route::group(['prefix' => '{course_id}/media'], function () {
+                Route::get('/delete-icon', 'WebinarController@deleteIcon');
+            });
         });
 
-        Route::get('/organization_classes', 'WebinarController@organizationClasses');
+        Route::get('/organization_classes', 'MyOrganizationCoursesController@index');
+
         Route::get('/{id}/sale/{sale_id}/invoice', 'WebinarController@invoice');
         Route::get('/{id}/getNextSessionInfo', 'WebinarController@getNextSessionInfo');
 
         Route::group(['prefix' => 'purchases'], function () {
-            Route::get('/', 'WebinarController@purchases');
-            Route::post('/getJoinInfo', 'WebinarController@getJoinInfo');
+            Route::get('/', 'MyPurchasedCoursesController@index');
+            Route::post('/getJoinInfo', 'MyPurchasedCoursesController@getJoinInfo');
         });
 
         Route::post('/search', 'WebinarController@search');
 
         Route::group(['prefix' => 'comments'], function () {
-            Route::get('/', 'CommentController@myClassComments');
-            Route::post('/store', 'CommentController@store');
-            Route::post('/{id}/update', 'CommentController@update');
-            Route::get('/{id}/delete', 'CommentController@destroy');
-            Route::post('/{id}/reply', 'CommentController@reply');
-            Route::post('/{id}/report', 'CommentController@report');
+            Route::get('/', 'MyCourseCommentsController@index');
+            Route::post('/store', 'MyCourseCommentsController@store');
+            Route::post('/{id}/update', 'MyCourseCommentsController@update');
+            Route::get('/{id}/delete', 'MyCourseCommentsController@destroy');
+            Route::post('/{id}/reply', 'MyCourseCommentsController@reply');
+            Route::post('/{id}/report', 'MyCourseCommentsController@report');
         });
 
-        Route::get('/my-comments', 'CommentController@myComments');
+        Route::get('/my-comments', 'MyCommentsController@index');
 
         Route::group(['prefix' => 'favorites'], function () {
             Route::get('/', 'FavoriteController@index');
@@ -83,6 +86,18 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::group(['prefix' => 'personal-notes'], function () {
             Route::get('/', 'CoursePersonalNotesController@index');
             Route::get('/{id}/delete', 'CoursePersonalNotesController@delete');
+        });
+
+        /* Attendances */
+        Route::group(['prefix' => 'attendances', 'middleware' => 'user.not.access'], function () {
+            Route::get('/', 'AttendancesController@index');
+            Route::get('/{session_id}/details', 'AttendanceDetailsController@index');
+            Route::get('/{session_id}/details/{student_id}/status/{status}', 'AttendanceDetailsController@changeStatus');
+        });
+
+        /* My Attendances */
+        Route::group(['prefix' => 'my-attendances'], function () {
+            Route::get('/', 'MyAttendancesController@index');
         });
     });
 
@@ -96,13 +111,15 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::post('/{id}/update', 'UpcomingCoursesController@update');
             Route::get('/{id}/delete', 'UpcomingCoursesController@destroy');
             Route::post('/order-items', 'UpcomingCoursesController@orderItems');
+            Route::post('/{id}/getContentItemByLocale', 'UpcomingCoursesController@getContentItemByLocale');
 
-            Route::get('/{id}/followers', 'UpcomingCoursesController@followers');
             Route::get('/{id}/assign-course', 'UpcomingCoursesController@assignCourseModal');
             Route::post('/{id}/assign-course', 'UpcomingCoursesController@storeAssignCourse');
+            Route::get('/{id}/followers', 'UpcomingCourseFollowersController@index');
         });
 
-        Route::get('/followings', 'UpcomingCoursesController@followings');
+        Route::get('/followings', 'UpcomingCourseFollowingsController@index');
+        Route::get('/followings/{upcoming_id}/delete', 'UpcomingCourseFollowingsController@deleteFollowing');
     });
 
     Route::group(['prefix' => 'quizzes'], function () {
@@ -116,28 +133,30 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::get('/{id}/delete', 'QuizController@destroy');
             Route::post('/{id}/order-items', 'QuizController@orderItems');
         });
+
+        Route::get('/{id}/overview', 'QuizController@overview');
         Route::get('/{id}/start', 'QuizController@start');
         Route::post('/{id}/store-result', 'QuizController@quizzesStoreResult');
         Route::get('/{quizResultId}/status', 'QuizController@status')->name('quiz_status');
 
-        Route::get('/my-results', 'QuizController@myResults');
-        Route::get('/opens', 'QuizController@opens');
+        Route::get('/opens', 'OpenQuizzesController@index');
+        Route::get('/my-results', 'QuizMyResultsController@index');
 
-        Route::get('/{quizResultId}/result', 'QuizController@showResult');
 
         Route::group(['prefix' => 'results'], function () {
-            Route::get('/', 'QuizController@results');
-            Route::get('/{quizResultId}/delete', 'QuizController@destroyQuizResult');
-            Route::get('/{quizResultId}/showCertificate', 'CertificateController@makeCertificate');
+            Route::get('/', 'QuizResultsController@index');
+            Route::get('/{quizResultId}/details', 'QuizResultsController@show');
+            Route::get('/{quizResultId}/edit', 'QuizResultsController@edit');
+            Route::post('/{quizResultId}/update', 'QuizResultsController@update');
+            Route::get('/{quizResultId}/delete', 'QuizResultsController@delete');
+            Route::get('/{quizResultId}/showCertificate', 'QuizResultsController@makeCertificate');
         });
-
-        Route::get('/{quizResultId}/edit-result', 'QuizController@editResult');
-        Route::post('/{quizResultId}/update-result', 'QuizController@updateResult');
 
 
     });
 
     Route::group(['prefix' => 'quizzes-questions'], function () {
+        Route::get('/get-form', 'QuizQuestionController@getForm');
         Route::post('/store', 'QuizQuestionController@store');
         Route::get('/{id}/edit', 'QuizQuestionController@edit');
         Route::get('/{id}/getQuestionByLocale', 'QuizQuestionController@getQuestionByLocale');
@@ -159,17 +178,26 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/store', 'SessionController@store');
         Route::post('/{id}/update', 'SessionController@update');
         Route::get('/{id}/delete', 'SessionController@destroy');
-        Route::get('/{id}/joinToBigBlueButton', 'SessionController@joinToBigBlueButton');
-        Route::get('/{id}/joinToAgora', 'SessionController@joinToAgora');
+
         Route::get('/{id}/endAgora', 'SessionController@endAgora');
         Route::get('/{id}/toggleUsersJoinToAgora', 'SessionController@toggleUsersJoinToAgora');
-        Route::get('/{id}/joinToJitsi', 'SessionController@joinToJitsi');
+
+
+        /* Join */
+        Route::group(['prefix' => '/{id}/join'], function () {
+            Route::get('/', 'SessionController@joinToSession');
+            Route::get('/toBigBlueButton', 'SessionController@joinToBigBlueButton');
+            Route::get('/toAgora', 'SessionController@joinToAgora');
+            Route::get('/toJitsi', 'SessionController@joinToJitsi');
+        });
     });
 
     Route::group(['prefix' => 'chapters'], function () {
+        Route::get('/get-form', 'ChapterController@getForm');
         Route::get('/{id}', 'ChapterController@getChapter');
         Route::get('/getAllByWebinarId/{webinar_id}', 'ChapterController@getAllByWebinarId');
         Route::post('/store', 'ChapterController@store');
+        Route::get('/{id}/edit', 'ChapterController@edit');
         Route::post('/{id}/update', 'ChapterController@update');
         Route::get('/{id}/delete', 'ChapterController@destroy');
         Route::post('/change', 'ChapterController@change');
@@ -185,6 +213,11 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/store', 'AssignmentController@store');
         Route::post('/{id}/update', 'AssignmentController@update');
         Route::get('/{id}/delete', 'AssignmentController@destroy');
+
+        Route::get('/my-requests', 'AssignmentController@myAssignments');
+        Route::get('/', 'AssignmentController@myCoursesAssignments');
+        Route::get('/histories', 'AssignmentController@myCoursesAssignmentsAllHistories');
+        Route::get('/{id}/students', 'AssignmentController@students');
     });
 
     Route::group(['prefix' => 'text-lesson'], function () {
@@ -203,6 +236,12 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/store', 'RelatedCoursesController@store');
         Route::post('/{id}/update', 'RelatedCoursesController@update');
         Route::get('/{id}/delete', 'RelatedCoursesController@destroy');
+    });
+
+    Route::group(['prefix' => 'relatedProducts'], function () {
+        Route::post('/store', 'RelatedProductsController@store');
+        Route::post('/{id}/update', 'RelatedProductsController@update');
+        Route::get('/{id}/delete', 'RelatedProductsController@destroy');
     });
 
     Route::group(['prefix' => 'faqs'], function () {
@@ -225,16 +264,15 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
 
     Route::group(['prefix' => 'certificates'], function () {
-        Route::get('/', 'CertificateController@lists');
-        Route::get('/achievements', 'CertificateController@achievements');
+        Route::get('/', 'CertificatesListsController@index');
+        Route::get('/students', 'GeneratedCertificatesController@index');
+        Route::get('/students/{certificateId}/show', 'GeneratedCertificatesController@download');
+        Route::get('/{type}/{typeItemId}/details', 'GeneratedCertificatesController@index')->where('type', 'quiz|courses|bundles');
 
-        Route::group(['prefix' => 'webinars'], function () {
-            Route::get('/', 'WebinarCertificateController@index');
-            Route::get('/{certificateId}/show', 'WebinarCertificateController@showCourseCertificate');
-        });
-
-        Route::group(['prefix' => 'bundles'], function () {
-            Route::get('/{certificateId}/show', 'WebinarCertificateController@showBundleCertificate');
+        /* My */
+        Route::group(['prefix' => 'my-achievements'], function () {
+            Route::get('/', 'MyCertificatesController@index');
+            Route::get('/{certificateId}/show', 'MyCertificatesController@download');
         });
     });
 
@@ -243,25 +281,95 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/requests', 'ReserveMeetingController@requests');
 
         Route::get('/settings', 'MeetingController@setting')->name('meeting_setting');
+        Route::get('/get-meeting-time-modal', 'MeetingController@getMeetingTimeModal');
         Route::post('/{id}/update', 'MeetingController@update');
         Route::post('saveTime', 'MeetingController@saveTime');
         Route::post('deleteTime', 'MeetingController@deleteTime');
         Route::post('temporaryDisableMeetings', 'MeetingController@temporaryDisableMeetings');
 
+
+        Route::get('/{id}/join-modal', 'ReserveMeetingController@getJoinModal');
         Route::get('/{id}/join', 'ReserveMeetingController@join');
         Route::post('/create-link', 'ReserveMeetingController@createLink');
-        Route::get('/{id}/finish', 'ReserveMeetingController@finish');
+        Route::get('/{id}/get-finish-modal', 'ReserveMeetingController@getFinishModal');
+        Route::post('/{id}/finish', 'ReserveMeetingController@finish');
 
-        Route::post('/{id}/add-session', 'ReserveMeetingController@addLiveSession');
+        Route::get('/{id}/create-session', 'ReserveMeetingController@getCreateSessionModal');
+        Route::post('/{id}/create-session', 'ReserveMeetingController@createSession');
+
+        Route::get('/{id}/contact-info', 'ReserveMeetingController@getContactInfoModal');
+
+        /* Meeting Packages*/
+        Route::group(['prefix' => 'packages'], function () {
+            Route::get('/', 'MeetingPackagesController@index');
+            Route::post('/store', 'MeetingPackagesController@store');
+            Route::get('/{id}/edit', 'MeetingPackagesController@edit');
+            Route::post('/{id}/update', 'MeetingPackagesController@update');
+            Route::get('/{id}/delete', 'MeetingPackagesController@delete');
+        });
+
+        /* Sold Packages */
+        Route::group(['prefix' => 'sold-packages'], function () {
+            Route::get('/', 'SoldMeetingPackagesController@index');
+            Route::get('/{id}/get-student-detail', 'SoldMeetingPackagesController@getStudentDetail');
+
+            /* Sessions */
+            Route::group(['prefix' => '{id}/sessions'], function () {
+                Route::get('/', 'SoldMeetingPackageSessionsController@index');
+
+                /* Date */
+                Route::get('/{session_id}/set-date', 'SoldMeetingPackageSessionsController@getSessionDateForm');
+                Route::post('/{session_id}/set-date', 'SoldMeetingPackageSessionsController@updateSessionDate');
+
+                /* API */
+                Route::get('/{session_id}/set-api', 'SoldMeetingPackageSessionsController@getSessionApiForm');
+                Route::post('/{session_id}/set-api', 'SoldMeetingPackageSessionsController@updateSessionApi');
+
+                /* Join */
+                Route::get('/{session_id}/join-modal', 'SoldMeetingPackageSessionsController@joinToSessionModal');
+                Route::get('/{session_id}/join-to-session', 'SoldMeetingPackageSessionsController@joinToSession');
+
+                /* Finish */
+                Route::get('/{session_id}/finish-modal', 'SoldMeetingPackageSessionsController@finishSessionModal');
+                Route::get('/{session_id}/finish', 'SoldMeetingPackageSessionsController@finishSession');
+            });
+        });
+
+        /* Purchased Packages */
+        Route::group(['prefix' => 'purchased-packages'], function () {
+            Route::get('/', 'PurchasedMeetingPackagesController@index');
+            Route::get('/{id}/get-instructor-detail', 'PurchasedMeetingPackagesController@getInstructorDetail');
+
+            /* Sessions */
+            Route::group(['prefix' => '{id}/sessions'], function () {
+                Route::get('/', 'PurchasedMeetingPackageSessionsController@index');
+
+                /* Join */
+                Route::get('/{session_id}/join-modal', 'PurchasedMeetingPackageSessionsController@joinToSessionModal');
+                Route::get('/{session_id}/join-to-session', 'PurchasedMeetingPackageSessionsController@joinToSession');
+
+                /* Finish */
+                Route::get('/{session_id}/finish-modal', 'PurchasedMeetingPackageSessionsController@finishSessionModal');
+                Route::get('/{session_id}/finish', 'PurchasedMeetingPackageSessionsController@finishSession');
+            });
+        });
+
+
     });
 
     Route::group(['prefix' => 'financial'], function () {
         Route::get('/sales', 'SaleController@index');
-        Route::get('/summary', 'AccountingController@index');
-        Route::get('/payout', 'PayoutController@index');
-        Route::post('/request-payout', 'PayoutController@requestPayout');
+        Route::get('/summary', 'AccountingSummaryController@index');
+
         Route::get('/account', 'AccountingController@account');
         Route::post('/charge', 'AccountingController@charge');
+
+        /* Payout */
+        Route::group(['prefix' => 'payout'], function () {
+            Route::get('/', 'PayoutController@index');
+            Route::post('/request', 'PayoutController@requestPayout');
+            Route::get('/{id}/details', 'PayoutController@getDetails');
+        });
 
         Route::group(['prefix' => 'offline-payments'], function () {
             Route::get('/{id}/edit', 'AccountingController@account');
@@ -298,6 +406,15 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('metas/{meta_id}/update', 'UserController@updateMeta');
         Route::get('metas/{meta_id}/delete', 'UserController@deleteMeta');
         Route::get('/deleteAccount', 'UserController@deleteAccount');
+        Route::get('/media/{type}/delete', 'UserController@deleteUserMedia');
+
+        Route::group(['prefix' => '/attachments'], function () {
+            Route::get('/get-form', 'UserProfileAttachmentsController@getForm');
+            Route::post("/store", 'UserProfileAttachmentsController@store');
+            Route::get("/{id}/edit", 'UserProfileAttachmentsController@edit');
+            Route::post("/{id}/update", 'UserProfileAttachmentsController@update');
+            Route::get("/{id}/delete", 'UserProfileAttachmentsController@delete');
+        });
     });
 
     Route::group(['prefix' => 'support'], function () {
@@ -315,15 +432,24 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     });
 
     Route::group(['prefix' => 'marketing', 'middleware' => 'user.not.access'], function () {
-        Route::get('/special_offers', 'SpecialOfferController@index')->name('special_offer_index');
-        Route::post('/special_offers/store', 'SpecialOfferController@store');
-        Route::get('/special_offers/{id}/disable', 'SpecialOfferController@disable');
-        Route::get('/promotions', 'MarketingController@promotions');
-        Route::post('/pay-promotion', 'MarketingController@payPromotion');
+
+        /* Special Offers */
+        Route::group(['prefix' => 'special_offers'], function () {
+            Route::get('/', 'SpecialOfferController@index')->name('special_offer_index');
+            Route::post('/store', 'SpecialOfferController@store');
+            Route::get('/{id}/disable', 'SpecialOfferController@disable');
+        });
+
+        /* Promotions */
+        Route::group(['prefix' => 'promotions'], function () {
+            Route::get('/', 'PromotionsController@index');
+            Route::get('/{id}/pay-form', 'PromotionsController@getPayForm');
+            Route::post('/{id}/pay', 'PromotionsController@payPromotion');
+        });
     });
 
     Route::group(['prefix' => 'marketing'], function () {
-        Route::get('/affiliates', 'AffiliateController@affiliates');
+        Route::get('/affiliates', 'AffiliateController@index');
 
         /* Registration Bonus */
         Route::get('/registration_bonus', 'RegistrationBonusController@index');
@@ -358,12 +484,12 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
     // organization instructor and students route
     Route::group(['prefix' => 'manage'], function () {
-        Route::get('/{user_type}', 'UserController@manageUsers');
-        Route::get('/{user_type}/new', 'UserController@createUser');
-        Route::post('/{user_type}/new', 'UserController@storeUser');
-        Route::get('/{user_type}/{user_id}/edit', 'UserController@editUser');
-        Route::get('/{user_type}/{user_id}/edit/step/{step?}', 'UserController@editUser');
-        Route::get('/{user_type}/{user_id}/delete', 'UserController@deleteUser');
+        Route::get('/{user_type}', 'OrganManageUsersController@manageUsers');
+        Route::get('/{user_type}/new', 'OrganManageUsersController@createUser');
+        Route::post('/{user_type}/new', 'OrganManageUsersController@storeUser');
+        Route::get('/{user_type}/{user_id}/edit', 'OrganManageUsersController@editUser');
+        Route::get('/{user_type}/{user_id}/edit/step/{step?}', 'OrganManageUsersController@editUser');
+        Route::get('/{user_type}/{user_id}/delete', 'OrganManageUsersController@deleteUser');
     });
 
     Route::group(['prefix' => 'rewards'], function () {
@@ -382,21 +508,12 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
                 Route::get('/{id}/edit', 'ProductController@edit');
                 Route::post('/{id}/update', 'ProductController@update');
                 Route::get('/{id}/delete', 'ProductController@destroy');
+                Route::get('/{id}/media/{mediaId}/delete', 'ProductController@deleteMediaById');
                 Route::post('/{id}/getContentItemByLocale', 'ProductController@getContentItemByLocale');
-                Route::post('/store', [ProductController::class, 'store'])->name('instructor.products.store');
-                // ++++++++++++++++++++++++++++++++ Start : Excel ++++++++++++++++++++++++++++++++
-                Route::get('/download-template', [ProductController::class, 'downloadTemplate'])
-                                                                    ->name('instructor.products.download.template');
-                Route::post('/import', [ProductController::class, 'import'])->name('instructor.products.import');
-                Route::get('/excel', [ProductController::class,'exportExcel'])->name('instructor.products.export');
-                // ++++++++++++++++++++++++++++++++ End : Excel ++++++++++++++++++++++++++++++++
-                Route::post('/save-product-variants', 'ProductController@save_product_variants')->name('save_product_variants');
-                Route::get('/delete-product-variant/{id}', 'ProductController@delete_product_variants')->name('delete_product_variants');
-                Route::post('/update-product-variants', 'ProductController@update_product_variants')->name('update_product_variants');
+                Route::post('/search', 'ProductController@search');
 
                 Route::group(['prefix' => 'filters'], function () {
                     Route::get('/get-by-category-id/{categoryId}', 'ProductFilterController@getByCategoryId');
-                    // Route::get('/get-specifications/{id}', 'ProductFilterController@getSpecifications')->name('get_category_specifications');
                 });
 
                 Route::group(['prefix' => 'specifications'], function () {
@@ -407,7 +524,6 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
                     Route::post('/order-items', 'ProductSpecificationController@orderItems');
                     Route::post('/search', 'ProductSpecificationController@search');
                     Route::get('/get-by-category-id/{categoryId}', 'ProductSpecificationController@getByCategoryId');
-                    Route::post('/save-new-value-variant', 'ProductSpecificationController@setMultiValuesAjax')->name('save_new_value_variant');
                 });
 
                 Route::group(['prefix' => 'files'], function () {
@@ -446,16 +562,10 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
 
 
         Route::group(['prefix' => 'products'], function () {
-            Route::get('/my-comments', 'CommentController@myComments');
+            Route::get('/my-comments', 'MyCommentController@index');
             Route::get('/files/{id}/download', 'ProductFileController@download');
             Route::get('/{id}/getFilesModal', 'ProductController@getFilesModal');
         });
-    });
-
-    Route::group(['prefix' => 'assignments'], function () {
-        Route::get('/my-assignments', 'AssignmentController@myAssignments');
-        Route::get('/my-courses-assignments', 'AssignmentController@myCoursesAssignments');
-        Route::get('/{id}/students', 'AssignmentController@students');
     });
 
     Route::group(['prefix' => 'bundles'], function () {
@@ -490,24 +600,29 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     });
 
     Route::group(['prefix' => 'forums'], function () {
-        Route::get('/topics', 'ForumsController@topics');
-        Route::get('/topics/{id}/removeBookmarks', 'ForumsController@removeBookmarks');
-        Route::get('/posts', 'ForumsController@posts');
-        Route::get('/bookmarks', 'ForumsController@bookmarks');
+        Route::get('/topics', 'ForumTopicsController@index');
+        Route::get('/topics/{id}/removeBookmarks', 'ForumTopicsController@removeBookmarks');
+        Route::get('/posts', 'ForumPostsController@index');
+
+        Route::get('/bookmarks', 'ForumsBookmarksController@index');
     });
 
     Route::group(['prefix' => 'blog'], function () {
-        Route::group(['prefix' => 'posts'], function () {
-            Route::get('/', 'BlogPostsController@index');
-            Route::get('/new', 'BlogPostsController@create');
-            Route::post('/store', 'BlogPostsController@store');
-            Route::get('/{post_id}/edit', 'BlogPostsController@edit');
-            Route::post('/{post_id}/update', 'BlogPostsController@update');
-            Route::get('/{post_id}/delete', 'BlogPostsController@delete');
-        });
+        Route::get('/', 'BlogPostsController@index');
+        Route::get('/new', 'BlogPostsController@create');
+        Route::post('/store', 'BlogPostsController@store');
+        Route::get('/{post_id}/edit', 'BlogPostsController@edit');
+        Route::post('/{post_id}/update', 'BlogPostsController@update');
+        Route::get('/{post_id}/delete', 'BlogPostsController@delete');
 
         Route::group(['prefix' => 'comments'], function () {
             Route::get('/', 'BlogCommentsController@index');
+        });
+
+        Route::group(['prefix' => '/{post_id}/related-posts'], function () {
+            Route::post('/store', 'BlogRelatedPostsController@store');
+            Route::post('/{id}/update', 'BlogRelatedPostsController@update');
+            Route::get('/{id}/delete', 'BlogRelatedPostsController@destroy');
         });
     });
 
@@ -516,8 +631,84 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/generate', 'AiContentController@generate');
     });
 
-    Route::resource('cross-sellings', CrossSellingRelationController::class);
-    Route::get('cross-selling/search', [CrossSellingRelationController::class, 'search'])->name('panel.cross-selling.search');
+    // Events Routes
+    Route::group(['prefix' => 'events', 'middleware' => 'check_event_feature_status'], function () {
+        Route::get('/', 'EventsController@index');
+        Route::get('/new', 'EventsController@create');
+        Route::post('/store', 'EventsController@store');
+        Route::get('/{id}/edit', 'EventsController@edit');
+        Route::get('/{id}/step/{step}', 'EventsController@edit');
+        Route::post('/{id}/update', 'EventsController@update');
+        Route::get('/{id}/delete', 'EventsController@delete');
+
+        Route::post('/search', 'EventsController@search');
+        Route::post('/{id}/getContentItemByLocale', 'EventsController@getContentItemByLocale');
+
+        // Tickets
+        Route::group(['prefix' => '{event_id}/tickets'], function () {
+            Route::post('/store', 'EventTicketsController@store');
+            Route::post('/{id}/update', 'EventTicketsController@update');
+            Route::get('/{id}/delete', 'EventTicketsController@delete');
+            Route::post('/order-items', 'EventTicketsController@orderItems');
+        });
+
+        // Speakers
+        Route::group(['prefix' => '{event_id}/speakers'], function () {
+            Route::post('/store', 'EventSpeakersController@store');
+            Route::post('/{id}/update', 'EventSpeakersController@update');
+            Route::get('/{id}/delete', 'EventSpeakersController@delete');
+            Route::post('/order-items', 'EventSpeakersController@orderItems');
+        });
+
+        // Create Session
+        Route::group(['prefix' => '{event_id}/create-session'], function () {
+            Route::get('/', 'EventsSessionController@getSessionModal');
+            Route::post('/', 'EventsSessionController@createSession');
+        });
+
+        // Join Session
+        Route::get('/{event_id}/join-session-modal', 'EventsSessionController@getJoinSessionModal');
+        Route::get('/{event_id}/join-session', 'EventsSessionController@joinToSession');
+
+        // Sold Tickets
+        Route::group(['prefix' => '{event_id}/sold-tickets'], function () {
+            Route::get('/', 'EventSoldTicketsController@index');
+            Route::get('/{id}/details', 'EventSoldTicketsController@details');
+        });
+
+        // organization_lists
+        Route::group(['prefix' => 'my-organization'], function () {
+            Route::get('/', 'OrganizationEventsController@index');
+        });
+
+        // my_purchases
+        Route::group(['prefix' => 'my-purchases'], function () {
+            Route::get('/', 'MyPurchaseEventsController@index');
+            Route::get('/{event_id}/join-modal', 'MyPurchaseEventsController@joinToSessionModal');
+            Route::get('/{event_id}/join-to-session', 'MyPurchaseEventsController@joinToSession');
+            Route::get('/{event_id}/invoice', 'MyPurchaseEventsController@invoice');
+
+            Route::group(['prefix' => '{event_id}/tickets'], function () {
+                Route::get('/', 'MyPurchaseEventTicketsController@index');
+                Route::get('/{id}/details', 'MyPurchaseEventTicketsController@details');
+            });
+        });
+
+        // comments
+        Route::group(['prefix' => 'comments'], function () {
+            Route::get('/', 'MyEventsCommentsController@index');
+            Route::post('/{id}/update', 'MyEventsCommentsController@update');
+            Route::get('/{id}/delete', 'MyEventsCommentsController@destroy');
+            Route::post('/{id}/reply', 'MyEventsCommentsController@reply');
+            Route::post('/{id}/report', 'MyEventsCommentsController@report');
+        });
+
+        // my_comments
+        Route::group(['prefix' => 'my-comments'], function () {
+            Route::get('/', 'MyCommentsOnEventsController@index');
+        });
+
+    });
 
 
 });

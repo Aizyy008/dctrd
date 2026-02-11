@@ -24,6 +24,8 @@ class QuizQuestionController extends Controller
             'type' => 'required',
             'image' => 'nullable|max:255',
             'video' => 'nullable|max:255',
+            // optional negative mark for multiple-choice questions
+            'negative_grade' => 'nullable|integer|min:0',
         ];
 
         $validate = Validator::make($data, $rules);
@@ -37,10 +39,14 @@ class QuizQuestionController extends Controller
 
         if (!empty($data['image']) and !empty($data['video'])) {
 
-            return back()->withErrors([
-                'image' => [trans('update.quiz_question_image_validation_by_video')],
-                'video' => [trans('update.quiz_question_image_validation_by_video')],
-            ]);
+            return response()->json([
+                'code' => 422,
+                'errors' => [
+                    'image' => [trans('update.quiz_question_image_validation_by_video')],
+                    'video' => [trans('update.quiz_question_image_validation_by_video')],
+                ]
+            ], 422);
+
         }
 
         if ($data['type'] == QuizzesQuestion::$multiple and !empty($data['answers'])) {
@@ -73,6 +79,7 @@ class QuizQuestionController extends Controller
                 'quiz_id' => $data['quiz_id'],
                 'creator_id' => $creator->id,
                 'grade' => $data['grade'],
+                'negative_grade' => $data['negative_grade'] ?? null,
                 'type' => $data['type'],
                 'image' => $data['image'] ?? null,
                 'video' => $data['video'] ?? null,
@@ -209,6 +216,7 @@ class QuizQuestionController extends Controller
             'type' => 'required',
             'image' => 'nullable|max:255',
             'video' => 'nullable|max:255',
+            'negative_grade' => 'nullable|integer|min:0',
         ];
 
         $validate = Validator::make($data, $rules);
@@ -221,11 +229,13 @@ class QuizQuestionController extends Controller
         }
 
         if (!empty($data['image']) and !empty($data['video'])) {
-
-            return back()->withErrors([
-                'image' => [trans('update.quiz_question_image_validation_by_video')],
-                'video' => [trans('update.quiz_question_image_validation_by_video')],
-            ]);
+            return response()->json([
+                'code' => 422,
+                'errors' => [
+                    'image' => [trans('update.quiz_question_image_validation_by_video')],
+                    'video' => [trans('update.quiz_question_image_validation_by_video')],
+                ]
+            ], 422);
         }
 
         if ($data['type'] == QuizzesQuestion::$multiple and !empty($data['answers'])) {
@@ -262,6 +272,7 @@ class QuizQuestionController extends Controller
                 $quizQuestion->update([
                     'quiz_id' => $data['quiz_id'],
                     'grade' => $data['grade'],
+                    'negative_grade' => $data['negative_grade'] ?? null,
                     'type' => $data['type'],
                     'image' => $data['image'] ?? null,
                     'video' => $data['video'] ?? null,

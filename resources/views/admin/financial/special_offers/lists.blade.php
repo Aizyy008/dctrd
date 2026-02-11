@@ -106,11 +106,8 @@
                             </div>
 
 
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label class="input-label mb-4"> </label>
-                                    <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                                </div>
+                             <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
                             </div>
                         </div>
                     </form>
@@ -122,7 +119,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14 text-center">
+                                <table class="table custom-table font-14 text-center">
                                     <tr>
                                         <th>{{ trans('admin/main.title') }}</th>
                                         <th class="text-left">{{ trans('admin/main.item') }}</th>
@@ -134,22 +131,22 @@
                                     </tr>
 
                                     @foreach($specialOffers as $specialOffer)
-                                        <tr>
+                                        <tr> 
                                             <td>{{ $specialOffer->name }}</td>
 
                                             <td class="text-left">
                                                 @if(!empty($specialOffer->webinar_id))
                                                     <span class="d-block font-14">{{ $specialOffer->webinar->title }}</span>
-                                                    <span class="d-block font-12 text-muted">{{ trans('admin/main.course') }}</span>
+                                                    <span class="d-block font-12 text-gray-500">{{ trans('admin/main.course') }}</span>
                                                 @elseif($specialOffer->bundle_id)
                                                     <span class="d-block font-14">{{ $specialOffer->bundle->title }}</span>
-                                                    <span class="d-block font-12 text-muted">{{ trans('update.bundle') }}</span>
+                                                    <span class="d-block font-12 text-gray-500">{{ trans('update.bundle') }}</span>
                                                 @elseif($specialOffer->subscribe_id)
                                                     <span class="d-block font-14">{{ $specialOffer->subscribe->title }}</span>
-                                                    <span class="d-block font-12 text-muted">{{ trans('public.subscribe') }}</span>
+                                                    <span class="d-block font-12 text-gray-500">{{ trans('public.subscribe') }}</span>
                                                 @elseif($specialOffer->registration_package_id)
                                                     <span class="d-block font-14">{{ $specialOffer->registrationPackage->title }}</span>
-                                                    <span class="d-block font-12 text-muted">{{ trans('update.registration_package') }}</span>
+                                                    <span class="d-block font-12 text-gray-500">{{ trans('update.registration_package') }}</span>
                                                 @endif
                                             </td>
 
@@ -160,20 +157,36 @@
                                             <td>{{  dateTimeFormat($specialOffer->to_date, 'Y/m/d h:i:s') }}</td>
 
                                             <td>
-                                                <span class="{{ ($specialOffer->status == 'active') ? 'text-success' : 'text-danger' }}">{{ trans('admin/main.'.$specialOffer->status) }}</span>
+                                                <span class="badge-status {{ ($specialOffer->status == 'active') ? 'text-success bg-success-30' : 'text-danger bg-danger-30' }}">{{ trans('admin/main.'.$specialOffer->status) }}</span>
                                             </td>
 
                                             <td>
-                                                @can('admin_product_discount_edit')
-                                                    <a href="{{ getAdminPanelUrl() }}/financial/special_offers/{{ $specialOffer->id }}/edit" class="btn-transparent text-primary btn-sm" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                @endcan
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                                @can('admin_product_discount_delete')
-                                                    @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/financial/special_offers/'. $specialOffer->id.'/delete','btnClass' => ''])
-                                                @endcan
-                                            </td>
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_product_discount_edit')
+                <a href="{{ getAdminPanelUrl() }}/financial/special_offers/{{ $specialOffer->id }}/edit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                </a>
+            @endcan
+
+            @can('admin_product_discount_delete')
+                @include('admin.includes.delete_button',[
+                    'url' => getAdminPanelUrl().'/financial/special_offers/'.$specialOffer->id.'/delete',
+                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                    'btnText' => trans("admin/main.delete"),
+                    'btnIcon' => 'trash',
+                    'iconType' => 'lin',
+                    'iconClass' => 'text-danger mr-2',
+                ])
+            @endcan
+        </div>
+    </div>
+</td>
                                         </tr>
                                     @endforeach
 

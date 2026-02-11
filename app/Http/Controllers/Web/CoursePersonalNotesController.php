@@ -9,6 +9,27 @@ use Illuminate\Http\Request;
 class CoursePersonalNotesController extends Controller
 {
 
+    public function deleteAttachment($id)
+    {
+        $user = auth()->user();
+
+        $personalNote = CoursePersonalNote::query()->where('user_id', $user->id)
+            ->where('id', $id)
+            ->first();
+
+        if (!empty($personalNote)) {
+            $personalNote->delete();
+
+            return response()->json([
+                'code' => 200,
+                'title' => trans('public.request_success'),
+                'msg' => trans('update.personal_note_deleted_successfully')
+            ]);
+        }
+
+        return response()->json([], 404);
+    }
+
     public function downloadAttachment($id)
     {
         $user = auth()->user();

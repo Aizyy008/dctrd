@@ -29,9 +29,19 @@ class Cart extends Model
         return $this->belongsTo('App\Models\Bundle', 'bundle_id', 'id');
     }
 
+    public function eventTicket()
+    {
+        return $this->belongsTo('App\Models\EventTicket', 'event_ticket_id', 'id');
+    }
+
     public function reserveMeeting()
     {
         return $this->belongsTo('App\Models\ReserveMeeting', 'reserve_meeting_id', 'id');
+    }
+
+    public function meetingPackage()
+    {
+        return $this->belongsTo('App\Models\MeetingPackage', 'meeting_package_id', 'id');
     }
 
     public function ticket()
@@ -69,6 +79,11 @@ class Cart extends Model
         Cart::where('creator_id', $userId)->delete();
     }
 
+    public function getId()
+    {
+        return (!empty($this->id) ? $this->id : $this->uid);
+    }
+
     public static function getCartsTotalPrice($carts)
     {
         $totalPrice = 0;
@@ -92,6 +107,10 @@ class Cart extends Model
             $price += $cart->webinar->price;
         } else if (!empty($cart->bundle_id) and !empty($cart->bundle)) {
             $price += $cart->bundle->price;
+        } else if (!empty($cart->event_ticket_id) and !empty($cart->eventTicket)) {
+            $price += $cart->eventTicket->getPriceWithDiscount() * $cart->quantity;
+        } else if (!empty($cart->meeting_package_id) and !empty($cart->meetingPackage)) {
+            $price += $cart->meetingPackage->getPrices()['price'];
         } else if (!empty($cart->reserve_meeting_id) and !empty($cart->reserveMeeting)) {
             $price += $cart->reserveMeeting->paid_amount;
         } else if (!empty($cart->product_order_id) and !empty($cart->productOrder) and !empty($cart->productOrder->product)) {

@@ -18,14 +18,14 @@ class CategoriesController extends Controller
 {
     public function index(Request $request, $categorySlug, $subCategorySlug = null)
     {
-
         if (!empty($categorySlug)) {
-
             $categoryQuery = Category::query()->where('slug', $categorySlug);
 
             if (!empty($subCategorySlug)) {
                 $categoryQuery = Category::query()->where('slug', $subCategorySlug);
             }
+
+            $categoryQuery->where('enable', true);
 
             $category = $categoryQuery->withCount('webinars')
                 ->with(['filters' => function ($query) {
@@ -47,18 +47,22 @@ class CategoriesController extends Controller
                             $q->whereIn('id', $categoryIds);
                         });
                     })
-                    ->with(['webinar' => function ($query) {
-                        $query->with(['teacher' => function ($qu) {
-                            $qu->select('id', 'full_name', 'avatar');
-                        }, 'reviews', 'tickets', 'feature']);
-                    }])
+                    ->with([
+                        'webinar' => function ($query) {
+                            $query->with([
+                                'teacher' => function ($qu) {
+                                    $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
+                                }
+                            ]);
+                        }])
                     ->orderBy('updated_at', 'desc')
                     ->get();
 
 
                 $webinarsQuery = Webinar::where('webinars.status', 'active')
-                    ->where('private', false)
                     ->whereIn('category_id', $categoryIds);
+
+                $filterMaxPrice = $webinarsQuery->max('price') ?? 10000;
 
                 $classesController = new ClassesController();
                 $moreOptions = $request->get('moreOptions');
@@ -73,6 +77,12 @@ class CategoriesController extends Controller
                     $classesController->columnId = 'bundle_id';
                 }
 
+
+                $webinarsQuery->where('private', false); // Ignore Private (Courses||Bundles)
+                $webinarsQuery->where('only_for_students', false); // Ignore Available Only for Students
+
+                $coursesRatingsCount = $classesController->getCoursesCountByRatings(deepClone($webinarsQuery));
+
                 $webinarsQuery = $classesController->handleFilters($request, $webinarsQuery);
 
                 $sort = $request->get('sort', null);
@@ -81,8 +91,11 @@ class CategoriesController extends Controller
                     $webinarsQuery = $webinarsQuery->orderBy("{$tableName}.created_at", 'desc');
                 }
 
-                $webinars = $webinarsQuery->with(['tickets'])
-                    ->paginate(6);
+                $getListData = $classesController->getListData($request, $webinarsQuery);
+
+                if ($request->ajax()) {
+                    return $getListData;
+                }
 
                 $seoSettings = getSeoMetas('categories');
                 $pageTitle = !empty($seoSettings['title']) ? $seoSettings['title'] : trans('site.categories_page_title');
@@ -94,16 +107,20 @@ class CategoriesController extends Controller
                     'pageDescription' => $pageDescription,
                     'pageRobot' => $pageRobot,
                     'category' => $category,
-                    'webinars' => $webinars,
                     'featureWebinars' => $featureWebinars,
-                    'webinarsCount' => $webinars->total(),
                     'sortFormAction' => $category->getUrl(),
+                    'filterMaxPrice' => ($filterMaxPrice > 1000) ? $filterMaxPrice : 1000,
+                    'coursesRatingsCount' => $coursesRatingsCount,
+                    'pageBasePath' => $request->getPathInfo(),
                 ];
 
-                return view(getTemplate() . '.pages.categories', $data);
+                $data = array_merge($data, $getListData);
+
+                return view('design_1.web.courses.lists.with_category', $data);
             }
         }
 
         abort(404);
     }
+
 }

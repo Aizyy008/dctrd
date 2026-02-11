@@ -9,5 +9,5 @@ return [
     */
 
     'dashboard' => 'Dashboard',
-    'admin_dashboard_show' => 'Dashboard Show',
+    'admin_dashboard_show' => 'Show Dashboard',
 ];

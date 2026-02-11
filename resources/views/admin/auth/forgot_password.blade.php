@@ -10,7 +10,7 @@
 
         <h4>{{ trans('auth.forget_password') }}</h4>
 
-        <p class="text-muted">{{ trans('update.we_will_send_a_link_to_reset_your_password') }}</p>
+        <p class="text-gray-500">{{ trans('update.we_will_send_a_link_to_reset_your_password') }}</p>
 
         <form method="POST" action="{{ getAdminPanelUrl() }}/forget-password">
             {{ csrf_field() }}

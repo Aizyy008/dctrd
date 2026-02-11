@@ -13,7 +13,7 @@ class BasePaymentChannel
     {
         $userCurrencyItem = getUserCurrencyItem(null, $currency);
 
-        return convertPriceToUserCurrency($amount, $userCurrencyItem);
+        return $amount > 0 ? convertPriceToUserCurrency($amount, $userCurrencyItem) : 0;
     }
 
     public function getCredentialItems(): array

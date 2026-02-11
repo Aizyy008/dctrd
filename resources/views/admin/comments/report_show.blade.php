@@ -24,7 +24,7 @@
                                     <h4>{{ trans('admin/main.reported_comment') }}</h4>
 
                                     <div class="table-responsive">
-                                        <table class="table table-striped font-14">
+                                        <table class="table custom-table font-14">
                                             <tr>
                                                 <th>{{ trans('admin/main.user') }}</th>
                                                 <th>{{ trans('admin/main.comment') }}</th>
@@ -85,14 +85,14 @@
                             <p class="mt2">{{ nl2br($report->message) }}</p>
 
                             <h4 class="mt-5">{{ trans('admin/main.report_detail') }}</h4>
-                            <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                            <div>
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th>{{ trans('admin/main.user') }}</th>
                                         <th>{{ trans('admin/main.post') }}</th>
                                         <th>{{ trans('site.message') }}</th>
                                         <th>{{ trans('public.date') }}</th>
-                                        <th>{{ trans('admin/main.action') }}</th>
+                                        <th width="80px">{{ trans('admin/main.action') }}</th>
                                     </tr>
 
                                     <tr>
@@ -101,11 +101,25 @@
                                         <td width="25%">{{ nl2br($report->message) }}</td>
                                         <td>{{ dateTimeFormat($report->created_at, 'j M Y | H:i') }}</td>
 
-                                        <td width="150px" class="text-right">
+                                        <td>
+                                            <div class="btn-group dropdown table-actions position-relative">
+                                                <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                                    <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                                </button>
 
-                                            @can('admin_'. $itemRelation .'_comments_reports')
-                                                @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/'. $page .'/comments/reports/'.$report->id.'/delete?redirect_to='.getAdminPanelUrl().'/'. $page .'/comments/reports','btnClass' => 'btn-sm'])
-                                            @endcan
+                                                <div class="dropdown-menu dropdown-menu-right">
+                                                    @can('admin_'.$itemRelation.'_comments_reports')
+                                                        @include('admin.includes.delete_button',[
+                                                            'url' => getAdminPanelUrl().'/'.$page.'/comments/reports/'.$report->id.'/delete?redirect_to='.getAdminPanelUrl().'/'.$page.'/comments/reports',
+                                                            'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                            'btnText' => trans('admin/main.delete'),
+                                                            'btnIcon' => 'trash',
+                                                            'iconType' => 'lin',
+                                                            'iconClass' => 'text-danger mr-2'
+                                                        ])
+                                                    @endcan
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
 

@@ -39,7 +39,7 @@ class ForgotPasswordController extends Controller
             'pageTitle' => trans('auth.forget_password'),
         ];
 
-        return view('admin.auth.forgot_password', $data);
+        return view('admin.auth.new.forgot_password', $data);
     }
 
     public function forgot(Request $request)

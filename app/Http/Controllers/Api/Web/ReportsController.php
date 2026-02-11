@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Api\Web;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use Illuminate\Http\Request;
 use App\Models\Api\WebinarReport ;
 
 class ReportsController extends Controller
 {
-   
+
    public function index(){
 
     $reasons=getReportReasons() ;

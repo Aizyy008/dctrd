@@ -26,8 +26,6 @@ trait LearningPageForumTrait
 
         $forums = $this->handleForumFilters($request, $query)->get();
 
-        $course->forums_count = $forums->count();
-
         foreach ($forums as $forum) {
             $forum->answer_count = $forum->answers->count();
 
@@ -73,9 +71,10 @@ trait LearningPageForumTrait
             'openQuestionsCount' => $openQuestionsCount,
             'commentsCount' => $commentsCount,
             'activeUsersCount' => $activeUsersCount,
+            "userIsCourseTeacher" => ($course->creator_id == $user->id or $course->teacher_id == $user->id or $user->isAdmin()),
         ];
 
-        return view('web.default.course.learningPage.index', $data);
+        return view('design_1.web.courses.learning_page.index', $data);
     }
 
     private function handleForumFilters(Request $request, $query)
@@ -93,6 +92,25 @@ trait LearningPageForumTrait
         }
 
         return $query;
+    }
+
+    public function getAskQuestionModal(Request $request, $slug)
+    {
+        $user = auth()->user();
+
+        $course = $this->getCourse($slug, $user, null);
+
+        if ($course == 'not_access') {
+            abort(404);
+        }
+
+        $data = [];
+        $html = (string)view()->make("design_1.web.courses.learning_page.includes.contents.forum.includes.ask_question_modal", $data);
+
+        return response()->json([
+            'code' => 200,
+            'html' => $html,
+        ]);
     }
 
     public function forumStoreNewQuestion(Request $request, $slug)
@@ -119,15 +137,17 @@ trait LearningPageForumTrait
             ], 422);
         }
 
-        CourseForum::create([
+        $forum = CourseForum::create([
             'webinar_id' => $course->id,
             'user_id' => $user->id,
             'title' => $data['title'],
             'description' => $data['description'],
-            'attach' => $data['attach'] ?? null,
             'pin' => false,
             'created_at' => time(),
         ]);
+
+        // Attachment
+        $this->handleForumAttachment($request, $forum, $user->id);
 
         if ($user->id != $course->creator_id and $user->id != $course->teacher_id) {
             $notifyOptions = [
@@ -140,7 +160,9 @@ trait LearningPageForumTrait
         }
 
         return response()->json([
-            'code' => 200
+            'code' => 200,
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.your_question_in_course_forum_stored_successful'),
         ]);
     }
 
@@ -161,14 +183,14 @@ trait LearningPageForumTrait
 
         if (!empty($courseForum)) {
             $data = [
-                'id' => $courseForum->id,
-                'title' => $courseForum->title,
-                'description' => $courseForum->description,
-                'attach' => $courseForum->attach,
+                'course' => $course,
+                'forum' => $courseForum,
             ];
+            $html = (string)view()->make("design_1.web.courses.learning_page.includes.contents.forum.includes.ask_question_modal", $data);
 
             return response()->json([
-                'forum' => $data
+                'code' => 200,
+                'html' => $html,
             ]);
         }
 
@@ -208,15 +230,34 @@ trait LearningPageForumTrait
             $courseForum->update([
                 'title' => $data['title'],
                 'description' => $data['description'],
-                'attach' => $data['attach'] ?? null,
             ]);
 
+            // Attachment
+            $this->handleForumAttachment($request, $courseForum, $user->id);
+
             return response()->json([
-                'code' => 200
+                'code' => 200,
+                'title' => trans('public.request_success'),
+                'msg' => trans('update.your_question_updated_successful'),
             ]);
         }
 
         return response()->json([], 422);
+    }
+
+    private function handleForumAttachment(Request $request, $forum, $userId)
+    {
+        $path = $forum->attach ?? null;
+        $file = $request->file('attachment');
+
+        if (!empty($file)) {
+            $destination = "webinars/forums/{$forum->id}";
+            $path = $this->uploadFile($file, $destination, "attachment", $userId);
+        }
+
+        $forum->update([
+            'attach' => $path,
+        ]);
     }
 
     public function forumPinToggle(Request $request, $slug, $forumId)
@@ -234,12 +275,16 @@ trait LearningPageForumTrait
             ->first();
 
         if (!empty($courseForum)) {
+            $pin = !$courseForum->pin;
+
             $courseForum->update([
-                'pin' => !$courseForum->pin,
+                'pin' => $pin,
             ]);
 
             return response()->json([
-                'code' => 200
+                'code' => 200,
+                'title' => trans('public.request_success'),
+                'msg' => $pin ? trans('update.learning_page_course_forum_pinned') : trans('update.learning_page_course_forum_unpin'),
             ]);
         }
 
@@ -311,6 +356,20 @@ trait LearningPageForumTrait
             ->first();
 
         if (!empty($courseForum)) {
+            $relatedForums = CourseForum::query()->where('id', '!=', $courseForum->id)
+                ->where('webinar_id', $course->id)
+                ->with([
+                    'user' => function ($query) {
+                        $query->select('id', 'full_name', 'avatar', 'avatar_settings', 'role_id', 'role_name');
+                    }
+                ])
+                ->withCount([
+                    'answers'
+                ])
+                ->inRandomOrder()
+                ->limit(4)
+                ->get();
+
             $data = [
                 'pageTitle' => $course->title,
                 'pageDescription' => $course->seo_description,
@@ -319,12 +378,19 @@ trait LearningPageForumTrait
                 'dontAllowLoadFirstContent' => true,
                 'courseForum' => $courseForum,
                 'user' => $user,
+                'relatedForums' => $relatedForums,
+                "userIsCourseTeacher" => ($course->creator_id == $user->id or $course->teacher_id == $user->id or $user->isAdmin()),
             ];
 
-            return view('web.default.course.learningPage.index', $data);
+            return view('design_1.web.courses.learning_page.index', $data);
         }
 
         abort(404);
+    }
+
+    private function getRelatedForums()
+    {
+
     }
 
     public function storeForumAnswers(Request $request, $slug, $forumId)
@@ -374,7 +440,9 @@ trait LearningPageForumTrait
             }
 
             return response()->json([
-                'code' => 200
+                'code' => 200,
+                'title' => trans('public.request_success'),
+                'msg' => trans('update.your_reply_stored_successful')
             ]);
         }
 
@@ -403,10 +471,16 @@ trait LearningPageForumTrait
                 ->first();
 
             if (!empty($answer)) {
+                $data = [
+                    'course' => $course,
+                    'courseForum' => $courseForum,
+                    'answer' => $answer,
+                ];
+                $html = (string)view()->make("design_1.web.courses.learning_page.includes.contents.forum.includes.edit_answer_modal", $data);
 
                 return response()->json([
                     'code' => 200,
-                    'answer' => $answer
+                    'html' => $html,
                 ]);
             }
         }
@@ -462,6 +536,71 @@ trait LearningPageForumTrait
         return response()->json([], 422);
     }
 
+    public function answerMarkAsResolvedModal($slug, $forumId, $answerId)
+    {
+        $user = auth()->user();
+
+        $course = $this->getCourse($slug, $user, 'forums');
+
+        $courseForumQuery = CourseForum::where('id', $forumId)
+            ->where('webinar_id', $course->id);
+
+        if (!$course->isOwner($user->id)) {
+            $courseForumQuery = $courseForumQuery->where('user_id', $user->id);
+        }
+
+        $courseForum = $courseForumQuery->first();
+
+
+        if (!empty($courseForum) and ($course->isOwner($user->id) or $user->id == $courseForum->user_id)) {
+            $data = [];
+            $html = (string)view()->make("design_1.web.courses.learning_page.includes.contents.forum.includes.mark_as_resolved_modal", $data);
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html,
+            ]);
+        }
+
+        return response()->json([], 422);
+    }
+
+    public function answerMarkAsResolved($slug, $forumId, $answerId)
+    {
+        $user = auth()->user();
+
+        $course = $this->getCourse($slug, $user, 'forums');
+
+        $courseForumQuery = CourseForum::where('id', $forumId)
+            ->where('webinar_id', $course->id);
+
+        if (!$course->isOwner($user->id)) {
+            $courseForumQuery = $courseForumQuery->where('user_id', $user->id);
+        }
+
+        $courseForum = $courseForumQuery->first();
+
+        if (!empty($courseForum) and ($course->isOwner($user->id) or $user->id == $courseForum->user_id)) {
+            $answer = CourseForumAnswer::where('forum_id', $courseForum->id)
+                ->where('id', $answerId)
+                ->first();
+
+            if (!empty($answer)) {
+                $answer->update([
+                    'resolved' => true,
+                ]);
+
+                return response()->json([
+                    'code' => 200,
+                    'title' => trans('public.request_success'),
+                    'msg' => trans('update.answer_mark_as_resolved_successfully'),
+                ]);
+            }
+        }
+
+        return response()->json([], 422);
+    }
+
     public function answerTogglePinOrResolved(Request $request, $slug, $forumId, $answerId, $togglePinOrResolved)
     {
         $user = auth()->user();
@@ -488,23 +627,31 @@ trait LearningPageForumTrait
 
             if (!empty($answer)) {
                 $updateData = [];
+                $msg = null;
 
                 if ($togglePinOrResolved == 'pin') {
                     $updateData['pin'] = true;
+                    $msg = trans('update.post_pined_successfully');
                 } else if ($togglePinOrResolved == 'un_pin') {
                     $updateData['pin'] = false;
+                    $msg = trans('update.post_unpined_successfully');
                 } else if ($togglePinOrResolved == 'mark_as_not_resolved') {
                     $updateData['resolved'] = false;
+                    $msg = trans('update.answer_mark_as_not_resolved_successfully');
                 } else if ($togglePinOrResolved == 'mark_as_resolved') {
                     $updateData['resolved'] = true;
+                    $msg = trans('update.answer_mark_as_resolved_successfully');
                 }
+
 
                 if (!empty($updateData)) {
                     $answer->update($updateData);
                 }
 
                 return response()->json([
-                    'code' => 200
+                    'code' => 200,
+                    'title' => trans('public.request_success'),
+                    'msg' => $msg,
                 ]);
             }
         }

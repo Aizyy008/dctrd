@@ -61,7 +61,7 @@
                                     <select name="position" class="form-control @error('position') is-invalid @enderror">
                                         <option selected disabled>{{ trans('admin/main.position') }}</option>
                                         @foreach(\App\Models\AdvertisingBanner::$positions as $position)
-                                            <option value="{{ $position }}" @if(!empty($banner) and $banner->position == $position) selected @endif>{{ $position }}</option>
+                                            <option value="{{ $position }}" @if(!empty($banner) and $banner->position == $position) selected @endif>{{ trans("update.{$position}") }}</option>
                                         @endforeach
                                     </select>
                                     @error('position')
@@ -132,7 +132,7 @@
                                 </div>
 
 
-                                <div class=" mt-4">
+                                <div class="text-right mt-4">
                                     <button class="btn btn-primary">{{ trans('admin/main.submit') }}</button>
                                 </div>
                             </form>

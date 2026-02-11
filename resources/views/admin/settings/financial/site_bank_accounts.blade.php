@@ -138,5 +138,5 @@
 </div>
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/settings/site_bank_accounts.min.js"></script>
+    <script src="/assets/admin/js/parts/settings/site_bank_accounts.min.js"></script>
 @endpush

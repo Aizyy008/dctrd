@@ -4,13 +4,10 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bundle;
-use App\Models\Category;
-use App\Models\FeatureWebinar;
 use App\Models\SpecialOffer;
 use App\Models\Ticket;
 use App\Models\Webinar;
 use App\Models\WebinarFilterOption;
-use App\Models\WebinarReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,18 +19,24 @@ class ClassesController extends Controller
 
     public function index(Request $request)
     {
-        $webinarsQuery = Webinar::where('webinars.status', 'active')
-            ->where('private', false);
+        $webinarsQuery = Webinar::where('webinars.status', 'active');
 
         $type = $request->get('type');
+
         if (!empty($type) and is_array($type) and in_array('bundle', $type)) {
             $webinarsQuery = Bundle::where('bundles.status', 'active');
+
             $this->tableName = 'bundles';
             $this->columnId = 'bundle_id';
         }
 
-        $webinarsQuery = $this->handleFilters($request, $webinarsQuery);
+        $webinarsQuery->where('private', false); // Ignore Private (Courses||Bundles)
+        $webinarsQuery->where('only_for_students', false); // Ignore Available Only for Students
 
+        $filterMaxPrice = $webinarsQuery->max('price') ?? 10000;
+        $coursesRatingsCount = $this->getCoursesCountByRatings(deepClone($webinarsQuery));
+
+        $webinarsQuery = $this->handleFilters($request, $webinarsQuery);
 
         $sort = $request->get('sort', null);
 
@@ -41,9 +44,16 @@ class ClassesController extends Controller
             $webinarsQuery = $webinarsQuery->orderBy("{$this->tableName}.created_at", 'desc');
         }
 
-        $webinars = $webinarsQuery->with([
-            'tickets'
-        ])->paginate(6);
+        if (empty($sort)) {
+            $webinarsQuery = $webinarsQuery->orderBy("{$this->tableName}.created_at", 'desc');
+        }
+
+        $getListData = $this->getListData($request, $webinarsQuery);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
 
         $seoSettings = getSeoMetas('classes');
         $pageTitle = $seoSettings['title'] ?? '';
@@ -54,11 +64,13 @@ class ClassesController extends Controller
             'pageTitle' => $pageTitle,
             'pageDescription' => $pageDescription,
             'pageRobot' => $pageRobot,
-            'webinars' => $webinars,
-            'coursesCount' => $webinars->total()
+            'pageBasePath' => $request->getPathInfo(),
+            'filterMaxPrice' => ($filterMaxPrice > 1000) ? $filterMaxPrice : 1000,
+            'coursesRatingsCount' => $coursesRatingsCount,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view(getTemplate() . '.pages.classes', $data);
+        return view('design_1.web.courses.lists.classes', $data);
     }
 
     public function handleFilters($request, $query)
@@ -71,6 +83,7 @@ class ClassesController extends Controller
         $filterOptions = $request->get('filter_option', []);
         $typeOptions = $request->get('type', []);
         $moreOptions = $request->get('moreOptions', []);
+        $instructor = $request->get('instructor', null);
 
         $query->whereHas('teacher', function ($query) {
             $query->where('status', 'active')
@@ -125,6 +138,13 @@ class ClassesController extends Controller
             }
         }
 
+        if (!empty($instructor)) {
+            $query->where(function ($query) use ($instructor) {
+                $query->where('creator_id', $instructor);
+                $query->orWhere('teacher_id', $instructor);
+            });
+        }
+
         if (!empty($isFree) and $isFree == 'on') {
             $query->where(function ($qu) {
                 $qu->whereNull('price')
@@ -162,37 +182,35 @@ class ClassesController extends Controller
 
         if (!empty($sort)) {
             if ($sort == 'expensive') {
-                $query->whereNotNull('price');
                 $query->where('price', '>', 0);
                 $query->orderBy('price', 'desc');
             }
 
             if ($sort == 'inexpensive') {
-                $query->whereNotNull('price');
-                $query->where('price', '>', 0);
                 $query->orderBy('price', 'asc');
             }
 
             if ($sort == 'bestsellers') {
-                $query->leftJoin('sales', function ($join) {
+                $query->join('sales', function ($join) {
                     $join->on("{$this->tableName}.id", '=', "sales.{$this->columnId}")
                         ->whereNull('refund_at');
                 })
                     ->whereNotNull("sales.{$this->columnId}")
-                    ->select("{$this->tableName}.*", "sales.{$this->columnId}", DB::raw("count(sales.{$this->columnId}) as salesCounts"))
+                    ->addSelect("{$this->tableName}.*", "sales.{$this->columnId}", DB::raw("count(sales.{$this->columnId}) as sales_counts"))
                     ->groupBy("sales.{$this->columnId}")
-                    ->orderBy('salesCounts', 'desc');
+                    ->orderBy('sales_counts', 'desc');
             }
 
             if ($sort == 'best_rates') {
-                $query->leftJoin('webinar_reviews', function ($join) {
+                $query->join('webinar_reviews', function ($join) {
                     $join->on("{$this->tableName}.id", '=', "webinar_reviews.{$this->columnId}");
                     $join->where('webinar_reviews.status', 'active');
                 })
-                    ->whereNotNull('rates')
+                    //->whereNotNull('rates')
                     ->select("{$this->tableName}.*", DB::raw('avg(rates) as rates'))
                     ->groupBy("{$this->tableName}.id")
                     ->orderBy('rates', 'desc');
+
             }
         }
 
@@ -205,5 +223,80 @@ class ClassesController extends Controller
         }
 
         return $query;
+    }
+
+    public function getListData(Request $request, $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = 9;
+
+        $cloneQuery = deepClone($query);
+        $total = DB::table(DB::raw("({$cloneQuery->toSql()}) as sub"))
+            ->mergeBindings($cloneQuery->getQuery()) // bind parameters
+            ->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $courses = $query->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $courses, $total, $count);
+        }
+
+        return [
+            'courses' => $courses,
+            'pagination' => $this->makePagination($request, $courses, $total, $count, true),
+        ];
+    }
+
+    public function getAjaxResponse(Request $request, $courses, $total, $count)
+    {
+        $html = "";
+
+        if ($request->get('card') == "list") {
+            $html = (string)view()->make('design_1.web.courses.components.cards.rows.index', [
+                'courses' => $courses,
+                'rowCardClassName' => "col-12 mt-24",
+                //'withoutStyles' => true
+            ]);
+        } else {
+            $html = (string)view()->make('design_1.web.courses.components.cards.grids.index', [
+                'courses' => $courses,
+                'gridCardClassName' => "col-12 col-md-6 col-lg-4 mt-24",
+                'withoutStyles' => true
+            ]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $courses, $total, $count, true)
+        ]);
+    }
+
+    public function getCoursesCountByRatings($query)
+    {
+        $ratings = [];
+
+        $query2 = $query->join('webinar_reviews', function ($join) {
+            $join->on("{$this->tableName}.id", '=', "webinar_reviews.{$this->columnId}");
+            $join->where('webinar_reviews.status', 'active');
+        })
+            ->whereNotNull('rates')
+            ->select("{$this->tableName}.*", DB::raw('avg(rates) as rates'))
+            ->groupBy("{$this->tableName}.id");
+
+
+        foreach ([5, 4, 3, 2, 1] as $rateNum) {
+            $first = ($rateNum == 1) ? 0 : $rateNum;
+            $next = $rateNum + 1;
+
+            $ratings[$rateNum] = deepClone($query2)
+                ->where('rates', '>=', $first)
+                ->where('rates', '<', $next)
+                ->get()->count();
+        }
+
+        return $ratings;
     }
 }

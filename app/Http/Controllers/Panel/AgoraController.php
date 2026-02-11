@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 class AgoraController extends Controller
 {
-    public $appId;
+    public  $appId;
     private $appCertificate;
 
     public function __construct()

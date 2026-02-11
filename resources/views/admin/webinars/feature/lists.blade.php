@@ -74,9 +74,9 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-2 d-flex align-items-center justify-content-end">
-                            <button type="submit" class="btn btn-primary w-100">{{ trans('admin/main.show_results') }}</button>
-                        </div>
+                        <div class="col-md-2 d-flex align-items-center ">
+                     <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
+                </div>
                     </form>
                 </div>
             </section>
@@ -85,17 +85,39 @@
                 <div class="col-12 col-md-12">
                     <div class="card">
 
-                        <div class="card-header">
+                    <div class="card-header justify-content-between">
+                            
+                            <div>
+                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_items_in_a_single_place') }}</p>
+                           </div>
+                           
+                            <div class="d-flex align-items-center gap-12">
+
                             @can('admin_feature_webinars_export_excel')
-                                <div class="text-right">
-                                    <a href="{{ getAdminPanelUrl() }}/webinars/features/excel?{{ http_build_query(request()->all()) }}" class="btn btn-primary">{{ trans('admin/main.export_xls') }}</a>
+                                <div class="d-flex align-items-center gap-12">
+                                    <a href="{{ getAdminPanelUrl() }}/webinars/features/excel?{{ http_build_query(request()->all()) }}" class="btn bg-white bg-hover-gray-100 border-gray-400 text-gray-500">
+                                        <x-iconsax-lin-import-2 class="icons text-gray-500" width="18px" height="18px"/>
+                                        <span class="ml-4 font-12">{{ trans('admin/main.export_xls') }}</span>
+                                    </a>
                                 </div>
                             @endcan
-                        </div>
+
+                            @can('admin_feature_webinars_create')
+                                   <a href="{{ getAdminPanelUrl() }}/webinars/features/create" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.add_new') }}</span>
+                                   </a>
+                               @endcan
+
+                            </div>
+                           
+               </div>
+
 
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th>{{ trans('admin/main.webinar_title') }}</th>
                                         <th>{{ trans('admin/main.webinar_status') }}</th>
@@ -111,7 +133,7 @@
 
                                         <tr>
                                             <td>
-                                                <a href="{{ $feature->webinar->getUrl() }}" target="_blank">{{ $feature->webinar->title }}</a>
+                                                <a class="text-dark" href="{{ $feature->webinar->getUrl() }}" target="_blank">{{ $feature->webinar->title }}</a>
                                             </td>
 
                                             <td class="text-center">{{ trans('admin/main.'.$feature->webinar->status) }}</td>
@@ -121,25 +143,46 @@
                                             <td class="text-center">{{ $feature->webinar->category->title }}</td>
                                             <td class="text-center">{{ trans('admin/main.page_'.$feature->page) }}</td>
                                             <td class="text-center">
-                                                <span class="text-{{ ($feature->status == 'publish') ? 'success' : 'warning' }}">
-                                                    {{ ($feature->status == 'publish') ? trans('admin/main.published') : trans('admin/main.pending') }}
-                                                </span>
+                                            <span class="badge-status {{ ($feature->status == 'publish') ? 'text-success bg-success-30' : 'text-warning bg-warning-30' }}">{{ ($feature->status == 'publish') ? trans('admin/main.published') : trans('admin/main.pending') }}</span>
                                             </td>
                                             <td width="150">
-                                                <a href="{{ getAdminPanelUrl() }}/webinars/features/{{ $feature->id }}/{{ ($feature->status == 'publish') ? 'pending' : 'publish' }}" class="btn-transparent btn-sm text-primary">
-                                                    @if($feature->status == 'publish')
-                                                        <i class="fa fa-eye-slash" data-toggle="tooltip" title="{{ trans('admin/main.pending') }}"></i>
-                                                    @else
-                                                        <i class="fa fa-eye" data-toggle="tooltip" title="{{ trans('admin/main.publish') }}"></i>
-                                                    @endif
-                                                </a>
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                                <a href="{{ getAdminPanelUrl() }}/webinars/features/{{ $feature->id }}/edit" class="btn-sm" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                    <i class="fa fa-edit"></i>
-                                                </a>
+        <div class="dropdown-menu dropdown-menu-right">
+            <!-- Publish/Pending Toggle -->
+            <a href="{{ getAdminPanelUrl() }}/webinars/features/{{ $feature->id }}/{{ ($feature->status == 'publish') ? 'pending' : 'publish' }}" 
+               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                @if($feature->status == 'publish')
+                    <x-iconsax-lin-eye-slash class="icons text-warning mr-2" width="18px" height="18px"/>
+                    <span class="text-warning">{{ trans('admin/main.pending') }}</span>
+                @else
+                    <x-iconsax-lin-eye class="icons text-success mr-2" width="18px" height="18px"/>
+                    <span class="text-success">{{ trans('admin/main.publish') }}</span>
+                @endif
+            </a>
 
-                                                @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/webinars/features/'. $feature->id .'/delete','btnClass' => 'btn-sm','icon' => true])
-                                            </td>
+            <!-- Edit Action -->
+            <a href="{{ getAdminPanelUrl() }}/webinars/features/{{ $feature->id }}/edit" 
+               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+            </a>
+
+            <!-- Delete Action -->
+            @include('admin.includes.delete_button',[
+                'url' => getAdminPanelUrl().'/webinars/features/'. $feature->id .'/delete',
+                'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                'btnText' => trans("admin/main.delete"),
+                'btnIcon' => 'trash',
+                'iconType' => 'lin',
+                'iconClass' => 'text-danger mr-2',
+            ])
+        </div>
+    </div>
+</td>
                                         </tr>
                                     @endforeach
 

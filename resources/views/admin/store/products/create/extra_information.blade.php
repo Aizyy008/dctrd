@@ -49,7 +49,7 @@
         <div class="form-group js-inventory-inputs {{ (!empty($product) and $product->unlimited_inventory) ? 'd-none' : '' }}">
             <label class="input-label">{{ trans('update.inventory_warning') }}</label>
             <input type="number" name="inventory_warning" value="{{ !empty($product) ? $product->inventory_warning : old('inventory_warning') }}" class="form-control @error('inventory_warning')  is-invalid @enderror" placeholder=""/>
-            <div class="text-muted text-small mt-1">{{ trans('update.inventory_warning_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.inventory_warning_hint') }}</div>
             @error('inventory_warning')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -70,7 +70,7 @@
             </div>
         </div>
 
-        <p class="text-gray font-12">{{ trans('update.create_product_unlimited_inventory_hint') }}</p>
+        <p class="text-gray-500 font-12">{{ trans('update.create_product_unlimited_inventory_hint') }}</p>
 
     </div>
 </div>

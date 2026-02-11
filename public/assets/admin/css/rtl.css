@@ -485,6 +485,10 @@ span.input-label{
 .card.card-large-icons {
     text-align: right;
 }
+
+.card.card-large-icons .card-icon {
+  border-radius: 0 16px 16px 0;
+}
 .section .section-title {
     text-align: right;
 }

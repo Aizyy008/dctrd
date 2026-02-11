@@ -15,13 +15,26 @@ class ProductCategory extends Model implements TranslatableContract
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 
-    static $cacheKey = 'product_categories';
-
-    public $translatedAttributes = ['title'];
+    public $translatedAttributes = ['title', 'subtitle', 'bottom_seo_title', 'bottom_seo_description'];
 
     public function getTitleAttribute()
     {
         return getTranslateAttributeValue($this, 'title');
+    }
+
+    public function getSubtitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'subtitle');
+    }
+
+    public function getBottomSeoTitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'bottom_seo_title');
+    }
+
+    public function getBottomSeoDescriptionAttribute()
+    {
+        return getTranslateAttributeValue($this, 'bottom_seo_description');
     }
 
 
@@ -63,21 +76,5 @@ class ProductCategory extends Model implements TranslatableContract
         }
 
         return $query->count();
-    }
-
-    static function getCategories()
-    {
-        $categories = cache()->remember(self::$cacheKey, 24 * 60 * 60, function () {
-            return self::whereNull('parent_id')
-                ->with([
-                    'subCategories' => function ($query) {
-                        $query->orderBy('order', 'asc');
-                    },
-                ])
-                ->orderBy('order', 'asc')
-                ->get();
-        });
-
-        return $categories;
     }
 }

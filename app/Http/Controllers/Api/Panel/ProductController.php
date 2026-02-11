@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Api\Product;
 use App\Models\Api\Comment;

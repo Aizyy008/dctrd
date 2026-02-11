@@ -18,17 +18,27 @@
         <div class="section-body">
 
             <div class="card">
-                <div class="card-header">
-                    @can('admin_newsletters_send')
-                        <div class="text-right">
-                            <a href="{{ getAdminPanelUrl() }}/newsletters/send" class="btn btn-primary">{{ trans('update.send_newsletter') }}</a>
+
+                <div class="card-header justify-content-between">
+                             <div>
+                                <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                                <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_items_in_a_single_place') }}</p>
+                            </div>
+
+                             <div class="d-flex align-items-center gap-12">
+
+                                @can('admin_newsletters_send')
+                                  <div class="text-right">
+                                      <a href="{{ getAdminPanelUrl() }}/newsletters/send" class="btn btn-primary">{{ trans('update.send_newsletter') }}</a>
+                                  </div>
+                                 @endcan
+
+                             </div>
                         </div>
-                    @endcan
-                </div>
 
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-striped font-14" id="datatable-basic">
+                        <table class="table custom-table font-14" id="datatable-basic">
 
                             <tr>
                                 <th class="text-left">{{ trans('update.send_method') }}</th>
@@ -102,5 +112,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/newsletter.min.js"></script>
+    <script src="/assets/admin/js/parts/newsletter.min.js"></script>
 @endpush

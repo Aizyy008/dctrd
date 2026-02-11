@@ -34,7 +34,8 @@ class VerificationController extends Controller
                         'usernameValue' => !empty($verification->mobile) ? $verification->mobile : $verification->email,
                     ];
 
-                    return view('web.default.auth.verification', $data);
+                    $authTemplate = getThemeAuthenticationPagesStyleName();
+                    return view("design_1.web.auth.{$authTemplate}.verification.index", $data);
                 }
             }
         }
@@ -49,20 +50,31 @@ class VerificationController extends Controller
         if (!empty($verificationId)) {
             $verification = Verification::where('id', $verificationId)
                 ->whereNull('verified_at')
-                ->where('expired_at', '>', time())
                 ->first();
+
             if (!empty($verification)) {
+                $time = time();
+
+                $verification->update([
+                    'code' => $this->getNewCode(),
+                    'expired_at' => $time + Verification::EXPIRE_TIME,
+                ]);
+
                 if (!empty($verification->mobile)) {
                     $verification->sendSMSCode();
                 } else {
                     $verification->sendEmailCode();
                 }
 
-                return redirect('/verification');
+                return response()->json([
+                    'code' => 200,
+                    'title' => trans('public.request_success'),
+                    'msg' => trans('update.new_verification_code_sent_successfully'),
+                ]);
             }
         }
 
-        return redirect('/login');
+        return response()->json([], 422);
     }
 
     public function checkConfirmed($user, $username, $value)
@@ -79,7 +91,7 @@ class VerificationController extends Controller
             $verification = Verification::where($username, $value)
                 ->where('expired_at', '>', time())
                 ->where(function ($query) {
-                    $query->whereNull('user_id')
+                    $query->whereNotNull('user_id')
                         ->orWhereHas('user');
                 })
                 ->first();
@@ -96,7 +108,7 @@ class VerificationController extends Controller
                     $data['created_at'] = $time;
                     $data['expired_at'] = $time + Verification::EXPIRE_TIME;
 
-                    if (time() > $verification->expired_at) {
+                    if ($time > $verification->expired_at) {
                         $data['code'] = $this->getNewCode();
                     } else {
                         $data['code'] = $verification->code;
@@ -132,52 +144,53 @@ class VerificationController extends Controller
 
     public function confirmCode(Request $request)
     {
-        $value = $request->get('username');
-        $code = $request->get('code');
-        $username = $this->username($value);
-        $request[$username] = $value;
+        $username = $request->get('username');
+        $usernameValue = $request->get('usernameValue');
         $time = time();
 
-        Verification::where($username, $value)
-            ->whereNull('verified_at')
-            ->where('code', $code)
-            ->where('created_at', '>', $time - 24 * 60 * 60)
-            ->update([
-                'verified_at' => $time,
-                'expired_at' => $time + 50,
-            ]);
+        $code = $request->get('code');
 
-        $rules = [
-            'code' => [
-                'required',
-                Rule::exists('verifications')->where(function ($query) use ($value, $code, $time, $username) {
-                    $query->where($username, $value)
-                        ->where('code', $code)
-                        ->whereNotNull('verified_at')
-                        ->where('expired_at', '>', $time);
-                }),
-            ],
-        ];
-
-        if ($username == 'mobile') {
-            $rules['mobile'] = 'required';
-            $value = ltrim($value, '+');
-        } else {
-            $rules['email'] = 'required|email';
+        if (is_array($code)) {
+            $code = array_filter($code, function ($value) {
+                return $value !== null;
+            });
         }
 
-        $this->validate($request, $rules, [], [
-            'mobile' => trans('auth.mobile'),
-            'email' => trans('auth.email'),
-            'code' => trans('auth.code'),
+        if (empty($code) or count($code) != 5) {
+            return back()->withErrors([
+                'code' => trans('update.verification_code_required'),
+            ]);
+        }
+
+        $code = implode('', $code);
+
+        $verification = Verification::where($username, $usernameValue)
+            ->whereNull('verified_at')
+            ->where('code', $code)
+            ->first();
+
+        if (empty($verification)) {
+            return back()->withErrors([
+                'code' => trans('update.verification_code_is_invalid'),
+            ]);
+        }
+
+        if ($verification->expired_at < time()) {
+            return back()->withErrors([
+                'code' => trans('update.verification_code_is_expired'),
+            ]);
+        }
+
+        $verification->update([
+            'verified_at' => $time,
+            'expired_at' => $time + 50,
         ]);
 
         $authUser = auth()->check() ? auth()->user() : null;
-
         $referralCode = session()->get('referralCode', null);
 
         if (empty($authUser)) {
-            $authUser = User::where($username, $value)
+            $authUser = User::where($username, $usernameValue)
                 ->first();
 
             $loginController = new LoginController();
@@ -211,20 +224,6 @@ class VerificationController extends Controller
 
             return $loginController->sendFailedLoginResponse($request);
         }
-    }
-
-    private function username($value)
-    {
-        $username = 'email';
-        $email_regex = "/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,})$/i";
-
-        if (preg_match($email_regex, $value)) {
-            $username = 'email';
-        } elseif (is_numeric($value)) {
-            $username = 'mobile';
-        }
-
-        return $username;
     }
 
     private function getNewCode()

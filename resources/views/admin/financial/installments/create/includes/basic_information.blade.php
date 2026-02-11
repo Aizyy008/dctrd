@@ -22,7 +22,7 @@
         <div class="form-group mt-15">
             <label class="input-label">{{ trans('public.title') }}</label>
             <input type="text" name="title" value="{{ !empty($installment) ? $installment->title : old('title') }}" class="form-control @error('title')  is-invalid @enderror" placeholder=""/>
-            <div class="text-muted text-small mt-1">{{ trans('update.installment_title_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_title_hint') }}</div>
             @error('title')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -33,7 +33,7 @@
         <div class="form-group mt-15">
             <label class="input-label">{{ trans('update.main_title') }}</label>
             <input type="text" name="main_title" value="{{ !empty($installment) ? $installment->main_title : old('main_title') }}" class="form-control @error('main_title')  is-invalid @enderror" placeholder=""/>
-            <div class="text-muted text-small mt-1">{{ trans('update.installment_main_title_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_main_title_hint') }}</div>
             @error('main_title')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -44,7 +44,7 @@
         <div class="form-group mt-15">
             <label class="input-label">{{ trans('public.description') }}</label>
             <textarea name="description" rows="5" class="form-control @error('description')  is-invalid @enderror">{{ !empty($installment) ? $installment->description : old('description') }}</textarea>
-            <div class="text-muted text-small mt-1">{{ trans('update.installment_description_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_description_hint') }}</div>
             @error('description')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -74,7 +74,7 @@
                 @enderror
             </div>
 
-            <div class="text-muted text-small mt-1">{{ trans('update.installment_banner_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_banner_hint') }}</div>
         </div>
 
 
@@ -117,11 +117,11 @@
             </div>
 
         </div>
-        <div class="text-muted text-small mt-1">{{ trans('update.installment_options_hint') }}</div>
+        <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_options_hint') }}</div>
         <div class="form-group mt-15">
             <label class="input-label">{{ trans('public.capacity') }}</label>
             <input type="number" name="capacity" value="{{ !empty($installment) ? $installment->capacity : old('capacity') }}" class="form-control @error('capacity')  is-invalid @enderror" placeholder="Empty means inactive this mode"/>
-            <div class="text-muted text-small mt-1">{{ trans('update.installment_capacity_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_capacity_hint') }}</div>
             @error('capacity')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -142,13 +142,13 @@
                     <option value="{{ $userGroup->id }}" {{ in_array($userGroup->id, $selectedGroupIds) ? 'selected' : '' }}>{{ $userGroup->name }}</option>
                 @endforeach
             </select>
-            <div class="text-muted text-small mt-1">{{ trans('update.installment_user_group_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_user_group_hint') }}</div>
             @error('group_ids')
             <div class="invalid-feedback d-block">
                 {{ $message }}
             </div>
             @enderror
-            <p class="text-muted font-12 mt-1">{{ trans('') }}</p>
+            <p class="text-gray-500 font-12 mt-1">{{ trans('') }}</p>
         </div>
 
         <div class="form-group">
@@ -171,7 +171,7 @@
                 </div>
                 @enderror
             </div>
-            <div class="text-muted text-small mt-1">{{ trans('update.installment_start_date_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_start_date_hint') }}</div>
         </div>
 
         <div class="form-group">
@@ -194,7 +194,7 @@
                 </div>
                 @enderror
             </div>
-            <div class="text-muted text-small mt-1">{{ trans('update.installment_end_date_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_end_date_hint') }}</div>
         </div>
 
     </div>

@@ -60,7 +60,7 @@
     </div>
 
     <div class="table-responsive mt-5">
-        <table class="table table-striped font-14">
+        <table class="table custom-table font-14">
             <tr>
                 <th>{{ trans('admin/main.icon') }}</th>
                 <th>{{ trans('public.title') }}</th>
@@ -83,12 +83,28 @@
                             </td>
                             <td>{{ $val['title'] }}</td>
                             <td><a href="{{ $val['link'] }}" target="_blank">{{ trans('public.view') }}</a></td>
-                            <td>
-                                <a href="{{ getAdminPanelUrl() }}/settings/socials/{{ $key }}/edit" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                    <i class="fa fa-edit"></i>
-                                </a>
+                            <td width="80px">
+                                <div class="btn-group dropdown table-actions position-relative">
+                                    <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                        <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                    </button>
 
-                                @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/settings/socials/'. $key .'/delete','btnClass' => ''])
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <a href="{{ getAdminPanelUrl() }}/settings/socials/{{ $key }}/edit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                            <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                            <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                                        </a>
+
+                                        @include('admin.includes.delete_button',[
+                                            'url' => getAdminPanelUrl().'/settings/socials/'. $key .'/delete',
+                                            'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                            'btnText' => trans("admin/main.delete"),
+                                            'btnIcon' => 'trash',
+                                            'iconType' => 'lin',
+                                            'iconClass' => 'text-danger mr-2',
+                                        ])
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforeach

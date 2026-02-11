@@ -18,15 +18,36 @@
                     <div class="form-group">
                         <label class="input-label">{{ trans('update.sms_sending_channel') }}</label>
                         <select name="value[sms_sending_channel]" class="form-control">
-                            <option value="">{{ trans('update.select_a_sms_channel') }}</option>
-
-                            @foreach(\App\Mixins\Notifications\SendSMS::allChannels as $smsChannel)
-                                <option value="{{ $smsChannel }}" {{ (!empty($itemValue) and !empty($itemValue["sms_sending_channel"]) and $itemValue["sms_sending_channel"] == $smsChannel) ? 'selected' : '' }}>{{ trans("update.sms_channel_{$smsChannel}") }}</option>
-                            @endforeach
+                        <option>Paid Plugin</option>
                         </select>
                     </div>
                 </div>
 
+                <div class="mb-5">
+                    <h5>{{ trans('update.check_mobile_number') }}</h5>
+
+                    <div class="form-group custom-switches-stacked">
+                        <label class="custom-switch pl-0">
+                            <input type="hidden" name="value[check_mobile_number]" value="0">
+                            <input type="checkbox" name="value[check_mobile_number]" id="checkMobileNumberSwitch" value="1"
+                                   {{ (!empty($itemValue) and !empty($itemValue['check_mobile_number']) and $itemValue['check_mobile_number']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                            <span class="custom-switch-indicator"></span>
+                            <label class="custom-switch-description mb-0 cursor-pointer"
+                                   for="checkMobileNumberSwitch">{{ trans('update.check_mobile_number') }}</label>
+                        </label>
+                        <div class="text-gray-500 text-small mt-1">{{ trans('update.check_mobile_number_switch_hint') }}</div>
+                    </div>
+
+                    <div class="js-check-mobile-number-digits-filed {{ (!empty($itemValue) and !empty($itemValue['check_mobile_number']) and $itemValue['check_mobile_number']) ? '' : 'd-none' }}">
+                        <div class="form-group">
+                            <label class="input-label">{{ trans('update.number_of_digits_in_mobile_number') }}</label>
+                            <input type="number" name="value[number_of_digits_in_mobile_number]" id="number_of_digits_in_mobile_number"
+                                   value="{{ (!empty($itemValue) and !empty($itemValue['number_of_digits_in_mobile_number'])) ? $itemValue['number_of_digits_in_mobile_number'] : 1 }}"
+                                   class="form-control"/>
+                            <p class="font-12 text-gray-500 mt-1 mb-0">{{ trans('update.number_of_digits_in_mobile_number_input_hint') }}</p>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="mb-5">
                     <h5>{{ trans('update.twilio_api_settings') }}</h5>
@@ -38,6 +59,17 @@
                         </div>
                     @endforeach
 
+                </div>
+
+                <div class="mb-5">
+                    <h5>{{ trans('update.kavenegar_settings') }}</h5>
+
+                    @foreach(['kavenegar_url', 'kavenegar_api_key', 'kavenegar_number']  as $kvngConf)
+                        <div class="form-group">
+                            <label>{{ trans("update.{$kvngConf}") }}</label>
+                            <input type="text" name="value[{{ $kvngConf }}]" value="{{ (!empty($itemValue) and !empty($itemValue["{$kvngConf}"])) ? $itemValue["{$kvngConf}"] : old("{$kvngConf}") }}" class="form-control "/>
+                        </div>
+                    @endforeach
                 </div>
 
                 <div class="mb-5">
@@ -65,7 +97,7 @@
                 <div class="mb-5">
                     <h5>{{ trans('update.msg91_settings') }}</h5>
 
-                    @foreach(['msg91_key']  as $msg91Conf)
+                    @foreach(['msg91_key', "msg91_flow_id"]  as $msg91Conf)
                         <div class="form-group">
                             <label>{{ trans("update.{$msg91Conf}") }}</label>
                             <input type="text" name="value[{{ $msg91Conf }}]" value="{{ (!empty($itemValue) and !empty($itemValue["{$msg91Conf}"])) ? $itemValue["{$msg91Conf}"] : old("{$msg91Conf}") }}" class="form-control "/>

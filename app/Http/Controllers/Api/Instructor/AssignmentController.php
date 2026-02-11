@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Instructor;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\WebinarAssignmentHistoryResource;
 use App\Http\Resources\WebinarAssignmentResource;
 use App\Models\Reward;
@@ -243,8 +243,14 @@ class AssignmentController extends Controller
             'grade' => 'required|integer',
         ]);
 
-        $assignmentHistory = WebinarAssignmentHistory::where('id', $historyId)->first();
+        $assignmentsIds = WebinarAssignment::query()->where('creator_id', $user->id)->pluck('id')->toArray();
+
+        $assignmentHistory = WebinarAssignmentHistory::query()->whereIn('assignment_id', $assignmentsIds)
+            ->where('id', $historyId)
+            ->first();
+
         abort_unless($assignmentHistory, 404);
+
         $assignment = $assignmentHistory->assignment;
         $webinar = $assignment->webinar;
 

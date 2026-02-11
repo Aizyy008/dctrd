@@ -8,6 +8,7 @@ use App\Models\Blog;
 use App\Models\Bundle;
 use App\Models\Comment;
 use App\Models\CommentReport;
+use App\Models\Event;
 use App\Models\Product;
 use App\Models\ProductReview;
 use App\Models\Reward;
@@ -43,6 +44,9 @@ class CommentsController extends Controller
         } else if ($page == 'product_reviews') {
             $this->item = 'product_review';
             $this->item_column = 'product_review_id';
+        }  else if ($page == 'events') {
+            $this->item = 'event';
+            $this->item_column = 'event_id';
         } else {
             $this->item = 'blog';
             $this->item_column = 'blog_id';
@@ -85,6 +89,7 @@ class CommentsController extends Controller
         $post_ids = $request->get('post_ids');
         $product_ids = $request->get('product_ids');
         $bundle_ids = $request->get('bundle_ids');
+        $event_ids = $request->get('event_ids');
 
         if (!empty($user_ids)) {
             $data['users'] = User::select('id', 'full_name')->whereIn('id', $user_ids)->get();
@@ -104,6 +109,10 @@ class CommentsController extends Controller
 
         if (!empty($bundle_ids)) {
             $data['bundles'] = Bundle::select('id')->whereIn('id', $bundle_ids)->get();
+        }
+
+        if (!empty($event_ids)) {
+            $data['events'] = Event::select('id')->whereIn('id', $event_ids)->get();
         }
 
         return view('admin.comments.comments', $data);

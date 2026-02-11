@@ -7,14 +7,11 @@
 
         <div class="form-group mt-15">
             <label class="input-label d-block">{{ trans('panel.select_course') }}</label>
-            <select name="webinar_id" class="js-ajax-webinar_id form-control bundleWebinars-select" data-bundle-id="{{  !empty($bundle) ? $bundle->id : '' }}" data-placeholder="{{ trans('panel.select_course') }}">
+            <select name="webinar_id" class="js-ajax-webinar_id form-control bundleWebinars-select"
+                    data-placeholder="{{ trans('update.search_and_select_class') }}">
 
-                @if(!empty($userWebinars) and count($userWebinars))
-                    @foreach($userWebinars as $userWebinar)
-                        <option value="{{ $userWebinar->id }}">{{ $userWebinar->title }}</option>
-                    @endforeach
-                @endif
             </select>
+
             <div class="invalid-feedback"></div>
         </div>
 

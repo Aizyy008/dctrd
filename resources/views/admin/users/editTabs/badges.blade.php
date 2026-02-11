@@ -31,7 +31,7 @@
                 <h5>{{ trans('admin/main.custom_badges') }}</h5>
 
                 <div class="table-responsive mt-3">
-                    <table class="table table-striped table-md">
+                    <table class="table custom-table table-md">
                         <tr>
                             <th>{{ trans('admin/main.title') }}</th>
                             <th>{{ trans('admin/main.image') }}</th>
@@ -59,10 +59,26 @@
                                     </td>
                                     <td class="text-center">{{ dateTimeFormat($customBadge->badge->created_at,'j M Y') }}</td>
                                     <td>
-                                        @can('admin_users_edit')
-                                            @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/users/'.$user->id.'/deleteBadge/'.$customBadge->id , 'btnClass' => 'btn-sm'])
-                                        @endcan
-                                    </td>
+                                    <div class="btn-group dropdown table-actions position-relative">
+                                        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                        </button>
+                                
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            @can('admin_users_edit')
+                                                @include('admin.includes.delete_button',[
+                                                    'url' => getAdminPanelUrl().'/users/'.$user->id.'/deleteBadge/'.$customBadge->id,
+                                                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                    'btnText' => trans('admin/main.delete'),
+                                                    'btnIcon' => 'trash',
+                                                    'iconType' => 'lin',
+                                                    'iconClass' => 'text-danger mr-2',
+                                                    'deleteConfirmMsg' => trans('update.user_delete_confirm_msg')
+                                                ])
+                                            @endcan
+                                        </div>
+                                    </div>
+                                </td>
                                 </tr>
                             @endforeach
                         @endif
@@ -77,7 +93,7 @@
                 <h5>{{ trans('admin/main.auto_badges') }}</h5>
 
                 <div class="table-responsive mt-3">
-                    <table class="table table-striped table-md">
+                    <table class="table custom-table table-md">
                         <tr>
                             <th>{{ trans('admin/main.title') }}</th>
                             <th>{{ trans('admin/main.image') }}</th>

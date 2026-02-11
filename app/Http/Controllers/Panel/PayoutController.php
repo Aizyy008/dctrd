@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payout;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class PayoutController extends Controller
@@ -13,20 +14,67 @@ class PayoutController extends Controller
         $this->authorize("panel_financial_payout");
 
         $user = auth()->user();
-        $payouts = Payout::where('user_id', $user->id)
-            ->orderBy('status', 'asc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = Payout::query()->where('user_id', $user->id);
+
+        //$copyQuery = deepClone($query);
+        //$query = $this->handleFilters($request, $query);
+        $getListData = $this->getListsData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
+        $selectedBank = $user->selectedBank;
 
         $data = [
             'pageTitle' => trans('financial.payout_request'),
-            'payouts' => $payouts,
             'accountCharge' => $user->getAccountingCharge(),
             'readyPayout' => $user->getPayout(),
             'totalIncome' => $user->getIncome(),
+            'selectedBank' => $selectedBank,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view(getTemplate() . '.panel.financial.payout', $data);
+        return view('design_1.panel.financial.payout.index', $data);
+    }
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $payouts = $query
+            ->orderBy('status', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $payouts, $total, $count);
+        }
+
+        return [
+            'payouts' => $payouts,
+            'pagination' => $this->makePagination($request, $payouts, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $payouts, $total, $count)
+    {
+        $html = "";
+
+        foreach($payouts as $payoutRow) {
+            $html .= (string)view()->make('design_1.panel.financial.payout.table_items', ['payout' => $payoutRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $payouts, $total, $count, true)
+        ]);
     }
 
     public function requestPayout()
@@ -90,4 +138,29 @@ class PayoutController extends Controller
         ];
         return back()->with(['toast' => $toastData]);
     }
+
+    public function getDetails($id)
+    {
+        $this->authorize("panel_financial_payout");
+        $user = auth()->user();
+
+        $payout = Payout::query()->where('id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!empty($payout)) {
+
+            $html = (string)view()->make('design_1.panel.financial.payout.modals.details', [
+                'payout' => $payout,
+            ]);
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html,
+            ]);
+        }
+
+        return response()->json([], 422);
+    }
+
 }

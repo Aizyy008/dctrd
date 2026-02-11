@@ -440,8 +440,10 @@ trait DashboardTrait
 
             $labels[] = str_pad($day, 2, 0, STR_PAD_LEFT);
 
-            $data[] = User::whereBetween('created_at', [$startDay, $endDay])
+            $count = User::whereBetween('created_at', [$startDay, $endDay])
                 ->count();
+
+            $data[] = ($count > 0) ? $count : 0;
         }
 
         return [

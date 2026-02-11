@@ -1,16 +1,16 @@
 {{-- Filters --}}
-<section class="card">
-    <div class="card-body">
+<section class="card mt-32">
+    <div class="card-body pb-4">
         <form method="get" class="mb-0">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label class="input-label">{{trans('admin/main.search')}}</label>
                         <input name="title" type="text" class="form-control" value="{{ request()->get('title') }}">
                     </div>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label class="input-label">{{trans('admin/main.start_date')}}</label>
                         <div class="input-group">
@@ -18,7 +18,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label class="input-label">{{trans('admin/main.end_date')}}</label>
                         <div class="input-group">
@@ -71,12 +71,11 @@
                 </div>
 
 
-                <div class="col-md-3">
-                    <div class="form-group mt-1">
-                        <label class="input-label mb-4"> </label>
-                        <input type="submit" class="text-center btn btn-primary w-100" value="{{trans('admin/main.show_results')}}">
-                    </div>
+                <div class="col-md-3 d-flex align-items-center ">
+                     <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
                 </div>
+
+
             </div>
         </form>
     </div>

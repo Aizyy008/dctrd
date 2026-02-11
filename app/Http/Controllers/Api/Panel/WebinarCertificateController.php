@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\WebinarCertificateResource;
 use App\Mixins\Certificate\MakeCertificate;
 use App\Models\Certificate;

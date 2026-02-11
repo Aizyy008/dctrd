@@ -11,11 +11,11 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="packageStatusSwitch">{{ trans('admin/main.active') }}</label>
                     </label>
-                    <div class="text-muted text-small mt-1">{{ trans('update.user_registration_packages_status_hint') }}</div>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('update.user_registration_packages_status_hint') }}</div>
                 </div>
 
                 @php
-                    $packageItems = ['courses_capacity','courses_count','meeting_count'];
+                    $packageItems = ['courses_capacity','courses_count','meeting_count','product_count', 'events_count', 'meeting_packages_count'];
 
                     if(!empty($user) and $user->isOrganization()) {
                         $organizationPackageItems = ['instructors_count','students_count'];

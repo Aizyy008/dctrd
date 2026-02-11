@@ -105,7 +105,7 @@ class Channel extends BasePaymentChannel implements IChannel
                     'token' => $paymentKey->token,
                     'iframeId' => $this->iframe_id,
                 ];
-                return view('web.default.cart.channels.paymob', $data);
+                return view('design_1.web.cart.payment.channels.paymob', $data);
             } else if (!empty($paymentKey) and !empty($paymentAuth->message)) {
                 $errorMsg = $paymentAuth->message;
             }

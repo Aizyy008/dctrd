@@ -7,12 +7,66 @@ use App\Models\Comment;
 use App\Models\Product;
 use App\Models\ProductReview;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ProductReviewController extends Controller
 {
+
+    public function getReviewsByCourseSlug(Request $request, $productSlug)
+    {
+        $product = Product::query()->select('id', 'slug')
+            ->where('slug', $productSlug)
+            ->first();
+
+        if (!empty($product)) {
+            $page = $request->get('page', 1);
+            $count = 10;
+
+            $query = ProductReview::query()->where('product_id', $product->id);
+            $query->where('status', 'active');
+            $query->with([
+                'comments' => function ($query) {
+                    $query->where('status', 'active');
+                },
+                'creator' => function ($qu) {
+                    $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
+                }
+            ]);
+            $query->orderBy('created_at', 'desc');
+
+            $total = $query->count();
+
+            $query->limit($count);
+            $query->offset(($page - 1) * $count);
+
+            $reviews = $query->get();
+            $hasMore = $total > ($page * $count);
+
+            if ($request->ajax()) {
+                $html = (string)view()->make('design_1.web.components.reviews.all_cards', ['reviews' => $reviews]);
+
+                return response()->json([
+                    'code' => 200,
+                    'html' => $html,
+                    'has_more' => $hasMore,
+                ]);
+            }
+
+            return [
+                'reviews' => $reviews,
+                'has_more' => $hasMore,
+            ];
+        }
+
+        abort(404);
+    }
+
     public function store(Request $request)
     {
-        $this->validate($request, [
+        $data = $request->all();
+        $user = auth()->user();
+
+        $validator = Validator::make($data, [
             'product_id' => 'required',
             'product_quality' => 'required',
             'purchase_worth' => 'required',
@@ -20,8 +74,12 @@ class ProductReviewController extends Controller
             'seller_quality' => 'required',
         ]);
 
-        $data = $request->all();
-        $user = auth()->user();
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
         $product = Product::where('id', $data['product_id'])
             ->where('status', 'active')
@@ -34,12 +92,12 @@ class ProductReviewController extends Controller
                     ->first();
 
                 if (!empty($productReview)) {
-                    $toastData = [
-                        'title' => trans('public.request_failed'),
-                        'msg' => trans('update.duplicate_review_for_product'),
-                        'status' => 'error'
-                    ];
-                    return back()->with(['toast' => $toastData]);
+                    return response()->json([
+                        'toast_alert' => [
+                            'title' => trans('public.request_failed'),
+                            'msg' => trans('public.duplicate_review_for_product'),
+                        ]
+                    ], 422);
                 }
 
                 $rates = 0;
@@ -71,50 +129,60 @@ class ProductReviewController extends Controller
                 sendNotification('product_new_rating', $notifyOptions, $product->creator_id);
                 sendNotification('new_user_item_rating', $notifyOptions, 1);
 
-                $toastData = [
+
+                return response()->json([
+                    'code' => 200,
                     'title' => trans('public.request_success'),
                     'msg' => trans('webinars.your_reviews_successfully_submitted_and_waiting_for_admin'),
-                    'status' => 'success'
-                ];
-                return back()->with(['toast' => $toastData]);
+                ]);
             } else {
-                $toastData = [
-                    'title' => trans('public.request_failed'),
-                    'msg' => trans('update.you_not_purchased_this_product'),
-                    'status' => 'error'
-                ];
-                return back()->with(['toast' => $toastData]);
+                return response()->json([
+                    'toast_alert' => [
+                        'title' => trans('public.request_failed'),
+                        'msg' => trans('cart.you_not_purchased_this_product'),
+                    ]
+                ], 422);
             }
         }
 
-        $toastData = [
-            'title' => trans('public.request_failed'),
-            'msg' => trans('cart.course_not_found'),
-            'status' => 'error'
-        ];
-        return back()->with(['toast' => $toastData]);
+        return response()->json([
+            'toast_alert' => [
+                'title' => trans('public.request_failed'),
+                'msg' => trans('cart.course_not_found'),
+            ]
+        ], 422);
     }
 
     public function storeReplyComment(Request $request)
     {
-        $this->validate($request, [
-            'reply' => 'nullable',
+        $user = auth()->user();
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'reply' => 'required|string',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'code' => 422,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
         Comment::create([
-            'user_id' => auth()->user()->id,
-            'comment' => $request->input('reply'),
-            'product_review_id' => $request->input('comment_id'),
+            'user_id' => $user->id,
+            'comment' => $data['reply'],
+            'product_review_id' => $data['review_id'],
             'status' => $request->input('status') ?? Comment::$pending,
             'created_at' => time()
         ]);
 
-        $toastData = [
+
+        return response()->json([
+            'code' => 200,
             'title' => trans('product.comment_success_store'),
             'msg' => trans('product.comment_success_store_msg'),
-            'status' => 'success'
-        ];
-        return redirect()->back()->with(['toast' => $toastData]);
+        ]);
     }
 
     public function destroy(Request $request, $id)
@@ -127,20 +195,18 @@ class ProductReviewController extends Controller
             if (!empty($review)) {
                 $review->delete();
 
-                $toastData = [
+                return response()->json([
+                    'code' => 200,
                     'title' => trans('public.request_success'),
                     'msg' => trans('webinars.your_review_deleted'),
-                    'status' => 'success'
-                ];
-                return back()->with(['toast' => $toastData]);
+                ]);
             }
 
-            $toastData = [
+            return response()->json([
+                'code' => 403,
                 'title' => trans('public.request_failed'),
                 'msg' => trans('webinars.you_not_access_review'),
-                'status' => 'error'
-            ];
-            return back()->with(['toast' => $toastData]);
+            ]);
         }
 
         abort(404);

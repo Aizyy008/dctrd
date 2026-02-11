@@ -5,7 +5,7 @@
                 <ul class="draggable-content-lists draggable-lists-chapter" data-drag-class="draggable-lists-chapter" data-order-table="webinar_chapters">
                     @foreach($webinar->chapters as $chapter)
 
-                        <li data-id="{{ !empty($chapter) ? $chapter->id :'' }}" data-chapter-order="{{ $chapter->order }}" class="accordion-row bg-white rounded-sm mt-20 py-15 py-lg-30 px-10 px-lg-20">
+                        <li data-id="{{ !empty($chapter) ? $chapter->id :'' }}" data-chapter-order="{{ $chapter->order }}" class="accordion-row bg-white rounded-12 mt-20 py-15 py-lg-30 px-10 px-lg-20">
                             <div class="d-flex align-items-center justify-content-between " role="tab" id="chapter_{{ !empty($chapter) ? $chapter->id :'record' }}">
                                 <div class="d-flex align-items-center" href="#collapseChapter{{ !empty($chapter) ? $chapter->id :'record' }}" aria-controls="collapseChapter{{ !empty($chapter) ? $chapter->id :'record' }}" data-parent="#chapterAccordion" role="button" data-toggle="collapse" aria-expanded="true">
                                     <span class="chapter-icon mr-10">
@@ -13,7 +13,7 @@
                                     </span>
                                     <div class="">
                                         <span class="font-weight-bold text-dark-blue d-block cursor-pointer">{{ !empty($chapter) ? $chapter->title : trans('public.add_new_chapter') }}</span>
-                                        <span class="font-12 text-gray d-block">
+                                        <span class="font-12 text-gray-500 d-block">
                                             {{ !empty($chapter->chapterItems) ? count($chapter->chapterItems) : 0 }} {{ trans('public.topic') }}
                                             | {{ convertMinutesToHourAndMinute($chapter->getDuration()) }} {{ trans('public.hr') }}
                                         </span>
@@ -64,22 +64,22 @@
                                         </div>
                                     </div>
 
-                                    <button type="button" class="js-add-chapter btn-transparent text-gray" data-webinar-id="{{ $webinar->id }}" data-chapter="{{ $chapter->id }}" data-locale="{{ mb_strtoupper($chapter->locale) }}">
+                                    <button type="button" class="js-add-chapter btn-transparent text-gray-500" data-webinar-id="{{ $webinar->id }}" data-chapter="{{ $chapter->id }}" data-locale="{{ mb_strtoupper($chapter->locale) }}">
                                         <i data-feather="edit-3" class="mr-10 cursor-pointer" height="20"></i>
                                     </button>
 
-                                    <a href="{{ getAdminPanelUrl() }}/chapters/{{ $chapter->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray">
+                                    <a href="{{ getAdminPanelUrl() }}/chapters/{{ $chapter->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray-500">
                                         <i data-feather="trash-2" class="mr-10 cursor-pointer" height="20"></i>
                                     </a>
 
-                                    <i data-feather="move" class="move-icon mr-10 cursor-pointer text-gray" height="20"></i>
+                                    <i data-feather="move" class="move-icon mr-10 cursor-pointer text-gray-500" height="20"></i>
 
-                                    <i class="collapse-chevron-icon feather-chevron-up text-gray" data-feather="chevron-down" height="20" href="#collapseChapter{{ !empty($chapter) ? $chapter->id :'record' }}" aria-controls="collapseChapter{{ !empty($chapter) ? $chapter->id :'record' }}" data-parent="#chapterAccordion" role="button" data-toggle="collapse" aria-expanded="true"></i>
+                                    <i class="collapse-chevron-icon feather-chevron-up text-gray-500" data-feather="chevron-down" height="20" href="#collapseChapter{{ !empty($chapter) ? $chapter->id :'record' }}" aria-controls="collapseChapter{{ !empty($chapter) ? $chapter->id :'record' }}" data-parent="#chapterAccordion" role="button" data-toggle="collapse" aria-expanded="true"></i>
                                 </div>
                             </div>
 
                             <div id="collapseChapter{{ !empty($chapter) ? $chapter->id :'record' }}" aria-labelledby="chapter_{{ !empty($chapter) ? $chapter->id :'record' }}" class=" collapse show" role="tabpanel">
-                                <div class="panel-collapse text-gray">
+                                <div class="panel-collapse text-gray-500">
 
                                     <div class="accordion-content-wrapper mt-15" id="chapterContentAccordion{{ !empty($chapter) ? $chapter->id :'' }}" role="tablist" aria-multiselectable="true">
                                         @if(!empty($chapter->chapterItems) and count($chapter->chapterItems))
@@ -99,11 +99,13 @@
                                                 @endforeach
                                             </ul>
                                         @else
-                                            @include(getTemplate() . '.includes.no-result',[
-                                                'file_name' => 'meet.png',
-                                                'title' => trans('update.chapter_content_no_result'),
-                                                'hint' => trans('update.chapter_content_no_result_hint'),
-                                            ])
+                                            <div class="d-flex-center flex-column px-32 py-120 text-center">
+                                                <div class="d-flex-center size-64 rounded-12 bg-primary-30">
+                                                    <x-iconsax-bul-note-2 class="icons text-primary" width="32px" height="32px"/>
+                                                </div>
+                                                <h3 class="font-16 font-weight-bold mt-12 text-dark">{{ trans('update.chapter_content_no_result') }}</h3>
+                                                <p class="mt-4 font-12 text-gray-500">{!! trans('update.chapter_content_no_result_hint') !!}</p>
+                                            </div>
                                         @endif
                                     </div>
 
@@ -113,11 +115,13 @@
                     @endforeach
                 </ul>
             @else
-                @include(getTemplate() . '.includes.no-result',[
-                    'file_name' => 'meet.png',
-                    'title' => trans('update.chapter_no_result'),
-                    'hint' => trans('update.chapter_no_result_hint'),
-                ])
+                <div class="d-flex-center flex-column px-32 py-120 text-center">
+                    <div class="d-flex-center size-64 rounded-12 bg-primary-30">
+                        <x-iconsax-bul-document class="icons text-primary" width="32px" height="32px"/>
+                    </div>
+                    <h3 class="font-16 font-weight-bold mt-12">{{ trans('update.chapter_no_result') }}</h3>
+                    <p class="mt-4 font-12 text-gray-500">{!! trans('update.chapter_no_result_hint') !!}</p>
+                </div>
             @endif
         </div>
 

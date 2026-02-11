@@ -17,7 +17,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th>{{ trans('admin/main.title') }}</th>
                                         <th class="text-left">{{ trans('admin/main.full_name') }}</th>
@@ -31,7 +31,7 @@
                                             <td class="text-left">{{ !empty($promotionSale->buyer) ? $promotionSale->buyer->full_name : trans('update.deleted_user') }}</td>
                                             <td class="text-left">
                                                 @if(!empty($promotionSale->webinar))
-                                                    <a href="{{ $promotionSale->webinar->getUrl() }}" target="_blank">{{ $promotionSale->webinar->title }}</a>
+                                                    <a class="text-dark" href="{{ $promotionSale->webinar->getUrl() }}" target="_blank">{{ $promotionSale->webinar->title }}</a>
                                                 @else
                                                     {{ trans('update.deleted_item') }}
                                                 @endif

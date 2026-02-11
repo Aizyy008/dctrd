@@ -5,17 +5,15 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\traits\PaymentsTrait;
 use App\Mixins\Cashback\CashbackAccounting;
+use App\Mixins\Events\EventTicketSoldMixins;
+use App\Mixins\MeetingPackages\MeetingPackageSoldMixins;
 use App\Models\Accounting;
 use App\Models\BecomeInstructor;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentChannel;
-use App\Models\Product;
-use App\Models\ProductOrder;
 use App\Models\ReserveMeeting;
-use App\Models\Reward;
-use App\Models\RewardAccounting;
 use App\Models\Sale;
 use App\Models\TicketUser;
 use App\PaymentChannels\ChannelManager;
@@ -68,6 +66,68 @@ class PaymentController extends Controller
             $order->update([
                 'status' => Order::$paid
             ]);
+
+            session()->put($this->order_session_key, $order->id);
+
+            return redirect('/payments/status');
+        }
+
+        // Offline payment for cart checkout
+        if ($gateway === 'offline') {
+            // Validate offline settings enabled and create offline payment request for this order
+            if (empty(getOfflineBankSettings('offline_banks_status'))) {
+                $toastData = [
+                    'title' => trans('cart.fail_purchase'),
+                    'msg' => trans('public.channel_payment_disabled'),
+                    'status' => 'error'
+                ];
+                return back()->with(['toast' => $toastData]);
+            }
+
+            // Required inputs: account, referral_code, date, attachment (optional)
+            $this->validate($request, [
+                'account' => 'required',
+                'referral_code' => 'required',
+                'date' => 'required',
+                'attachment' => 'nullable|image|mimes:jpeg,png,jpg|max:10240'
+            ]);
+
+            $attachment = null;
+            if (!empty($request->file('attachment'))) {
+                // Reuse AccountingController upload helper behavior
+                $path = 'financial/offlinePayments';
+                $attachment = (new \App\Http\Controllers\Panel\AccountingController())->uploadFile($request->file('attachment'), $path, null, $user->id);
+            }
+
+            $date = convertTimeToUTCzone($request->input('date'), getTimezone());
+
+            \App\Models\OfflinePayment::create([
+                'user_id' => $user->id,
+                'amount' => $order->total_amount,
+                'offline_bank_id' => $request->input('account'),
+                'reference_number' => $request->input('referral_code'),
+                'status' => \App\Models\OfflinePayment::$waiting,
+                'pay_date' => $date->getTimestamp(),
+                'attachment' => $attachment,
+                'created_at' => time(),
+                'type' => \App\Models\OfflinePayment::$typeCart,
+                'order_id' => $order->id,
+            ]);
+
+            $order->update([
+                'status' => \App\Models\Order::$paying,
+                'payment_method' => \App\Models\Order::$paymentChannel,
+            ]);
+
+            // Empty user cart after submitting offline payment
+            \App\Models\Cart::emptyCart($user->id);
+
+            $notifyOptions = [
+                '[amount]' => handlePrice($order->total_amount),
+                '[u.name]' => $user->full_name
+            ];
+            sendNotification('offline_payment_request', $notifyOptions, $user->id);
+            sendNotification('new_offline_payment_request', $notifyOptions, 1);
 
             session()->put($this->order_session_key, $order->id);
 
@@ -182,21 +242,8 @@ class PaymentController extends Controller
             $cashbackAccounting->rechargeWallet($order);
         } else {
             foreach ($order->orderItems as $orderItem) {
-                $sale = Sale::createSales($orderItem, $order->payment_method);
-
-                if (!empty($orderItem->reserve_meeting_id)) {
-                    $reserveMeeting = ReserveMeeting::where('id', $orderItem->reserve_meeting_id)->first();
-                    $reserveMeeting->update([
-                        'sale_id' => $sale->id,
-                        'reserved_at' => time()
-                    ]);
-
-                    $reserver = $reserveMeeting->user;
-
-                    if ($reserver) {
-                        $this->handleMeetingReserveReward($reserver);
-                    }
-                }
+                $updateInstallmentOrderAfterSale = false;
+                $updateProductOrderAfterSale = false;
 
                 if (!empty($orderItem->gift_id)) {
                     $gift = $orderItem->gift;
@@ -216,15 +263,16 @@ class PaymentController extends Controller
                     Accounting::createAccountingForRegistrationPackage($orderItem, $type);
 
                     if (!empty($orderItem->become_instructor_id)) {
-                        BecomeInstructor::where('id', $orderItem->become_instructor_id)
+                        BecomeInstructor::query()->where('id', $orderItem->become_instructor_id)
                             ->update([
-                                'package_id' => $orderItem->registration_package_id
+                                'package_id' => $orderItem->registration_package_id,
+                                'status' => 'pending',
                             ]);
                     }
                 } elseif (!empty($orderItem->installment_payment_id)) {
                     Accounting::createAccountingForInstallmentPayment($orderItem, $type);
 
-                    $this->updateInstallmentOrder($orderItem, $sale);
+                    $updateInstallmentOrderAfterSale = true;
                 } else {
                     // webinar and meeting and product and bundle
 
@@ -232,8 +280,43 @@ class PaymentController extends Controller
                     TicketUser::useTicket($orderItem);
 
                     if (!empty($orderItem->product_id)) {
-                        $this->updateProductOrder($sale, $orderItem);
+                        $updateProductOrderAfterSale = true;
                     }
+                }
+
+                // Set Sale After All Accounting
+                $sale = Sale::createSales($orderItem, $order->payment_method);
+
+                if (!empty($orderItem->reserve_meeting_id)) {
+                    $reserveMeeting = ReserveMeeting::where('id', $orderItem->reserve_meeting_id)->first();
+                    $reserveMeeting->update([
+                        'sale_id' => $sale->id,
+                        'reserved_at' => time()
+                    ]);
+
+                    $reserver = $reserveMeeting->user;
+
+                    if ($reserver) {
+                        $this->handleMeetingReserveReward($reserver);
+                    }
+                }
+
+                if ($updateInstallmentOrderAfterSale) {
+                    $this->updateInstallmentOrder($orderItem, $sale);
+                }
+
+                if ($updateProductOrderAfterSale) {
+                    $this->updateProductOrder($sale, $orderItem);
+                }
+
+                // Make Ticket Code
+                if (!empty($orderItem->event_ticket_id)) {
+                    (new EventTicketSoldMixins())->makeTicket($orderItem, $sale);
+                }
+
+                // Meeting Package Sessions
+                if (!empty($orderItem->meeting_package_id)) {
+                    (new MeetingPackageSoldMixins())->makeUserSessions($orderItem, $sale);
                 }
             }
 
@@ -265,7 +348,7 @@ class PaymentController extends Controller
                 'order' => $order,
             ];
 
-            return view('web.default.cart.status_pay', $data);
+            return view('design_1.web.cart.payment.status.index', $data);
         }
 
         return redirect('/panel');

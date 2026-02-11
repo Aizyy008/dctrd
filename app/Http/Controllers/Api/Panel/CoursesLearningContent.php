@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
+use App\Mixins\Logs\UserLoginHistoryMixin;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,10 @@ class CoursesLearningContent extends Controller
         $file = $data['file'];
         $slug = $data['slug'];
 
-        Auth::login($user);
+        Auth::login($user, true);
+
+        $userLoginHistoryMixin = new UserLoginHistoryMixin();
+        $userLoginHistoryMixin->storeUserLoginHistory($user);
 
         $url = "/course/learning/{$slug}?type=file&item={$file}";
         return redirect(url($url));

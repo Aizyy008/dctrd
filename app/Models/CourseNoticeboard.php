@@ -31,11 +31,11 @@ class CourseNoticeboard extends Model
     public function getIcon()
     {
         $icons = [
-            'warning' => 'alert-triangle',
-            'danger' => 'alert-octagon',
-            'neutral' => 'shield',
-            'info' => 'message-square',
-            'success' => 'check-circle'
+            'warning' => 'danger',
+            'danger' => 'close-circle',
+            'neutral' => 'more-circle',
+            'info' => 'info-circle',
+            'success' => 'tick-circle'
         ];
 
         return $icons[$this->color];

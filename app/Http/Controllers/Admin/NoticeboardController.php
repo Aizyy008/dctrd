@@ -90,6 +90,8 @@ class NoticeboardController extends Controller
             'organ_id' => null,
             'type' => $data['type'],
             'sender' => 'Staff',
+            'sender_id' => auth()->id(),
+            'sender_type' => 'platform',
             'title' => $data['title'],
             'message' => $data['message'],
             'created_at' => time()

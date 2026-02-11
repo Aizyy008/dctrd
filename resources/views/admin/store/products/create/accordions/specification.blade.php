@@ -1,7 +1,11 @@
-<div class="accordion-row bg-white rounded-lg border border-gray300 mt-3 py-3 py-lg-4 px-2 px-lg-3">
+<div class="accordion-row bg-white border border-gray-200 mt-3 rounded-12 py-3 py-lg-16 px-2 px-lg-16">
     <div class="d-flex align-items-center justify-content-between " role="tab" id="specification_{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}">
         <div class="d-flex align-items-center cursor-pointer" href="#collapseSpecification{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}" aria-controls="collapseSpecification{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}" data-parent="#specificationsAccordion" role="button" data-toggle="collapse" aria-expanded="true">
             <div class="font-weight-bold text-dark-blue d-block">{{ !empty($selectedSpecification) ? $selectedSpecification->specification->title : trans('update.add_new_specification') }}</div>
+
+            @if(!empty($selectedSpecification) and $selectedSpecification->allow_selection)
+                <div class="badge badge-light ml-3">{{ trans('update.selectable') }}</div>
+            @endif
         </div>
 
         <div class="d-flex align-items-center">
@@ -10,15 +14,15 @@
             @endif
 
             @if(!empty($selectedSpecification))
-                @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/store/products/specifications/'. $selectedSpecification->id .'/delete','btnClass' => 'mr-3', 'btnText' => '<i class="fa fa-trash"></i>'])
+                @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/store/products/specifications/'. $selectedSpecification->id .'/delete','btnClass' => 'mr-3 text-gray-500', 'btnText' => '<i class="fa fa-trash"></i>'])
             @endif
 
-            <i class="collapse-chevron-icon fa fa-chevron-down cursor-pointer" href="#collapseSpecification{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}" aria-controls="collapseSpecification{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}" data-parent="#specificationsAccordion" role="button" data-toggle="collapse" aria-expanded="true"></i>
+            <i class="collapse-chevron-icon fa fa-chevron-down cursor-pointer text-gray-500" href="#collapseSpecification{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}" aria-controls="collapseSpecification{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}" data-parent="#specificationsAccordion" role="button" data-toggle="collapse" aria-expanded="true"></i>
         </div>
     </div>
 
     <div id="collapseSpecification{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}" aria-labelledby="specification_{{ !empty($selectedSpecification) ? $selectedSpecification->id :'record' }}" class=" collapse @if(empty($selectedSpecification)) show @endif" role="tabpanel">
-        <div class="panel-collapse text-gray">
+        <div class="panel-collapse text-gray-500">
             <div class="js-content-form specification-form" data-action="{{ getAdminPanelUrl() }}/store/products/specifications/{{ !empty($selectedSpecification) ? $selectedSpecification->id . '/update' : 'store' }}">
                 <input type="hidden" name="ajax[{{ !empty($selectedSpecification) ? $selectedSpecification->id : 'new' }}][product_id]" value="{{ !empty($product) ? $product->id :'' }}">
                 <input type="hidden" class="js-input-type" name="ajax[{{ !empty($selectedSpecification) ? $selectedSpecification->id : 'new' }}][input_type]" value="{{ !empty($selectedSpecification) ? $selectedSpecification->type :'' }}">
@@ -114,7 +118,7 @@
                                     <label class="custom-control-label" for="specificationAllowSelectionSwitch{{ !empty($selectedSpecification) ? $selectedSpecification->id : '_record' }}"></label>
                                 </div>
                             </div>
-                            <div class="text-muted text-small mt-1">{{ trans('update.allow_user_selection_hint') }}</div>
+                            <div class="text-gray-500 text-small mt-1">{{ trans('update.allow_user_selection_hint') }}</div>
                         </div>
 
                         <div class="form-group mt-3">
@@ -130,11 +134,11 @@
                     </div>
                 </div>
 
-                <div class="mt-30 d-flex align-items-center">
-                    <button type="button" class="js-save-specification btn btn-sm btn-primary">{{ trans('public.save') }}</button>
+                <div class="mt-4 d-flex align-items-center">
+                    <button type="button" class="js-save-specification btn btn-sm btn-primary size-100">{{ trans('public.save') }}</button>
 
                     @if(empty($selectedSpecification))
-                        <button type="button" class="btn btn-sm btn-danger ml-2 cancel-accordion">{{ trans('public.close') }}</button>
+                        <button type="button" class="btn btn-sm btn-danger ml-2 cancel-accordion size-100">{{ trans('public.close') }}</button>
                     @endif
                 </div>
             </div>

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Api\Bundle;
 use App\Models\RewardAccounting;
 use App\Models\Sale;
@@ -33,7 +33,7 @@ class BundleController extends Controller
         $checkCourseForSale = $bundle->checkWebinarForSale($user);
 
         if ($checkCourseForSale != 'ok') {
-            return $checkCourseForSale;
+            return back()->with(['toast' => $checkCourseForSale]);
         }
 
         Sale::create([
@@ -66,7 +66,7 @@ class BundleController extends Controller
         $checkCourseForSale = $bundle->checkWebinarForSale($user);
 
         if ($checkCourseForSale != 'ok') {
-            return $checkCourseForSale;
+            return back()->with(['toast' => $checkCourseForSale]);
         }
 
         if (!empty($bundle->price) and $bundle->price > 0) {

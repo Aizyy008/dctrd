@@ -1,32 +1,18 @@
-<?php
-
-return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Admin Filters
-    |--------------------------------------------------------------------------
-    */
-
-    'filters' => 'فرز',
-    'new_page_lead' => 'يمكنك انشاء فرز جديد.',
-    'edit_page_lead' => 'يمكنك تعديل هذا الفرز.',
-
-    'add_options' => 'اضافة خيار',
-    'option' => 'خيار',
-    'filter_option' => 'خيار فرز',
-
-    'tags_list_page_title' => 'قائمة الفرز',
-    'filter' => 'علامة',
-    'create_field_title_placeholder' => 'اختر عنوان.',
-    'create_field_title_placeholder' => 'اختر عنوان.',
-    'filters_count' => 'عدد الغرز',
-    'page_lists_lead' => 'قائمة الفرز يمكن تعديل او حذف اي صف.',
-
-    'admin_filters' => 'الفرز',
-    'admin_filters_list' => 'قائمة الفرز',
-    'admin_filters_create' => 'انشاء فرز',
-    'admin_filters_edit' => 'تعديل الفرز',
-    'admin_filters_delete' => 'حذف الفرز',
-
-];
+<?php return array (
+  'filters' => 'المرشحات',
+  'new_page_lead' => 'يمكنك إنشاء مرشح جديد.',
+  'edit_page_lead' => 'يمكنك تحرير هذا المرشح.',
+  'add_options' => 'أضف الخيارات',
+  'option' => 'خيار',
+  'filter_option' => 'خيار التصفية',
+  'tags_list_page_title' => 'قائمة المرشحات',
+  'filter' => 'علامة',
+  'create_field_title_placeholder' => 'اختر عنوانًا.',
+  'filters_count' => 'المرشحات العد',
+  'page_lists_lead' => 'قائمة المرشحات. يمكنك تحرير أو حذف أي صف.',
+  'admin_filters' => 'المرشحات',
+  'admin_filters_list' => 'قائمة المرشحات',
+  'admin_filters_create' => 'المرشحات إنشاء',
+  'admin_filters_edit' => 'المرشحات تحرير',
+  'admin_filters_delete' => 'المرشحات حذف',
+);

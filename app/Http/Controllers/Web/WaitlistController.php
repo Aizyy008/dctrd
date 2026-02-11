@@ -10,14 +10,38 @@ use Illuminate\Support\Facades\Validator;
 
 class WaitlistController extends Controller
 {
-    public function store(Request $request)
+
+    public function getWaitlistModal($courseSlug)
+    {
+        $course = Webinar::where('slug', $courseSlug)
+            ->where('status', 'active')
+            ->first();
+
+        if (!empty($course)) {
+            $user = auth()->user();
+
+            $data = [
+                'course' => $course,
+                'user' => $user,
+            ];
+
+            $html = (string)view("design_1.web.courses.show.includes.waitlist_modal", $data)->render();
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html,
+            ]);
+        }
+
+        return response()->json([], 400);
+    }
+
+    public function store(Request $request, $courseSlug)
     {
         $user = auth()->user();
         $data = $request->all();
 
-        $rules = [
-            'slug' => 'required|exists:webinars,slug'
-        ];
+        $rules = [];
 
         if (empty($user)) {
             $rules['name'] = 'required|string';
@@ -35,16 +59,18 @@ class WaitlistController extends Controller
             ], 422);
         }
 
-        $webinar = Webinar::query()->where('slug', $data['slug'])->first();
+        $course = Webinar::where('slug', $courseSlug)
+            ->where('status', 'active')
+            ->first();
 
-        if (!empty($webinar)) {
+        if (!empty($course)) {
             $userId = !empty($user) ? $user->id : null;
             $fullName = $data['name'] ?? null;
             $email = $data['email'] ?? null;
             $phone = $data['phone'] ?? null;
 
             Waitlist::query()->updateOrCreate([
-                'webinar_id' => $webinar->id,
+                'webinar_id' => $course->id,
                 'user_id' => $userId,
                 'email' => $email,
                 'phone' => $phone
@@ -54,7 +80,7 @@ class WaitlistController extends Controller
             ]);
 
             $notifyOptions = [
-                '[c.title]' => $webinar->title,
+                '[c.title]' => $course->title,
                 '[u.name]' => !empty($fullName) ? $fullName : (!empty($user) ? $user->full_name : 'User'),
             ];
 
@@ -68,7 +94,9 @@ class WaitlistController extends Controller
 
             return response()->json([
                 'code' => 200,
-                'msg' => trans('update.course_added_to_waitlists_successful')
+                'title' => trans('public.request_success'),
+                'msg' => trans('update.course_added_to_waitlists_successful'),
+                'redirect_timeout' => 1500
             ]);
         }
 

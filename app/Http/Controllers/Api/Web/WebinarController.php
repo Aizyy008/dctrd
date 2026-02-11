@@ -470,7 +470,7 @@ class WebinarController extends Controller
                 'prerequisites' => $webinar->prerequisites->map(function ($prerequisite) {
                     return [
                         'required' => $prerequisite->required,
-                        'webinar' => self::brief($prerequisite->prerequisiteWebinar, true)
+                        'webinar' => self::brief($prerequisite->course, true)
                     ];
                 }),
                 'faqs' => $webinar->faqs

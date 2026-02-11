@@ -53,7 +53,14 @@
 /* 2. Mixin */
 /* 3. Bootstrap Override */
 /* 3.1 Misc */
-@import url("//fonts.googleapis.com/css?family=Nunito:400,600,700,800");
+@font-face {
+  font-family: 'gilroy';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/assets/admin/fonts/gilroy-regular.ttf) format('truetype');
+}
+
 
 .btn:focus,
 .btn:active,
@@ -260,10 +267,9 @@ select.form-control:not([size]):not([multiple]) {
 
 .form-group .control-label,
 .form-group > label {
-    font-weight: 600;
-    color: #34395e;
+    font-weight: 400;
+    color: var(--gray-500);
     font-size: 12px;
-    letter-spacing: .5px;
 }
 
 .form-group.floating-addon {
@@ -779,9 +785,8 @@ select.form-control:not([size]):not([multiple]) {
 
 /* 3.5 Card */
 .card {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
     background-color: #fff;
-    border-radius: 3px;
+    border-radius: 16px;
     border: none;
     position: relative;
     margin-bottom: 30px;
@@ -789,7 +794,7 @@ select.form-control:not([size]):not([multiple]) {
 
 .card .card-header, .card .card-body, .card .card-footer {
     background-color: transparent;
-    padding: 20px 25px;
+    padding: 20px 20px;
 }
 
 .card .navbar {
@@ -819,24 +824,15 @@ select.form-control:not([size]):not([multiple]) {
 }
 
 .card .card-header {
-    border-bottom-color: #f9f9f9;
+    border-bottom-color: var(--gray-200);
     line-height: 30px;
     -ms-grid-row-align: center;
     align-self: center;
     width: 100%;
     min-height: 70px;
-    padding: 15px 25px;
+    padding: 16px;
     display: flex;
     align-items: center;
-}
-
-.card .card-header .btn {
-    margin-top: 1px;
-    padding: 2px 15px;
-}
-
-.card .card-header .btn:not(.note-btn) {
-    border-radius: 30px;
 }
 
 .card .card-header .btn:hover {
@@ -849,14 +845,11 @@ select.form-control:not([size]):not([multiple]) {
     border-radius: 30px;
 }
 
-.card .card-header .form-control + .input-group-btn .btn {
-    margin-top: -1px;
-}
 
 .card .card-header h4 {
     font-size: 16px;
     line-height: 28px;
-    color: var(--primary);
+    color: #121F3E;
     padding-right: 10px;
     margin-bottom: 0;
 }
@@ -994,17 +987,18 @@ select.form-control:not([size]):not([multiple]) {
 }
 
 .card.card-hero .card-header {
-    padding: 40px;
-    background-image: linear-gradient(to bottom, var(--primary), #95a0f4);
+    padding: 35px;
+    background-color: var(--primary);
     color: #fff;
     overflow: hidden;
     height: auto;
     min-height: auto;
     display: block;
+    border-radius: 16px 16px 0px 0px;
 }
 
 .card.card-hero .card-header h4 {
-    font-size: 40px;
+    font-size: 24px;
     line-height: 1;
     color: #fff;
 }
@@ -1016,8 +1010,7 @@ select.form-control:not([size]):not([multiple]) {
 
 .card.card-hero .card-header .card-icon {
     float: right;
-    color: #8c98f3;
-    margin: -60px;
+    margin: -15px;
 }
 
 .card.card-hero .card-header .card-icon .ion, .card.card-hero .card-header .card-icon .fas, .card.card-hero .card-header .card-icon .far, .card.card-hero .card-header .card-icon .fab, .card.card-hero .card-header .card-icon .fal {
@@ -1146,6 +1139,7 @@ select.form-control:not([size]):not([multiple]) {
     font-size: 13px;
     font-weight: 600;
     letter-spacing: .3px;
+    border-radius: 16px;
 }
 
 .card .card-stats .card-stats-items {
@@ -1187,7 +1181,7 @@ select.form-control:not([size]):not([multiple]) {
     justify-content: center;
     flex-shrink: 0;
     width: 150px;
-    border-radius: 3px 0 0 3px;
+    border-radius: 16px 0 0 16px;
 }
 
 .card.card-large-icons .card-icon .ion, .card.card-large-icons .card-icon .fas, .card.card-large-icons .card-icon .far, .card.card-large-icons .card-icon .fab, .card.card-large-icons .card-icon .fal {
@@ -1611,7 +1605,7 @@ h6 .badge {
 }
 
 .btn {
-    font-weight: 600;
+    font-weight: 400;
     font-size: 12px;
     line-height: 24px;
     padding: .3rem .8rem;
@@ -1655,11 +1649,6 @@ h6 .badge {
     width: 70%;
     text-align: left;
     padding-left: 10px;
-}
-
-.btn:not(.btn-social):not(.btn-social-icon):active, .btn:not(.btn-social):not(.btn-social-icon):focus, .btn:not(.btn-social):not(.btn-social-icon):hover {
-    border-color: transparent !important;
-    background-color: white;
 }
 
 .btn > i {
@@ -1826,9 +1815,8 @@ h6 .badge {
 }
 
 .btn-primary, .btn-primary.disabled {
-    box-shadow: 0 2px 6px #acb5f6;
-    background-color: var(--primary);
-    border-color: var(--primary);
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
 }
 
 .btn-primary:focus, .btn-primary.disabled:focus {
@@ -1844,8 +1832,8 @@ h6 .badge {
 }
 
 .btn-outline-primary, .btn-outline-primary.disabled {
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
 }
 
 .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active, .btn-outline-primary.disabled:hover, .btn-outline-primary.disabled:focus, .btn-outline-primary.disabled:active {
@@ -2438,6 +2426,7 @@ h6 .badge {
 
     .navbar .dropdown-menu {
         position: absolute;
+        transform-origin: top right;
     }
 
     .navbar .navbar-nav {
@@ -2467,7 +2456,7 @@ h6 .badge {
 }
 
 .dropdown-menu a {
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .dropdown-menu .dropdown-title {
@@ -2495,7 +2484,7 @@ a.dropdown-item {
 }
 
 a.dropdown-item:focus, a.dropdown-item:active, a.dropdown-item.active {
-    background-color: var(--primary);
+    background-color: #fff;
     color: #fff !important;
 }
 
@@ -2747,8 +2736,8 @@ body {
     background-color: #f4f6f9;
     font-size: 14px;
     font-weight: 400;
-    font-family: "Nunito", "Segoe UI", arial;
-    color: #6c757d;
+    font-family: var(--font-family-base) !important;
+    color: var(--dark);
 }
 
 a.bb {
@@ -3244,9 +3233,8 @@ pre {
 
 .section .section-header {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
     background-color: #fff;
-    border-radius: 3px;
+    border-radius: 16px;
     border: none;
     position: relative;
     margin-bottom: 30px;
@@ -3260,7 +3248,6 @@ pre {
     font-weight: 700;
     display: inline-block;
     font-size: 24px;
-    margin-top: 3px;
     color: #34395e;
 }
 
@@ -3870,6 +3857,8 @@ body.layout-3 .main-footer {
     letter-spacing: .3px;
     color: #78828a;
     text-decoration: none;
+    gap: 10px;
+    margin-top: 0;
 }
 
 .main-sidebar .sidebar-menu li a .badge {
@@ -3937,8 +3926,9 @@ body.layout-3 .main-footer {
 .main-sidebar .sidebar-menu li ul.dropdown-menu li a {
     color: #868e96;
     height: 35px;
-    padding-left: 65px;
+    padding-left: 50px;
     font-weight: 400;
+    margin-top: 0px;
 }
 
 .main-sidebar .sidebar-menu li ul.dropdown-menu li a:hover {
@@ -3963,7 +3953,7 @@ body.layout-3 .main-footer {
 .main-content {
     padding-left: 280px;
     padding-right: 30px;
-    padding-top: 80px;
+    margin-top: 70px;
     width: 100%;
     position: relative;
 }

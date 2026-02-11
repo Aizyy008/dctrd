@@ -45,9 +45,7 @@ class Channel extends BasePaymentChannel implements IChannel
     {
         $price = $this->makeAmountByCurrency($order->total_amount, $this->currency);
         $generalSettings = getGeneralSettings();
-        $currency = currency();
         $user = auth()->user();
-
 
         try {
 
@@ -55,7 +53,7 @@ class Channel extends BasePaymentChannel implements IChannel
 
             $response = $tapPay->charge([
                 'amount' => $price,
-                'currency' => $currency,
+                'currency' => $this->currency,
                 'threeDSecure' => 'true',
                 'description' => $generalSettings['site_name'] . ' payment',
                 'statement_descriptor' => 'sample',
