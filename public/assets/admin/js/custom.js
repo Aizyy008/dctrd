@@ -271,11 +271,11 @@
     }
 
 
-    $('body').on('change', '.js-edit-content-locale', function (e) {
+    $('body').on('change', '.js-edit-content-locale, .js-reload-when-selected', function (e) {
         const val = $(this).val();
 
         if (val) {
-            var url = window.location.origin + window.location.pathname;
+            var url = window.location.origin + window.location.pathname + window.location.search;
 
             url += (url.indexOf('?') > -1) ? '&' : '?';
 
@@ -338,8 +338,8 @@
         const confirm = $(this).attr('data-confirm') ?? deleteAlertConfirm;
 
         var html = '<div class="">\n' +
-            '    <p class="">' + title + '</p>\n' +
-            '    <div class="mt-30 d-flex align-items-center justify-content-center">\n' +
+            '    <p class="text-center">' + title + '</p>\n' +
+            '    <div class="d-flex align-items-center justify-content-center">\n' +
             '        <button type="button" id="swlDelete" data-href="' + href + '" class="btn btn-sm btn-primary">' + confirm + '</button>\n' +
             '        <button type="button" class="btn btn-sm btn-danger ml-10 close-swl">' + deleteAlertCancel + '</button>\n' +
             '    </div>\n' +
@@ -364,9 +364,13 @@
 
         $.get(href, function (result) {
             if (result && result.code === 200) {
+
+                const title = result.title ?? deleteAlertSuccess;
+                const msg = result.msg ?? deleteAlertSuccessHint;
+
                 Swal.fire({
-                    title: (typeof result.title !== "undefined") ? result.title : deleteAlertSuccess,
-                    text: (typeof result.text !== "undefined") ? result.text : deleteAlertSuccessHint,
+                    title: title,
+                    html: `<div class="text-center mt-8 mb-12">${msg}</div>`,
                     showConfirmButton: false,
                     icon: 'success',
                 });
@@ -507,5 +511,65 @@
             $input.removeAttr('maxlength min max');
         }
     })
+
+    window.validatePrice = function (input) {
+        const $input = $(input);
+        const value = $input.val();
+        const $error = $input.closest('.form-group').find('.invalid-feedback');
+
+        $error.text('');
+
+        if (/^\d*\.?\d*$/.test(value)) {
+            $input.removeClass('is-invalid');
+        } else {
+            $input.addClass('is-invalid');
+            $error.text(priceInvalidHintLang ?? 'Price Invalid');
+        }
+    }
+
+    /* Sortable */
+    function updateToDatabase(path, idString) {
+        $.post(path, {items: idString}, function (result) {
+            if (result && result.title && result.msg) {
+                showToast('success', result.title, result.msg)
+            }
+        });
+    }
+
+    function setSortable(target) {
+        if (target.length) {
+            target.sortable({
+                group: 'no-drop',
+                handle: '.move-icon',
+                axis: "y",
+                update: function (e, ui) {
+                    var sortData = target.sortable('toArray', {attribute: 'data-id'});
+                    var path = e.target.getAttribute('data-path');
+
+                    updateToDatabase(path, sortData.join(','))
+                }
+            });
+        }
+    }
+
+    const items = [];
+
+    var draggableContentLists = $('.draggable-content-lists');
+    if (draggableContentLists.length) {
+        for (let item of draggableContentLists) {
+            items.push($(item).attr('data-drag-class'))
+        }
+    }
+
+    if (items.length) {
+        for (let item of items) {
+            const tag = $('.' + item);
+
+            if (tag.length) {
+                setSortable(tag);
+            }
+        }
+    }
+
 
 })(jQuery);
