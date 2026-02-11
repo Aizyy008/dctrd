@@ -105,8 +105,7 @@
                                             <select class="form-control @error('status') is-invalid @enderror" id="status" name="status">
                                                 <option disabled selected>{{ trans('admin/main.select_status') }}</option>
                                                 @foreach (\App\User::$statuses as $status)
-                                                    <option
-                                                        value="{{ $status }}" {{ old('status') === $status ? 'selected' :''}}>{{  $status }}</option>
+                                                    <option value="{{ $status }}" {{ old('status') === $status ? 'selected' :''}}>{{  $status }}</option>
                                                 @endforeach
                                             </select>
                                             @error('status')
@@ -133,3 +132,4 @@
 @push('scripts_bottom')
 
 @endpush
+

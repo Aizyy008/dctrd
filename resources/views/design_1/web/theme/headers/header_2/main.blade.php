@@ -40,7 +40,7 @@
                 {{-- Right Button --}}
                 <div class="col-6 col-lg-3 d-flex align-items-center justify-content-end">
                     @if(!empty($themeSpecificButton) and !empty($themeSpecificButton['title']))
-                        <a href="{{ $themeSpecificButton['url'] }}" class="btn-flip-effect btn btn-primary btn-lg gap-8 text-white" data-text="{{ $themeSpecificButton['title'] }}">
+                        <a href="{{ $themeSpecificButton['url'] }}" class="btn-flip-effect {{ (!empty($themeSpecificButton['icon'])) ? '' : 'btn-flip-effect__no-side' }} btn btn-primary btn-lg gap-8 text-white" data-text="{{ $themeSpecificButton['title'] }}">
                             @if(!empty($themeSpecificButton['icon']))
                                 @svg("iconsax-{$themeSpecificButton['icon']}", ['width' => '20px', 'height' => '20px', 'class' => "icons"])
                             @endif

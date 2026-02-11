@@ -91,12 +91,15 @@
     });
 
     $('body').on('change', '#multiCurrencySwitch', function () {
-        const $section = $('.js-multi-currency-section');
+        const $multiSection = $('.js-multi-currency-section');
+        const $guestSection = $('.js-guests-default-currency-section');
 
         if (this.checked) {
-            $section.removeClass('d-none')
+            $multiSection.removeClass('d-none');
+            $guestSection.removeClass('d-none');
         } else {
-            $section.addClass('d-none')
+            $multiSection.addClass('d-none');
+            $guestSection.addClass('d-none');
         }
     })
 

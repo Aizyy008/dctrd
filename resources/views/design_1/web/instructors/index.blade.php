@@ -10,7 +10,7 @@
 @endphp
 
 @section("content")
-    <main class="pb-56">
+    <main class="pb-104">
         <section class="instructors-lists-hero position-relative">
             <div class="instructors-lists-hero__mask"></div>
             <img src="{{ $pageHeroImage }}" class="img-cover" alt="{{ trans('home.instructors') }}"/>

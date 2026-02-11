@@ -16,7 +16,8 @@
                     <div class="text-gray-500 text-small mt-1">{{ trans('update.registration_packages_organizations_status_hint') }}</div>
                 </div>
                 <h2 class="section-title">{{ trans('update.organization_default_values') }}</h2>
-                @foreach(['instructors_count','students_count','courses_capacity','courses_count','meeting_count','product_count'] as $str)
+
+                @foreach(['instructors_count','students_count','courses_capacity','courses_count','meeting_count','events_count', 'meeting_packages_count'] as $str)
                     <div class="form-group">
                         <label>{{ trans('update.'.$str) }}</label>
                         <input type="text" class="form-control" name="value[{{ $str }}]" value="{{ (!empty($organizationsSettings) and isset($organizationsSettings[$str])) ? $organizationsSettings[$str] : '' }}">

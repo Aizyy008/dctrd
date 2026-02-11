@@ -1,6 +1,6 @@
 <div class="form-group {{ $className ?? '' }}">
     <label class="form-group-label bg-white">{{ $label }}</label>
-    <input type="{{ !empty($type) ? $type : 'text' }}" name="{{ $name }}" class="form-control bg-white" value="{{ $value ?? '' }}" placeholder="{{ $placeholder ?? '' }}">
+    <input type="{{ !empty($type) ? $type : 'text' }}" name="{{ $name }}" class="form-control bg-white {{ !empty($inputClass) ? $inputClass : '' }}" value="{!! $value ?? '' !!}" placeholder="{{ $placeholder ?? '' }}">
     <div class="invalid-feedback"></div>
     @if($hint)
         <div class="mt-8 font-12 text-gray-500">{{ $hint }}</div>

@@ -16,7 +16,7 @@
                     <h5>{{ trans('update.direct_publication_options') }}</h5>
 
                     @php
-                        $directPublicationOptions = ['direct_publication_of_courses', 'direct_publication_of_bundles', 'direct_publication_of_comments', 'direct_publication_of_reviews', 'direct_publication_of_blog'];
+                        $directPublicationOptions = ['direct_publication_of_courses', 'direct_publication_of_bundles', 'direct_publication_of_upcoming_courses', 'direct_publication_of_events', 'direct_publication_of_comments', 'direct_publication_of_reviews', 'direct_publication_of_blog'];
                     @endphp
 
                     @foreach($directPublicationOptions as $directPublicationOption)

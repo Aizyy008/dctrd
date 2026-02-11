@@ -1,7 +1,7 @@
 <div class="form-group select2-bg-white {{ $className ?? '' }}">
     <label class="form-group-label bg-white">{{ $label }}</label>
 
-    <select name="{{ $name }}" class="form-control js-searchable-select bg-white {{ $selectClassName ?? '' }}" data-allow-clear="false" data-placeholder="{{ $placeholder ?? '' }}"
+    <select name="{{ $name }}" class="form-control {{ !empty($searchSelect2Class) ? $searchSelect2Class : 'js-searchable-select' }} bg-white {{ $selectClassName ?? '' }}" data-allow-clear="false" data-placeholder="{{ $placeholder ?? '' }}"
             data-change-action="{{ !empty($changeActionEls) ? $changeActionEls : '' }}" data-change-parent="{{ !empty($changeActionParent) ? $changeActionParent : '' }}"
             data-api-path="{{ getAdminPanelUrl('/webinars/search') }}"
             data-item-column-name="title"
@@ -10,11 +10,11 @@
     >
         @if(!empty($value))
             @php
-                $course = \App\Models\Webinar::query()->find($value);
+                $searchSelectedCourse = \App\Models\Webinar::query()->find($value);
             @endphp
 
-            @if(!empty($course))
-                <option value="{{ $course->id }}" selected>{{ $course->title }}</option>
+            @if(!empty($searchSelectedCourse))
+                <option value="{{ $searchSelectedCourse->id }}" selected>{{ $searchSelectedCourse->title }}</option>
             @endif
         @endif
     </select>

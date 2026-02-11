@@ -3,26 +3,27 @@
 
         @php
             $items = [
-                'course',
-                'product',
-                'bundle',
-                'upcoming_course',
-                'blog_post',
-                'instructor',
-                'organization',
+                'course' => ['grid_card_1'],
+                'product' => ['grid_card_1'],
+                'bundle' => ['grid_card_1'],
+                'upcoming_course' => ['grid_card_1'],
+                'blog_post' => ['grid_card_1'],
+                'instructor' => ['grid_card_1'],
+                'organization' => ['grid_card_1'],
+                'event' => ['grid_card_1'],
+                'meeting_package' => ['grid_card_1'],
             ];
 
-            $cardNames = ['grid_card_1'];
         @endphp
 
-        @foreach($items as $item)
+        @foreach($items as $itemName => $itemCards)
             <div class="form-group mb-3">
-                <label class="input-label">{{ trans("update.{$item}") }}</label>
-                <select name="contents[card_styles][{{ $item }}]" class="form-control">
+                <label class="input-label">{{ trans("update.{$itemName}") }}</label>
+                <select name="contents[card_styles][{{ $itemName }}]" class="form-control">
                     <option value="">{{ trans('update.select_a_card_style') }}</option>
 
-                    @foreach($cardNames as $cardName)
-                        <option value="{{ $cardName }}" {{ (!empty($themeContents) and !empty($themeContents['card_styles']) and !empty($themeContents['card_styles'][$item]) and $themeContents['card_styles'][$item] == $cardName) ? 'selected' : '' }}>{{ trans("update.{$cardName}") }}</option>
+                    @foreach($itemCards as $cardName)
+                        <option value="{{ $cardName }}" {{ (!empty($themeContents) and !empty($themeContents['card_styles']) and !empty($themeContents['card_styles'][$itemName]) and $themeContents['card_styles'][$itemName] == $cardName) ? 'selected' : '' }}>{{ trans("update.{$cardName}") }}</option>
                     @endforeach
                 </select>
             </div>

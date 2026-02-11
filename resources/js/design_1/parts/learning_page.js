@@ -118,6 +118,20 @@
         if ($players.length) {
             for (const plyr of $players) {
                 const player = new Plyr(plyr);
+
+                // Attach moving watermark after player ready
+                if (typeof window.initMovingWatermark === 'function' && typeof window.wmUserName !== 'undefined' && window.wmEnabled !== false) {
+                    try {
+                        window.initMovingWatermark(player, {
+                            userName: window.wmUserName,
+                            avatarUrl: window.wmUserAvatar,
+                            mode: (window.wmMode || 'fade'),
+                            opacity: (typeof window.wmOpacity !== 'undefined') ? window.wmOpacity : undefined,
+                            size: (window.wmSize || '1'),
+                            data: (window.wmData || 'student'),
+                        });
+                    } catch (e) {}
+                }
             }
         }
     }

@@ -19,7 +19,7 @@
 
             $body.find(".js-select2").select2({
                 width: '100%',
-                dropdownParent: $('#upcomingAssignCourseModal')
+                dropdownParent: $('#upcomingAssignCourseModal'),
             });
 
         }, '', '40rem')

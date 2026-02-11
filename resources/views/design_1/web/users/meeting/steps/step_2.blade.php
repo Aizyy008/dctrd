@@ -59,8 +59,14 @@
                     </div>
 
                     <div class="meeting-book__input-button flex-1">
-                        <input type="radio" name="meeting_type" id="meetingTypeInPerson" value="in_person">
-                        <label for="meetingTypeInPerson" class="d-flex-center cursor-pointer">{{ trans('update.in_person') }}</label>
+                        <input type="radio" name="meeting_type" id="meetingTypeInPerson" value="in_person" {{ (!$meeting->in_person) ? 'disabled' : '' }}>
+                        <label for="meetingTypeInPerson" class="d-flex-center gap-4 cursor-pointer">
+                            {{ trans('update.in_person') }}
+
+                            @if(!$meeting->in_person)
+                                <span class="font-12">({{ trans('update.not_available') }})</span>
+                            @endif
+                        </label>
                     </div>
                 </div>
             </div>

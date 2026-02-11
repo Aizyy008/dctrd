@@ -1,40 +1,35 @@
-@php
-    $nextSession = $course->nextSession();
-
-    /*$lastSession = $course->lastSession();
-    $isProgressing = false;
-
-    if($course->start_date <= time() and !empty($lastSession) and $lastSession->date > time()) {
-        $isProgressing=true;
-    }*/
-
-@endphp
-
 <a href="{{ $course->getUrl() }}" target="_blank" class="text-decoration-none d-block">
     <div class="panel-course-grid-card {{ !empty($isInvitedCoursesPage) ? 'is-invited-course-card' : '' }} position-relative">
         <div class="panel-course-grid-card__image position-relative rounded-16 bg-gray-100">
             <img src="{{ $course->getImage() }}" alt="" class="img-cover rounded-16">
 
-            <div class="panel-course-grid-card__actions-box d-flex align-items-start justify-content-between">
-                {{-- Badges --}}
-                @include("design_1.panel.webinars.my_courses.grid_card.grid_card_badges")
+            @if(!empty($pageSource) and $pageSource == "bundles")
+                <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
+                    <x-iconsax-bol-box class="icons text-white" width="24px" height="24px"/>
+                </div>
+            @else
 
-                {{-- Actions --}}
-                {{--@include("design_1.panel.webinars.my_courses.grid_card.grid_card_actions")--}}
-            </div>
+                <div class="panel-course-grid-card__actions-box d-flex align-items-start justify-content-between">
+                    {{-- Badges --}}
+                    @include("design_1.panel.webinars.my_courses.grid_card.grid_card_badges")
 
-            @if($course->isWebinar())
-                <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                    <x-iconsax-bol-video class="icons text-white" width="24px" height="24px"/>
+                    {{-- Actions --}}
+                    {{--@include("design_1.panel.webinars.my_courses.grid_card.grid_card_actions")--}}
                 </div>
-            @elseif($course->isTextCourse())
-                <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                    <x-iconsax-bol-note-2 class="icons text-white" width="24px" height="24px"/>
-                </div>
-            @elseif($course->isCourse())
-                <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
-                    <x-iconsax-bol-video-play class="icons text-white" width="24px" height="24px"/>
-                </div>
+
+                @if($course->isWebinar())
+                    <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
+                        <x-iconsax-bol-video class="icons text-white" width="24px" height="24px"/>
+                    </div>
+                @elseif($course->isTextCourse())
+                    <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
+                        <x-iconsax-bol-note-2 class="icons text-white" width="24px" height="24px"/>
+                    </div>
+                @elseif($course->isCourse())
+                    <div class="is-live-course-icon d-flex-center size-64 rounded-circle">
+                        <x-iconsax-bol-video-play class="icons text-white" width="24px" height="24px"/>
+                    </div>
+                @endif
             @endif
         </div>
 
@@ -74,9 +69,13 @@
                         @endif
                     </div>
 
+                    @php
+                        $itemDuration = (!empty($pageSource) and $pageSource == "bundles") ? $course->getBundleDuration() : $course->duration;
+                    @endphp
+
                     <div class="d-flex align-items-center">
                         <x-iconsax-lin-clock-1 class="icons text-gray-500" width="16px" height="16px"/>
-                        <span class="ml-2 font-12 text-gray-500">{{ convertMinutesToHourAndMinute($course->duration) }} {{ trans('home.hours') }}</span>
+                        <span class="ml-2 font-12 text-gray-500">{{ convertMinutesToHourAndMinute($itemDuration) }} {{ trans('home.hours') }}</span>
                     </div>
 
                 </div>

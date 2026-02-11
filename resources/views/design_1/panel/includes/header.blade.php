@@ -22,14 +22,19 @@
                 <x-iconsax-lin-sun-1 class="light-icon icons text-gray-500" width="20px" height="20px"/>
             </div>
 
-            @if(!empty($navbarPages) and count($navbarPages))
-                <div class="d-none d-lg-flex align-items-center">
-                    @foreach($navbarPages as $navbarPage)
-                        <a href="{{ $navbarPage['link'] }}" class="navbar-item navbar-item-h-70 d-flex align-items-center mr-16 mr-lg-32 text-gray-500">{{ $navbarPage['title'] }}</a>
-                    @endforeach
-                </div>
-            @endif
+            @if(!empty($panelNavbarLinks))
+                @php
+                    $panelNavbarLinksItems = handleNavbarLinks($panelNavbarLinks)
+                @endphp
 
+                @if(!empty($panelNavbarLinksItems) and count($panelNavbarLinksItems))
+                    <div class="d-none d-lg-flex align-items-center">
+                        @foreach($panelNavbarLinksItems as $panelNavbarLinkItem)
+                            <a href="{{ $panelNavbarLinkItem['link'] }}" class="navbar-item navbar-item-h-70 d-flex align-items-center mr-16 mr-lg-32 text-gray-500">{{ $panelNavbarLinkItem['title'] }}</a>
+                        @endforeach
+                    </div>
+                @endif
+            @endif
         </div>
 
         <div class="d-flex align-items-center">
@@ -50,10 +55,12 @@
 
             <div class="panel-header__contents-with-line d-flex align-items-center gap-16 mr-16">
 
-                <div class="js-view-cart-drawer size-32 position-relative d-flex-center bg-gray-100 rounded-8 cursor-pointer">
-                    <x-iconsax-lin-bag-happy class="icons text-gray-500" width="20px" height="20px"/>
-                    <span class="js-cart-counter panel-header__badge-counter badge-counter bg-success font-12 {{ ($userCartCount < 1) ? 'd-none' : '' }}">{{ $userCartCount }}</span>
-                </div>
+                @if(!isFreeModeEnabled() || isFreeModeShowCartEnabled())
+                    <div class="js-view-cart-drawer size-32 position-relative d-flex-center bg-gray-100 rounded-8 cursor-pointer">
+                        <x-iconsax-lin-bag-happy class="icons text-gray-500" width="20px" height="20px"/>
+                        <span class="js-cart-counter panel-header__badge-counter badge-counter bg-success font-12 {{ ($userCartCount < 1) ? 'd-none' : '' }}">{{ $userCartCount }}</span>
+                    </div>
+                @endif
 
                 {{-- Notification --}}
                 <div class="d-none d-lg-flex">

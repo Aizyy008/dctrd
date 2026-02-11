@@ -52,10 +52,12 @@
                     @include('design_1.web.theme.headers.header_2.includes.currency')
 
                     {{-- Cart --}}
-                    <div class="js-view-cart-drawer position-relative d-flex-center size-32 bg-gray-100 rounded-8 cursor-pointer">
-                        <x-iconsax-lin-bag class="icons text-gray-500" width="20px" height="20px"/>
-                        <span class="js-cart-counter theme-header-2__top-navbar-cart-counter d-inline-flex-center font-12 text-white {{ ($userCartCount < 1) ? 'd-none' : '' }}">{{ $userCartCount }}</span>
-                    </div>
+                    @if(!isFreeModeEnabled() || isFreeModeShowCartEnabled())
+                        <div class="js-view-cart-drawer position-relative d-flex-center size-32 bg-gray-100 rounded-8 cursor-pointer">
+                            <x-iconsax-lin-bag class="icons text-gray-500" width="20px" height="20px"/>
+                            <span class="js-cart-counter theme-header-2__top-navbar-cart-counter d-inline-flex-center font-12 text-white {{ ($userCartCount < 1) ? 'd-none' : '' }}">{{ $userCartCount }}</span>
+                        </div>
+                    @endif
                 </div>
             </div>
 

@@ -17,6 +17,10 @@
                         {{ $accounting->webinar->title }}
                     @elseif(!empty($accounting->bundle_id) and !empty($accounting->bundle))
                         {{ $accounting->bundle->title }}
+                    @elseif(!empty($accounting->event_ticket_id) and !empty($accounting->eventTicket))
+                        {{ $accounting->eventTicket->event->title }}
+                    @elseif(!empty($accounting->meeting_package_id))
+                        {{ trans('update.meeting_package') }}
                     @elseif(!empty($accounting->product_id) and !empty($accounting->product))
                         {{ $accounting->product->title }}
                     @elseif(!empty($accounting->meeting_time_id))
@@ -51,6 +55,10 @@
                         #{{ $accounting->webinar->id }}{{ ($accounting->is_cashback) ? '-'.$accounting->webinar->title : '' }}
                     @elseif(!empty($accounting->bundle_id) and !empty($accounting->bundle))
                         #{{ $accounting->bundle->id }}{{ ($accounting->is_cashback) ? '-'.$accounting->bundle->title : '' }}
+                    @elseif(!empty($accounting->event_ticket_id) and !empty($accounting->eventTicket))
+                        #{{ $accounting->eventTicket->id }} ({{ $accounting->eventTicket->title }})
+                    @elseif(!empty($accounting->meeting_package_id) and !empty($accounting->meetingPackage))
+                        #{{ $accounting->meeting_package_id }} ({{ $accounting->meetingPackage->title }})
                     @elseif(!empty($accounting->product_id) and !empty($accounting->product))
                         #{{ $accounting->product->id }}{{ ($accounting->is_cashback) ? '-'.$accounting->product->title : '' }}
                     @elseif(!empty($accounting->meeting_time_id) and !empty($accounting->meetingTime))

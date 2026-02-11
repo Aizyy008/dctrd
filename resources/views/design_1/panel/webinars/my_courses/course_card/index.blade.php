@@ -42,7 +42,7 @@
                     <div class="d-flex align-items-start justify-content-between gap-12">
                         <div class="">
                             <h3 class="font-16 text-dark">{{ truncate($course->title, 46) }}</h3>
-                            
+
                             @include("design_1.web.components.rate", [
                                 'rate' => round($course->getRate(),1),
                                 'rateCount' => $course->reviews()->where('status', 'active')->count(),
@@ -81,7 +81,7 @@
     </div>
 
     {{-- Actions Dropdown (positioned outside the link) --}}
-    <div class="actions-dropdown-container position-absolute" style="top: 28px; right: 28px; z-index: 10;">
+    <div class="item-card-actions-dropdown-container">
         @include("design_1.panel.webinars.my_courses.course_card.actions_dropdown")
     </div>
 </div>

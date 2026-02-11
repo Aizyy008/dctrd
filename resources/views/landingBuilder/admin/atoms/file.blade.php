@@ -3,7 +3,7 @@
 
     <div class="custom-file bg-white">
         @if(!empty($value))
-            <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+            <input type="hidden" name="{{ $name }}" value="{!! $value !!}">
 
             <div class="js-custom-file-clear custom-file__clear" data-text="{{ trans('update.select_a_file') }}">
                 <x-iconsax-lin-add class="close-icon" width="24px" height="24px"/>

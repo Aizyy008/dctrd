@@ -4,7 +4,7 @@
         @include('design_1.panel.dashboard.student.includes.hello_box')
 
         {{-- Courses Overview --}}
-        <div class="{{ (!empty($helloBox['continueLearningCourses']) and count($helloBox['continueLearningCourses'])) ? 'mt-128' : 'mt-84' }}">
+        <div class="{{ (!empty($helloBox['continueLearningCourses']) and count($helloBox['continueLearningCourses'])) ? (!empty($isRtl) ? 'mt-160' : 'mt-128') : 'mt-84' }}">
             @include('design_1.panel.dashboard.student.includes.courses_overview')
         </div>
 

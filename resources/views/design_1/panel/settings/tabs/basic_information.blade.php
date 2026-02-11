@@ -37,7 +37,7 @@
                                 </select>
                             </div>
                             <div class="col-8 h-100 pl-4">
-                                <input type="tel" name="mobile" class="register-mobile-form-group__input bg-white">
+                                <input type="tel" name="mobile" class="register-mobile-form-group__input bg-white" value="{{ (!empty($user) and empty($new_user)) ? $user->mobile : old('mobile') }}">
                             </div>
                         </div>
                     </div>
@@ -207,7 +207,7 @@
                     </div>
                 </div>
 
-                <div class="form-group d-flex align-items-center mb-0">
+                <div class="form-group d-flex align-items-center">
                     <div class="custom-switch mr-8">
                         <input id="enableProfileStatisticsSwitch" type="checkbox" name="enable_profile_statistics" class="custom-control-input" {{ (!empty($user) and $user->enable_profile_statistics) ? 'checked' : '' }}>
                         <label class="custom-control-label cursor-pointer" for="enableProfileStatisticsSwitch"></label>
@@ -215,6 +215,17 @@
 
                     <div class="">
                         <label class="cursor-pointer" for="enableProfileStatisticsSwitch">{{ trans('update.enable_profile_statistics') }}</label>
+                    </div>
+                </div>
+
+                <div class="form-group d-flex align-items-center mb-0">
+                    <div class="custom-switch mr-8">
+                        <input id="autoRenewSubscriptionSwitch" type="checkbox" name="auto_renew_subscription" class="custom-control-input" {{ (!empty($user) and $user->auto_renew_subscription) ? 'checked' : '' }}>
+                        <label class="custom-control-label cursor-pointer" for="autoRenewSubscriptionSwitch"></label>
+                    </div>
+
+                    <div class="">
+                        <label class="cursor-pointer" for="autoRenewSubscriptionSwitch">{{ trans('update.auto_renew_subscription') }}</label>
                     </div>
                 </div>
 

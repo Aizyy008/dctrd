@@ -12,6 +12,13 @@
         <ul class="my-8">
             @if(!empty($authUser) and $authUser->isAdmin())
                 <li class="learning-page__dropdown-menu__item">
+                    <a href="{{ getAdminPanelUrl("/attendances?webinar_ids[]={$course->id}") }}" target="_blank" class="d-flex align-items-center w-100 px-16 py-8">
+                        <x-iconsax-lin-user-tick class="icons" width="24px" height="24px"/>
+                        <span class="ml-8">{{ trans('update.attendance') }}</span>
+                    </a>
+                </li>
+
+                <li class="learning-page__dropdown-menu__item">
                     <a href="{{ getAdminPanelUrl("/quizzes?webinar_ids[]={$course->id}") }}" target="_blank" class="d-flex align-items-center w-100 px-16 py-8">
                         <x-iconsax-lin-clipboard-tick class="icons" width="24px" height="24px"/>
                         <span class="ml-8">{{ trans('update.student_quizzes') }}</span>
@@ -69,6 +76,13 @@
                     </a>
                 </li>
             @elseif($userIsCourseTeacher)
+                <li class="learning-page__dropdown-menu__item">
+                    <a href="/panel/courses/attendances?course_id={{ $course->id }}" target="_blank" class="d-flex align-items-center w-100 px-16 py-8">
+                        <x-iconsax-lin-user-tick class="icons" width="24px" height="24px"/>
+                        <span class="ml-8">{{ trans('update.attendance') }}</span>
+                    </a>
+                </li>
+
                 <li class="learning-page__dropdown-menu__item">
                     <a href="/panel/quizzes/results" target="_blank" class="d-flex align-items-center w-100 px-16 py-8">
                         <x-iconsax-lin-clipboard-tick class="icons" width="24px" height="24px"/>

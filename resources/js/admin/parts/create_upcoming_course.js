@@ -263,7 +263,7 @@
         const $this = $(this);
         const answer = $this.parent().find('input').val();
 
-        var html = '<div class="my-2">' + answer + '</div>';
+        var html = '<div class="p-16">' + answer + '</div>';
 
         Swal.fire({
             html: html,

@@ -4,7 +4,7 @@
         @include('design_1.panel.dashboard.instructor.includes.hello_box')
 
         {{-- Courses Overview --}}
-        <div class="mt-128">
+        <div class="{{ (!empty($isRtl) ? 'mt-160' : 'mt-128') }}">
             @include('design_1.panel.dashboard.instructor.includes.courses_overview')
         </div>
 

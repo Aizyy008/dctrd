@@ -1,27 +1,6 @@
 (function ($) {
     "use strict";
 
-    function handleTimePicker($timePicker) {
-        $timePicker.persianDatepicker({
-            format: 'H:m',
-            calendarType: 'gregorian',
-            calendar: {
-                persian: {
-                    locale: 'en'
-                }
-            },
-            onlyTimePicker: true,
-            timePicker: {
-                minute: {
-                    step: 5
-                },
-                second: {
-                    enabled: false
-                }
-            }
-        });
-    }
-
     $('body').on('click', '.js-add-time', function (e) {
         e.preventDefault();
         const day = $(this).closest('tr').attr('data-day');

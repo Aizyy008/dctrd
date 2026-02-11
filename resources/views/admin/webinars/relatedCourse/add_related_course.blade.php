@@ -1,7 +1,13 @@
 <section class="mt-30">
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="section-title after-line">{{ trans('update.related_courses') }}</h2>
-        <button id="addRelatedCourse" type="button" class="btn btn-primary btn-sm mt-3" data-path="{{ getAdminPanelUrl("/relatedCourses/get-form") }}?item={{ $relatedCourseItemId }}&item_type={{ $relatedCourseItemType }}">{{ trans('update.add_related_courses') }}</button>
+        <button id="addRelatedCourse" type="button"
+                class="btn btn-primary btn-sm mt-3"
+                data-path="{{ getAdminPanelUrl("/relatedCourses/get-form") }}?item={{ $relatedCourseItemId }}&item_type={{ $relatedCourseItemType }}"
+                data-title="{{ trans('update.add_new_related_courses') }}"
+        >
+            {{ trans('update.add_related_courses') }}
+        </button>
     </div>
 
     <div class="row mt-10">
@@ -24,35 +30,35 @@
                                     <th>{{ $relatedCourse->course->title }}</th>
                                     <td class="text-left">{{ $relatedCourse->course->teacher->full_name }}</td>
                                     <td>{{  handlePrice($relatedCourse->course->price) }}</td>
-                                    <td>{{ dateTimeFormat($relatedCourse->course->created_at,'j F Y | H:i') }}</td>
+                                    <td>{{ dateTimeFormat($relatedCourse->course->created_at,'j m Y | H:i') }}</td>
 
                                     <td>
-                                         <div class="btn-group dropdown table-actions position-relative">
-                                             <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
-                                                 <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
-                                             </button>
+                                        <div class="btn-group dropdown table-actions position-relative">
+                                            <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                                <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                            </button>
 
-                                             <div class="dropdown-menu dropdown-menu-right">
-                                                 <button type="button"
-                                                         class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 js-edit-related-course"
-                                                         data-path="{{ getAdminPanelUrl("/relatedCourses/{$relatedCourse->id}/edit") }}?item={{ $relatedCourseItemId }}&item_type={{ $relatedCourseItemType }}">
-                                                     <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                                     <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
-                                                 </button>
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                                <button type="button"
+                                                        class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 js-edit-related-course"
+                                                        data-path="{{ getAdminPanelUrl("/relatedCourses/{$relatedCourse->id}/edit") }}?item={{ $relatedCourseItemId }}&item_type={{ $relatedCourseItemType }}"
+                                                        data-title="{{ trans('update.edit_related_course') }}"
+                                                >
+                                                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                                                </button>
 
-                                                 @include('admin.includes.delete_button',[
-                                                     'url' => getAdminPanelUrl().'/relatedCourses/'.$relatedCourse->id.'/delete',
-                                                     'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
-                                                     'btnText' => trans("admin/main.delete"),
-                                                     'btnIcon' => 'trash',
-                                                     'iconType' => 'lin',
-                                                     'iconClass' => 'text-danger mr-2',
-                                                 ])
-                                             </div>
-                                         </div>
+                                                @include('admin.includes.delete_button',[
+                                                    'url' => getAdminPanelUrl().'/relatedCourses/'.$relatedCourse->id.'/delete',
+                                                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                    'btnText' => trans("admin/main.delete"),
+                                                    'btnIcon' => 'trash',
+                                                    'iconType' => 'lin',
+                                                    'iconClass' => 'text-danger mr-2',
+                                                ])
+                                            </div>
+                                        </div>
                                     </td>
-
-
 
 
                                 </tr>
@@ -75,6 +81,9 @@
 </section>
 
 @push('scripts_bottom')
-    <!-- Modal -->
+    <script>
+        var saveLang = '{{ trans('public.save') }}';
+        var closeLang = '{{ trans('public.close') }}';
+    </script>
     <script src="/assets/admin/js/parts/related_courses.min.js"></script>
 @endpush

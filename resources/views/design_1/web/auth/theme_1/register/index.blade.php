@@ -15,15 +15,15 @@
     <form method="Post" action="/register" class="mt-16">
         <input type="hidden" name="_token" value="{{ csrf_token() }}">
 
-        <div class="pl-16">
+        <div class="pl-16 ">
             <div class="font-16 font-weight-bold">{{ trans('update.join_us_now!') }} 😊</div>
-            <h1 class="font-24 mt-4 mb-32">{{ trans('update.create_an_account') }}</h1>
+            <h1 class="font-24 mt-4">{{ trans('update.create_an_account') }}</h1>
         </div>
 
-        <div class="auth-page-form-container pr-16" data-simplebar @if((!empty($isRtl) and $isRtl)) data-simplebar-direction="rtl" @endif>
+        <div class="auth-page-form-container pr-16 mt-16 pt-16" data-simplebar @if((!empty($isRtl) and $isRtl)) data-simplebar-direction="rtl" @endif>
             {{-- Role --}}
             @if(!empty($selectRolesDuringRegistration) and count($selectRolesDuringRegistration))
-                <div class="my-28">
+                <div class="mb-28">
                     <div class="font-12 text-gray-500">{{ trans('update.select_a_role') }}</div>
 
                     <div class="d-flex align-items-center gap-4 p-4 rounded-12 border-gray-300 mt-8">
@@ -120,9 +120,9 @@
                     $selectedTimezone = getGeneralSettings('default_time_zone');
                 @endphp
 
-                <div class="form-group ">
+                <div class="form-group js-auth-timezone-container">
                     <label class="form-group-label">{{ trans('update.timezone') }}</label>
-                    <select name="timezone" class="form-control select2" data-allow-clear="false">
+                    <select name="timezone" class="form-control select2" data-allow-clear="false" data-dropdown-parent=".js-auth-timezone-container">
                         <option value="" {{ empty($user->timezone) ? 'selected' : '' }} disabled>{{ trans('public.select') }}</option>
                         @foreach(getListOfTimezones() as $timezone)
                             <option value="{{ $timezone }}" @if($selectedTimezone == $timezone) selected @endif>{{ $timezone }}</option>

@@ -14,12 +14,14 @@
             'name' => 'faq',
             'icon' => 'bill'
         ],
+    ];
 
-        4 => [
+    if (empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses'))) {
+        $progressSteps[4] = [
             'name' => 'message_to_reviewer',
             'icon' => 'shield-search'
-        ],
-    ];
+        ];
+    }
 
 @endphp
 

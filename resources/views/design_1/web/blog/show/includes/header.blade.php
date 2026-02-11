@@ -31,7 +31,7 @@
         <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between mt-24">
             <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center">
 
-                <a href="{{ ($post->author->isTeacher()) ? $post->author->getProfileUrl() : '#!' }}" class="d-flex align-items-center">
+                <a href="{{ $post->author->getProfileUrl() }}" target="_blank" class="d-flex align-items-center">
                     <div class="size-40 rounded-circle">
                         <img src="{{ $post->author->getAvatar(40) }}" alt="{{ $post->author->full_name }}" class="img-cover rounded-circle">
                     </div>

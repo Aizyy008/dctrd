@@ -34,3 +34,13 @@ body {
         width: 100%;
     }
 }
+
+.gift-received-modal {
+
+    &__sender-avatar {
+        position: absolute;
+        right: 4px;
+        bottom: -4px;
+        z-index: 2;
+    }
+}

@@ -1,6 +1,6 @@
 <a href="{{ $post->getUrl() }}" class="text-decoration-none d-block">
     <div class="blog-section__post-card position-relative rounded-24 {{ !empty($className) ? $className : '' }}">
-        <div class="position-relative">
+        <div class="position-relative h-100">
             <img src="{{ $post->image }}" alt="{{ $post->title }}" class="blog-section__post-card-img img-cover rounded-24">
         </div>
 

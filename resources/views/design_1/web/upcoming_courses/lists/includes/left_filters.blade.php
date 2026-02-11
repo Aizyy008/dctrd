@@ -122,9 +122,9 @@
                 <div
                     class="course-list-price-range range wrunner-value-bottom no-bottom-value-note mt-8"
                     id="priceRange"
-                    data-minLimit="{{ 0 }}"
+                    data-minLimit="0"
                     data-maxLimit="{{ $filterMaxPrice }}"
-                    data-step="10"
+                    data-step="{{ ($filterMaxPrice < 100) ? 2 : (($filterMaxPrice < 500) ? 50 : 100) }}"
                 >
                     <input type="hidden" name="min_price" value="" class="js-range-input-view-data">
                     <input type="hidden" name="max_price" value="" class="js-range-input-view-data">

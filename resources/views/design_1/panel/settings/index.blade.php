@@ -11,7 +11,7 @@
 
         <div class="custom-tabs mt-16">
             @if(empty($new_user))
-                <div class="user-setting-page-tabs-items d-flex align-items-center gap-24 gap-lg-40 border-bottom-gray-200 border-top-gray-200">
+                <div class="custom-tabs-items-scrollable-mobile d-flex align-items-center gap-24 gap-lg-40 border-bottom-gray-200 border-top-gray-200">
                     @include('design_1.panel.settings.includes.progress')
                 </div>
             @endif

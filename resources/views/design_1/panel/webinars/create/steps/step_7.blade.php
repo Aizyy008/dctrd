@@ -24,23 +24,23 @@
     </div>
 
 
-    @if(!empty($webinar->quizzes) and count($webinar->quizzes))
-        <div id="jsQuizzesAccordionsLists" class="js-quizzes-accordions-lists mt-16">
+    <div id="jsQuizzesAccordionsLists" class="js-quizzes-accordions-lists mt-16">
+        @if(!empty($webinar->quizzes) and count($webinar->quizzes))
             <ul class="draggable-content-lists quizzes-draggable-lists" data-path="" data-drag-class="quizzes-draggable-lists">
                 @foreach($webinar->quizzes as $quizInfo)
                     @include('design_1.panel.webinars.create.includes.accordions.quiz',['quizInfo' => $quizInfo])
                 @endforeach
             </ul>
-        </div>
-    @else
-        <div class="d-flex-center flex-column px-32 py-120 text-center">
-            <div class="d-flex-center size-64 rounded-12 bg-primary-30">
-                <x-iconsax-bul-clipboard-tick class="icons text-primary" width="32px" height="32px"/>
+        @else
+            <div class="d-flex-center flex-column px-32 py-120 text-center rounded-16 border-gray-200">
+                <div class="d-flex-center size-64 rounded-12 bg-primary-30">
+                    <x-iconsax-bul-clipboard-tick class="icons text-primary" width="32px" height="32px"/>
+                </div>
+                <h3 class="font-16 font-weight-bold mt-12">{{ trans('public.quizzes_no_result') }}</h3>
+                <p class="mt-4 font-12 text-gray-500">{!! trans('public.quizzes_no_result_hint') !!}</p>
             </div>
-            <h3 class="font-16 font-weight-bold mt-12">{{ trans('public.quizzes_no_result') }}</h3>
-            <p class="mt-4 font-12 text-gray-500">{!! trans('public.quizzes_no_result_hint') !!}</p>
-        </div>
-    @endif
+        @endif
+    </div>
 
 </div>
 

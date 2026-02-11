@@ -167,7 +167,7 @@
 
                     <div class="form-group  mb-0">
                         <label class="form-group-label">{{ trans('update.select_your_occupations') }}</label>
-                        <select name="occupations[]" class="form-control select2" multiple>
+                        <select name="occupations[]" class="form-control select2" multiple data-maximumSelectionLength="10">
                             <option value="">{{ trans('update.select_your_occupations') }}</option>
 
                             @foreach($categories as $category)
@@ -289,7 +289,7 @@
 
 <div class="d-none" id="newEducationModal">
     <div class="mt-20 text-center">
-        <img src="/assets/design_1/img/panel/settings/education_experience_modal.png" width="216px" height="160px" class="rounded-circle" alt="">
+        <img src="/assets/design_1/img/panel/settings/education_experience_modal.svg" width="216px" height="160px" class="" alt="">
 
         <h4 class="font-14 mt-12 font-weight-bold">{{ trans('site.new_education_hint') }}</h4>
         <span class="d-block mt-8 text-gray-500 font-12">{{ trans('site.new_education_exam') }}</span>
@@ -304,7 +304,7 @@
 
 <div class="d-none" id="newExperienceModal">
     <div class="mt-20 text-center">
-        <img src="/assets/design_1/img/panel/settings/education_experience_modal.png" width="216px" height="160px" class="rounded-circle" alt="">
+        <img src="/assets/design_1/img/panel/settings/education_experience_modal.svg" width="216px" height="160px" class="" alt="">
 
         <h4 class="font-14 mt-12 font-weight-bold">{{ trans('site.new_experience_hint') }}</h4>
         <span class="d-block mt-8 text-gray-500 font-12">{{ trans('site.new_experience_exam') }}</span>

@@ -34,13 +34,13 @@
         @else
             @switch($assignment->assignmentHistory->status)
                 @case(\App\Models\WebinarAssignmentHistory::$passed)
-                    <span class="text-primary ">{{ trans('quiz.passed') }}</span>
+                      <div class="d-inline-flex-center px-8 py-6 rounded-8 bg-success-30 font-12 text-success">{{ trans('quiz.passed') }}</div>
                     @break
                 @case(\App\Models\WebinarAssignmentHistory::$pending)
-                    <span class="text-warning ">{{ trans('public.pending') }}</span>
+                    <div class="d-inline-flex-center px-8 py-6 rounded-8 bg-warning-30 font-12 text-warning">{{ trans('public.pending') }}</div>
                     @break
                 @case(\App\Models\WebinarAssignmentHistory::$notPassed)
-                    <span class=" text-danger">{{ trans('quiz.failed') }}</span>
+                    <div class="d-inline-flex-center px-8 py-6 rounded-8 bg-danger-30 font-12 text-danger">{{ trans('quiz.failed') }}</div>
                     @break
             @endswitch
         @endif

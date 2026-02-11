@@ -169,13 +169,13 @@
     z-index: 1506;
 
     &__body {
-        height: calc(100vh - 168px);
+        height: calc(100% - 125px);
         overflow-y: auto;
     }
 
     &.no-footer {
         .cart-drawer__body {
-            height: calc(100vh - 73px);
+            height: calc(100% - 25px);
         }
     }
 

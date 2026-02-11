@@ -57,6 +57,15 @@
                     <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
 
+                <div class="form-group js-guests-default-currency-section {{ (!empty($itemValue) and !empty($itemValue['multi_currency'])) ? : "d-none" }}">
+                    <label class="input-label d-block">{{ trans('admin/main.guest_default_currency') }}</label>
+                    <select name="value[visitors_default_currency]" class="form-control">
+                        <option value="default" @if(empty($itemValue) or empty($itemValue['visitors_default_currency']) or $itemValue['visitors_default_currency'] == 'default') selected @endif>{{ trans('admin/main.use_default_currency') }}</option>
+                        <option>{{ trans('admin/main.use_ip_currency') }} (Paid Plugin)</option>
+                    </select>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.guest_default_currency_hint') }}</div>
+                </div>
+
                 <section class="js-multi-currency-section mt-3 {{ (!empty($itemValue) and !empty($itemValue['multi_currency'])) ? : "d-none" }}">
                     <div class="d-flex justify-content-between align-items-center pb-2">
                         <h2 class="section-title after-line">{{ trans('update.currencies') }}</h2>

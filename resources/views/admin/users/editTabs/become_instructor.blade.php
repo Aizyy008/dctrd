@@ -1,5 +1,3 @@
-
-
 <div class="tab-pane mt-3 fade active show" id="become_instructor" role="tabpanel" aria-labelledby="become_instructor-tab">
     <div class="row">
         <div class="col-12">
@@ -15,7 +13,7 @@
                     <td width="50%" class="text-left">{{ $becomeInstructor->description ?? '-' }}</td>
                     <td class="text-center">
                         @if(!empty($becomeInstructor->certificate))
-                            <a href="{{ (strpos($becomeInstructor->certificate,'http') != false) ? $becomeInstructor->certificate : url($becomeInstructor->certificate) }}" target="_blank" class="btn btn-sm btn-success">{{ trans('admin/main.show') }}</a>
+                            <a href="{{ url($becomeInstructor->certificate) }}" target="_blank" class="btn btn-sm btn-success">{{ trans('admin/main.show') }}</a>
                         @else
                             -
                         @endif
@@ -23,15 +21,14 @@
                 </tr>
             </table>
 
-            @if(!empty($becomeInstructorFormFieldValues) and count($becomeInstructorFormFieldValues))
+            @if(!empty($becomeInstructorForm) and !empty($becomeInstructorFormFieldsSubmissions))
                 <h3 class="section-title after-line mt-4">{{ trans('update.extra_form') }}</h3>
 
-                @foreach($becomeInstructorFormFieldValues as $becomeInstructorFormFieldTitle => $becomeInstructorFormFieldValue)
-                    <div class="mt-3">
-                        <label>{{ $becomeInstructorFormFieldTitle }}:</label>
-                        <p class="text-gray-500 white-space-pre-wrap">{{ $becomeInstructorFormFieldValue }}</p>
-                    </div>
-                @endforeach
+                {{-- Items --}}
+                @include('admin.forms.submissions.form_field_items', [
+                    'formFields' => $becomeInstructorForm->fields,
+                    'submissionItems' => $becomeInstructorFormFieldsSubmissions,
+                ])
             @endif
 
 

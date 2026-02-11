@@ -3,6 +3,26 @@
 
     .note-editable {
         background-color: var(--gray) !important;
+
+
+        ul {
+            list-style: disc !important;
+            list-style-position: inside !important;
+
+            li {
+                list-style: inherit !important;
+            }
+        }
+
+        ol {
+            list-style: decimal !important;
+            list-style-position: inside !important;
+
+            li {
+                list-style: inherit !important;
+            }
+        }
+
     }
 
     .note-toolbar {

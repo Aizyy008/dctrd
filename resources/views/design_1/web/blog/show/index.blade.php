@@ -13,7 +13,7 @@
         <img src="{{ $post->image }}" alt="{{ $post->title }}" class="img-cover">
     </div>
 
-    <div class="container position-relative blog-show-body">
+    <div class="container position-relative blog-show-body pb-120">
         <div class="blog-show-cover-image position-relative rounded-32">
             <img src="{{ $post->image }}" alt="{{ $post->title }}" class="img-cover rounded-32">
         </div>
@@ -38,7 +38,9 @@
         @include('design_1.web.blog.show.includes.suggested_post')
 
         {{-- Comments --}}
-        @include('design_1.web.blog.show.includes.comments')
+        @if($post->enable_comment)
+            @include('design_1.web.blog.show.includes.comments')
+        @endif
 
     </div>
 

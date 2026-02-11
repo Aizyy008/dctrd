@@ -275,6 +275,36 @@
                     <div class="text-gray-500 text-small">{{ trans('update.admin_user_edit_content_access_limitation_hint') }}</div>
                 </div>
 
+                <div class="form-group custom-switches-stacked mt-2">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="public_message" value="0">
+                        <input type="checkbox" name="public_message" id="publicMessageSwitch" value="1" {{ (!empty($user) and $user->public_message) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="publicMessageSwitch">{{ trans('update.enable_profile_messages') }}</label>
+                    </label>
+                    <div class="text-gray-500 text-small">{{ trans('update.admin_user_edit_enable_profile_messages_hint') }}</div>
+                </div>
+
+                <div class="form-group custom-switches-stacked mt-2">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="enable_profile_statistics" value="0">
+                        <input type="checkbox" name="enable_profile_statistics" id="enableProfileStatisticsSwitch" value="1" {{ (!empty($user) and $user->enable_profile_statistics) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="enableProfileStatisticsSwitch">{{ trans('update.enable_profile_statistics') }}</label>
+                    </label>
+                    <div class="text-gray-500 text-small">{{ trans('update.admin_user_edit_enable_profile_statistics_hint') }}</div>
+                </div>
+
+                <div class="form-group custom-switches-stacked mt-2">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="auto_renew_subscription" value="0">
+                        <input type="checkbox" name="auto_renew_subscription" id="autoRenewSubscriptionSwitch" value="1" {{ (!empty($user) and $user->auto_renew_subscription) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="autoRenewSubscriptionSwitch">{{ trans('update.auto_renew_subscription') }}</label>
+                    </label>
+                    <div class="text-gray-500 text-small">{{ trans('update.admin_user_edit_auto_renew_subscription_hint') }}</div>
+                </div>
+
                 @if(!empty($user) and !$user->isUser())
                     <div class="form-group custom-switches-stacked mt-2">
                         <label class="custom-switch pl-0">

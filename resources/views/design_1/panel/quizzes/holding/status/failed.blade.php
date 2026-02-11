@@ -21,7 +21,7 @@
         @if($canTryAgain)
             <a href="/panel/quizzes/{{ $quiz->id }}/overview" class="btn btn-primary btn-lg">{{ trans('public.try_again') }}</a>
         @else
-            <a href="/panel/quizzes/{{ $quizResult->id }}/result" class="btn btn-primary btn-lg">{{ trans('update.view_answers') }}</a>
+            <a href="/panel/quizzes/results/{{ $quizResult->id }}/details" class="btn btn-primary btn-lg">{{ trans('update.view_answers') }}</a>
         @endif
 
         <a href="/panel/quizzes/my-results" class="btn btn-outline-primary btn-lg">{{ trans('update.my_results') }}</a>

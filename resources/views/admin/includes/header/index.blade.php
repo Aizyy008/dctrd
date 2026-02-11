@@ -5,7 +5,7 @@
 
     <div class="d-flex align-items-center justify-content-end flex-1 gap-16">
 
-    {{-- About System --}}
+      {{-- About System --}}
         <div class="about-system-select position-relative">
             <div class="d-flex-center size-32 rounded-8 cursor-pointer position-relative" style="background-color: rgba(255, 255, 255, 0.2);">
                 <x-iconsax-lin-info-circle class="icons text-white" width="20px" height="20px"/>
@@ -19,7 +19,7 @@
                             <img src="{{ asset('assets/design_1/img/logo.jpg') }}" alt="Rocket LMS" class="size-48 rounded-circle" style="object-fit: cover;">
                         </div>
                         <div class="ml-12">
-                            <h4 class="font-16 font-weight-bold text-white mb-0">Rocket LMS V2.0</h4>
+                            <h4 class="font-16 font-weight-bold text-white mb-0">Rocket LMS V2.1</h4>
                             <span class="font-12 text-white" style="opacity: 0.75;">Learning Management System</span>
                         </div>
                     </div>
@@ -89,8 +89,6 @@
                 }
             }
         </style>
-
-
 
 
         {{-- Ai --}}

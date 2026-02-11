@@ -1,4 +1,4 @@
-<div class="add-answer-card mt-3 {{ (empty($answer) or (!empty($loop) and $loop->iteration == 1)) ? 'main-answer-row' : '' }}">
+<div class="add-answer-card mt-28 {{ (empty($answer) or (!empty($loop) and $loop->iteration == 1)) ? 'main-answer-row' : '' }}">
     <button type="button" class="btn btn-sm btn-danger rounded-circle answer-remove {{ (!empty($answer) and !empty($loop) and $loop->iteration > 1) ? '' : 'd-none' }}">
         <i class="fa fa-times"></i>
     </button>
@@ -13,7 +13,7 @@
     </div>
 
     <div class="row mt-2 align-items-end">
-        <div class="col-12 col-md-8">
+        <div class="col-12 col-md-12">
             <div class="form-group">
                 <label class="input-label">{{ trans('quiz.answer_image') }} <span class="braces">({{ trans('public.optional') }})</span></label>
                 <div class="input-group">
@@ -26,7 +26,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-12">
             <div class="form-group mt-2 d-flex align-items-center justify-content-between js-switch-parent">
                 <label class="js-switch" for="correctAnswerSwitch_{{ !empty($answer) ? $answer->id : 'ans_tmp' }}">{{ trans('quiz.correct_answer') }}</label>
                 <div class="custom-control custom-switch">

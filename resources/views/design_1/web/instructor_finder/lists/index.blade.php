@@ -10,15 +10,80 @@
 @endpush
 
 @section('content')
+    <div class="container instructor-finder mt-80 pb-60">
 
- <div class=" text-center d-block mt-104"  data-width="50%" >
-                                <img class="col-md-3" src="/assets/default/img/plugin.svg" alt="image">
-                                <h3 class="mt-3 mb-10">This is a paid plugin!</h3>
-                                <h5 class="lead">
-                                    You can purchase it by <strong><a class="text-danger" href="https://codecanyon.net/item/universal-plugins-bundle-for-rocket-lms/33297004">this link</a></strong> on Codecanyon.
-                                </h5>             
-                              </div>
+        {{-- top hero --}}
+        <div class="position-relative z-index-15">
+            <div class="instructor-finder__top-hero-mask rounded-32"></div>
 
+            <div class="position-relative bg-white py-16 py-md-32 rounded-32 z-index-2">
+                <div class="d-flex align-items-center px-16 px-md-32">
+                    <div class="d-flex-center size-64 rounded-12 bg-primary-30">
+                        <x-iconsax-bul-teacher class="icons text-primary" width="32px" height="32px"/>
+                    </div>
+                    <div class="ml-8">
+                        <h1 class="font-24 font-weight-bold">{{ trans('home.instructors') }}</h1>
+                        <p class="mt-4 font-12 text-gray-500">{{ trans('update.explore_instructor_profiles_and_book_meetings') }}</p>
+                    </div>
+                </div>
+
+                {{-- Featured Instructors --}}
+                @include('design_1.web.instructor_finder.lists.top_featured_instructors')
+            </div>
+        </div>
+
+        {{-- Map --}}
+        @include('design_1.web.instructor_finder.lists.map')
+
+        <form id="filtersForm" action="/instructor-finder" method="get">
+
+            {{-- Top Filters --}}
+            @include('design_1.web.instructor_finder.lists.top_filters')
+
+
+            <div class="row flex-md-row-reverse">
+                {{-- Instructors Card --}}
+                <div class="col-12 col-md-8 col-lg-9 mt-20">
+                    <div id="instructorsList">
+                        @if(!empty($instructors) and $instructors->isNotEmpty())
+                            @foreach($instructors as $instructor)
+                                @include('design_1.web.instructor_finder.lists.instructor_card', ['instructor' => $instructor])
+                            @endforeach
+                        @else
+                            @include('design_1.panel.includes.no-result',[
+                               'file_name' => 'instructor-finder.svg',
+                               'title' => trans('update.instructor_finder_no_result'),
+                               'hint' => nl2br(trans('update.instructor_finder_no_result_hint')),
+                           ])
+                        @endif
+                    </div>
+
+                    <div class="text-center">
+                        <button type="button" id="loadMoreInstructors" data-url="/instructor-finder" class="btn btn-outline-gray-500 mt-48 {{ ($instructors->lastPage() <= $instructors->currentPage()) ? ' d-none' : '' }}">{{ trans('site.load_more_instructors') }}</button>
+                    </div>
+
+                </div>
+
+                {{-- Left Side --}}
+                <div class="col-12 col-md-4 col-lg-3 mt-20">
+
+                    {{-- Top Mentors --}}
+                    @include('design_1.web.instructor_finder.lists.left_side.top_mentors')
+
+                    {{-- Filters --}}
+                    @include('design_1.web.instructor_finder.lists.left_side.filters')
+
+                    {{-- Location --}}
+                    @include('design_1.web.instructor_finder.lists.left_side.location')
+
+                    {{-- Others --}}
+                    @include('design_1.web.instructor_finder.lists.left_side.other')
+
+                </div>
+            </div>
+
+        </form>
+    </div>
 @endsection
 
 

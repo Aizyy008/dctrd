@@ -21,7 +21,7 @@
 
             <div class="mt-16 font-12 text-gray-500">{{ trans('update.verification_code') }}</div>
 
-            <div class="d-grid grid-columns-5 gap-16 mt-12">
+            <div class="direction-ltr d-grid grid-columns-5 gap-16 mt-12">
                 @foreach([1,2,3,4,5] as $num)
                     <input type="tel" name="code[{{ $num }}]" class="auth-verification-code-field" autocomplete="off">
                 @endforeach

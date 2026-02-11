@@ -1,4 +1,4 @@
-<div class="d-grid grid-columns-3 grid-columns-lg-3 gap-24 mt-16">
+<div class="d-grid grid-columns-2 grid-lg-columns-3 gap-24 mt-16">
     {{-- Type --}}
     <div class="d-flex align-items-center">
         <div class="d-flex-center size-36 bg-white rounded-circle">

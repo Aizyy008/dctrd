@@ -87,8 +87,8 @@
                                 <select name="ajax[{{ !empty($file) ? $file->id : 'new' }}][storage]"
                                         class="js-file-storage form-control"
                                 >
-                                    @foreach(getFeaturesSettings('available_sources') as $source)
-                                        <option value="{{ $source }}" @if(!empty($file) and $file->storage == $source) selected @endif>{{ trans('update.file_source_'.$source) }}</option>
+                                    @foreach(getAvailableUploadFileSources() as $source)
+                                        <option value="{{ $source }}" @if((!empty($file) and $file->storage == $source) or (empty($file) and $loop->first)) selected @endif>{{ trans('update.file_source_'.$source) }}</option>
                                     @endforeach
                                 </select>
                             </div>

@@ -12,7 +12,11 @@
     <div class="agora-page d-flex">
         <div class="agora-page__main">
             {{-- Top Header --}}
-            @include('design_1.web.courses.learning_page.includes.top_header')
+            @if(!empty($session->webinar))
+                @include('design_1.web.courses.learning_page.includes.top_header', ['course' => $session->webinar])
+            @else
+                @include('design_1.web.courses.agora.includes.other_top_header')
+            @endif
 
             {{-- Page Content --}}
             <div class="agora-page__main-content" data-simplebar @if((!empty($isRtl))) data-simplebar-direction="rtl" @endif>
@@ -28,7 +32,9 @@
     </div>
 
     {{-- Noticeboards --}}
-    @include('design_1.web.courses.learning_page.noticeboards.index')
+    @if(!empty($session->webinar))
+        @include('design_1.web.courses.learning_page.noticeboards.index', ['course' => $session->webinar])
+    @endif
 @endsection
 
 @push('scripts_bottom')

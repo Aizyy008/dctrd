@@ -11,7 +11,7 @@
 @endphp
 
 @section("content")
-    <div class="container my-56">
+    <div class="container mt-56 mb-120">
         <div class="text-center">
             <h1 class="font-32 font-weight-bold">{{ $pageTitle }}</h1>
             <p class="font-16 text-gray-500 mt-8">{{ $titleHint }}</p>

@@ -153,7 +153,7 @@
                 <select name="video_demo_source"
                         class="js-video-demo-source form-control"
                 >
-                    @foreach(getFeaturesSettings('available_sources') as $source)
+                    @foreach(getAvailableUploadFileSources() as $source)
                         <option value="{{ $source }}" @if(!empty($upcomingCourse) and $upcomingCourse->video_demo_source == $source) selected @endif>{{ trans('update.file_source_'.$source) }}</option>
                     @endforeach
                 </select>

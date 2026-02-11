@@ -40,6 +40,15 @@
                 </a>
             </li>
 
+            @if($authUser->isAdmin())
+                <li class="navbar-auth-user__dropdown-item">
+                    <a href="{{ getAdminPanelUrl() }}/users/{{ $authUser->id }}/edit" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
+                        <x-iconsax-lin-lock class="icons" width="24px" height="24px"/>
+                        <span class="ml-8">{{ trans('admin/main.change_password') }}</span>
+                    </a>
+                </li>
+            @endif
+
             <li class="navbar-auth-user__dropdown-item">
                 <a href="{{ ($authUser->isAdmin()) ? getAdminPanelUrl("/notifications") : '/panel' }}" class="d-flex align-items-center w-100 px-16 py-8 bg-transparent">
                     <x-iconsax-lin-notification class="icons" width="24px" height="24px"/>

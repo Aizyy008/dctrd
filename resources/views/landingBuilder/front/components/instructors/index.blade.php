@@ -70,8 +70,8 @@
                         </div>
                     </div>
 
-                    @if(!empty($contents['cta_section']['title_regular_text']))
-                        <div class="font-16 text-gray-500 mt-16">{{ $contents['cta_section']['title_regular_text'] }}</div>
+                    @if(!empty($contents['cta_section']['description']))
+                        <div class="font-16 text-gray-500 mt-16">{{ $contents['cta_section']['description'] }}</div>
                     @endif
                 @endif
 

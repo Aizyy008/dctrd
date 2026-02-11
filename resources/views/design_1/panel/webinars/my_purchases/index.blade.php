@@ -18,7 +18,7 @@
         <div id="tableListContainer" class="" data-view-data-path="/panel/courses">
             <div class="js-page-sales-lists row mt-20">
                 @foreach($sales as $saleRow)
-                    <div class="col-12 col-lg-6 mb-32">
+                    <div class="col-12 col-xlg-6 mb-32">
                         @include("design_1.panel.webinars.my_purchases.item_card.index", ['sale' => $saleRow])
                     </div>
                 @endforeach

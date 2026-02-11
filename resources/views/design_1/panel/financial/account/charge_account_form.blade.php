@@ -66,7 +66,7 @@
         </div>
 
         @if(!empty($invalidChannels))
-            <div class="d-flex align-items-center p-12 rounded-12 bg-gray-500-20 mt-24">
+            <div class="d-flex align-items-center p-12 rounded-12 bg-gray-500-20 mt-24 mx-16">
                 <div class="d-flex-center size-48 rounded-12 bg-gray-500">
                     <x-iconsax-bol-info-circle class="icons text-white" width="24px" height="24px"/>
                 </div>
@@ -76,7 +76,7 @@
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row mx-12">
                 @foreach($invalidChannels as $invalidChannel)
                     <div class="col-6 col-lg-3 mt-16">
                         <div class="d-flex align-items-center p-16 rounded-16 border-gray-200">
@@ -160,7 +160,7 @@
                 <div class="col-12 col-md-4 js-offline-payment-input {{ (!$showOfflineFields) ? 'd-none' : '' }}">
                     <div class="form-group">
                         <label for="dateInput" class="form-group-label">{{ trans('public.date_time') }}</label>
-                        <input type="text" name="date" id="dateInput" class="form-control datepicker js-default-init-date-picker @error('date') is-invalid @enderror" value="{{ !empty($editOfflinePayment) ? dateTimeFormat($editOfflinePayment->pay_date, 'Y-m-d H:i', false) : old('date') }}" data-format="YYYY/MM/DD"/>
+                        <input type="text" name="date" id="dateInput" class="form-control datetimepicker js-default-init-date-picker @error('date') is-invalid @enderror" value="{{ !empty($editOfflinePayment) ? dateTimeFormat($editOfflinePayment->pay_date, 'Y-m-d H:i', false) : old('date') }}" data-format="YYYY/MM/DD HH:mm" autocomplete="off"/>
                         @error('date')
                         <div class="invalid-feedback"> {{ $message }}</div>
                         @enderror

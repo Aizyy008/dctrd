@@ -24,7 +24,7 @@
             <a href="{{ $webinar->getLearningPageUrl() }}" class="btn btn-primary btn-lg">{{ trans('update.back_to_learning_page') }}</a>
         @endif
 
-        <a href="/panel/quizzes/{{ $quizResult->id }}/result" class="btn btn-outline-primary btn-lg">{{ trans('update.view_answers') }}</a>
+        <a href="/panel/quizzes/results/{{ $quizResult->id }}/details" class="btn btn-outline-primary btn-lg">{{ trans('update.view_answers') }}</a>
     </div>
 
     @if($quiz->certificate)

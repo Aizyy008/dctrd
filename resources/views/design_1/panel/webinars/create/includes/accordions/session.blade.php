@@ -61,7 +61,6 @@
 
                 <div class="js-zoom-not-complete-alert mt-12 text-danger d-none">
                     {{ trans('webinars.your_zoom_settings_are_not_complete') }}
-                    <a href="/panel/setting/step/8" class="text-primary" target="_blank">{{ trans('public.go_to_settings') }}</a>
                 </div>
             </div>
 
@@ -156,6 +155,19 @@
                     <label class="cursor-pointer" for="sessionStatusSwitch{{ !empty($session) ? $session->id : '_record' }}">{{ trans('public.active') }}</label>
                 </div>
             </div>
+
+            @if(!empty(getAttendanceSettings("status")))
+                <div class="form-group d-flex align-items-center">
+                    <div class="custom-switch mr-8">
+                        <input id="sessionAttendanceStatusSwitch{{ !empty($session) ? $session->id : '_record' }}" type="checkbox" name="ajax[{{ !empty($session) ? $session->id : 'new' }}][enable_attendance]" class="custom-control-input" {{ (!empty($session) and $session->enable_attendance) ? 'checked' : ''  }}>
+                        <label class="custom-control-label cursor-pointer" for="sessionAttendanceStatusSwitch{{ !empty($session) ? $session->id : '_record' }}"></label>
+                    </div>
+
+                    <div class="">
+                        <label class="cursor-pointer" for="sessionAttendanceStatusSwitch{{ !empty($session) ? $session->id : '_record' }}">{{ trans('update.enable_attendance') }}</label>
+                    </div>
+                </div>
+            @endif
 
             <div class="js-agora-chat-and-rec  {{ (empty($session) or $session->session_api !== 'agora') ? 'd-none' : '' }}">
                 @if(getFeaturesSettings('agora_chat'))

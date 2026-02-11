@@ -19,7 +19,7 @@
                 </div>
                 <h2 class="section-title">{{ trans('update.instructor_default_values') }}</h2>
 
-                @foreach(['courses_capacity','courses_count','meeting_count','product_count'] as $str)
+                @foreach(['courses_capacity','courses_count','meeting_count','product_count', 'events_count', 'meeting_packages_count'] as $str)
                     <div class="form-group">
                         <label>{{ trans('update.'.$str) }}</label>
                         <input type="text" class="form-control" name="value[{{ $str }}]" value="{{ (!empty($instructorsSettings) and isset($instructorsSettings[$str])) ? $instructorsSettings[$str] : '' }}">
@@ -42,7 +42,7 @@
                 <div class="text-right">
                 <button type="submit" class="btn btn-primary">{{ trans('admin/main.save_change') }}</button>
                 </div>
-                
+
             </form>
         </div>
     </div>

@@ -93,7 +93,11 @@
             showConfirmButton: false,
             width: '48rem',
             didOpen: function () {
-                courseDemoVideoPlayer = new Plyr(`#${videoTagId}`, options);
+                const $videoTagEl = $(`#${videoTagId}`);
+
+                if ($videoTagEl.length) {
+                    courseDemoVideoPlayer = new Plyr(`#${videoTagId}`, options);
+                }
             },
         })
     });

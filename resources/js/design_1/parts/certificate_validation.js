@@ -5,6 +5,8 @@
         e.preventDefault();
 
         const $this = $(this);
+        const modalTitle = $this.attr("data-title");
+
         const $form = $this.closest('form');
 
         const action = $form.attr('action');
@@ -16,7 +18,7 @@
         $.post(action, data, function (result) {
             if (result) {
                 Swal.fire({
-                    html: makeModalHtml(certificateValidationLang, closeIcon, result.html, null),
+                    html: makeModalHtml(modalTitle, closeIcon, result.html, null),
                     showCancelButton: false,
                     showConfirmButton: false,
                     customClass: {

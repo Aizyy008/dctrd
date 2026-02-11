@@ -24,6 +24,19 @@
 
                 <div class="mt-16 text-gray-500">{{ trans('update.enable_meetings_hint') }}</div>
 
+                @if(!empty($meetingPackagesFeatureStatus))
+                    <div class="form-group d-flex align-items-center mt-16">
+                        <div class="custom-switch mr-8">
+                            <input id="enableMeetingsPackagesSwitch" type="checkbox" name="enable_meeting_packages" class="custom-control-input" {{ $meeting->enable_meeting_packages ? 'checked' : '' }}>
+                            <label class="custom-control-label cursor-pointer" for="enableMeetingsPackagesSwitch"></label>
+                        </div>
+
+                        <div class="">
+                            <label class="cursor-pointer" for="enableMeetingsPackagesSwitch">{{ trans('update.enable_meetings_packages') }}</label>
+                        </div>
+                    </div>
+                @endif
+
             </div>
         </div>
 

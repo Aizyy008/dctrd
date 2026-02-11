@@ -84,6 +84,34 @@
                                     </select>
                                 </div>
 
+                                <div class="form-group js-events-input {{ (!empty($discount) and $discount->source == \App\Models\Discount::$discountSourceEvent) ? '' : 'd-none' }}">
+                                    <label class="input-label">{{ trans('update.events') }}</label>
+                                    <select name="event_ids[]" multiple="multiple" class="form-control search-event-select2 " data-placeholder="{{ trans('update.search_event') }}">
+
+                                        @if(!empty($discount) and !empty($discount->discountEvents))
+                                            @foreach($discount->discountEvents as $discountEvent)
+                                                @if(!empty($discountEvent->event))
+                                                    <option value="{{ $discountEvent->event->id }}" selected>{{ $discountEvent->event->title }}</option>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+
+                                <div class="form-group js-meeting_package-input {{ (!empty($discount) and $discount->source == \App\Models\Discount::$discountSourceMeetingPackage) ? '' : 'd-none' }}">
+                                    <label class="input-label">{{ trans('update.meeting_package') }}</label>
+                                    <select name="meeting_package_ids[]" multiple="multiple" class="form-control search-meeting-package-select2 " data-placeholder="{{ trans('update.meeting_package') }}">
+
+                                        @if(!empty($discount) and !empty($discount->discountMeetingPackages))
+                                            @foreach($discount->discountMeetingPackages as $discountMeetingPackage)
+                                                @if(!empty($discountMeetingPackage->meetingPackage))
+                                                    <option value="{{ $discountMeetingPackage->meetingPackage->id }}" selected>{{ $discountMeetingPackage->meetingPackage->title }}</option>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+
                                 <div class="form-group js-categories-input {{ (empty($discount) or $discount->source != \App\Models\Discount::$discountSourceCategory) ? 'd-none' : '' }}">
                                     <label class="input-label">{{ trans('admin/main.categories') }}</label>
                                     <select name="category_ids[]" multiple="multiple" class="form-control search-category-select2 " data-placeholder="{{ trans('update.search_categories') }}">

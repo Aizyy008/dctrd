@@ -2,6 +2,7 @@
 
 @push("styles_top")
     <link rel="stylesheet" href="{{ getDesign1StylePath("cart_page") }}">
+    <link rel="stylesheet" href="/assets/default/vendors/daterangepicker/daterangepicker.min.css">
 @endpush
 
 @php
@@ -17,13 +18,13 @@
             <p class="mt-8 font-16 text-gray-500">{{ handlePrice($calculatePrices["total"], true, true, false, null, true) . ' ' . trans('cart.for_items',['count' => $count]) }}</p>
         </div>
 
-        <form action="/payments/payment-request" method="post">
+        <form action="/payments/payment-request" method="post" enctype="multipart/form-data">
             {{ csrf_field() }}
             <input type="hidden" name="order_id" value="{{ $order->id }}">
 
             <div class="row">
                 {{-- Items --}}
-                <div class="col-12 col-md-7 col-lg-9 mt-32">
+                <div class="col-12 col-md-7 col-lg-9 mt-32 mb-104">
 
                     {{-- CashBack --}}
                     @if(!empty($totalCashbackAmount))
@@ -75,6 +76,21 @@
                                         </div>
                                     </label>
                                 </div>
+
+                                @if(!empty(getOfflineBankSettings('offline_banks_status')))
+                                    <div class="payment-channel-card position-relative">
+                                        <input type="radio" name="gateway" id="gateway_offline" value="offline">
+                                        <label class="position-relative w-100 d-block cursor-pointer" for="gateway_offline">
+                                            <div class="gateway-mask"></div>
+                                            <div class="gateway-card position-relative z-index-2 d-flex-center flex-column rounded-16 bg-white w-100 h-100 text-center">
+                                                <div class="d-flex-center size-48 bg-gray-100">
+                                                    <x-iconsax-bul-convert-card class="icons text-dark" width="48px" height="48px"/>
+                                                </div>
+                                                <h6 class="font-14 mt-12">{{ trans('financial.offline') }}</h6>
+                                            </div>
+                                        </label>
+                                    </div>
+                                @endif
                             </div>
 
 
@@ -110,6 +126,51 @@
                             @endif
 
                         </div>
+
+                        @if(!empty(getOfflineBankSettings('offline_banks_status')))
+                            <div class="js-offline-payment-input d-none mt-36 px-16">
+                                <div class="row">
+                                    <div class="col-12 col-md-4">
+                                        <div class="form-group">
+                                            <label class="form-group-label">{{ trans('financial.account') }}</label>
+                                            <select name="account" class="form-control">
+                                                <option selected disabled>{{ trans('financial.select_the_account') }}</option>
+                                                @foreach($paymentChannels as $paymentChannel)
+                                                @endforeach
+                                                @foreach($offlineBanks as $offlineBank)
+                                                    <option value="{{ $offlineBank->id }}">{{ $offlineBank->title }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 col-md-4">
+                                        <div class="form-group">
+                                            <label class="form-group-label">{{ trans('admin/main.referral_code') }}</label>
+                                            <input type="text" name="referral_code" class="form-control"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 col-md-4">
+                                        <div class="form-group">
+                                            <label class="form-group-label">{{ trans('public.date_time') }}</label>
+                                            <input type="text" name="date" class="form-control datetimepicker js-default-init-date-picker" data-format="YYYY/MM/DD HH:mm"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 col-md-4">
+                                        <div class="form-group">
+                                            <label class="form-group-label">{{ trans('update.attach_the_payment_photo') }}</label>
+                                            <div class="custom-file bg-white">
+                                                <input type="file" name="attachment" class="custom-file-input" id="attachmentInputCheckout" accept="image/*">
+                                                <span class="custom-file-text"></span>
+                                                <label class="custom-file-label" for="attachmentInputCheckout">{{ trans('update.browse') }}</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
 
@@ -160,6 +221,27 @@
         var pleaseWaitLang = '{{ trans('update.please_wait') }}';
         var transferringToLang = '{{ trans('update.transferring_to_the_payment_gateway') }}';
     </script>
+    <script src="/assets/default/vendors/moment.min.js"></script>
+    <script src="/assets/default/vendors/daterangepicker/daterangepicker.min.js"></script>
     <script src="{{ getDesign1ScriptPath("cart_page") }}"></script>
-
+    <script>
+        (function() {
+            function toggleOfflineFields() {
+                var offlineRadio = document.getElementById('gateway_offline');
+                var container = document.querySelector('.js-offline-payment-input');
+                if (!container) return;
+                if (offlineRadio && offlineRadio.checked) {
+                    container.classList.remove('d-none');
+                } else {
+                    container.classList.add('d-none');
+                }
+            }
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.name === 'gateway') {
+                    toggleOfflineFields();
+                }
+            });
+            document.addEventListener('DOMContentLoaded', toggleOfflineFields);
+        })();
+    </script>
 @endpush

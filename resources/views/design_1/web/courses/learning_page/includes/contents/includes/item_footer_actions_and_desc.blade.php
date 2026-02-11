@@ -88,9 +88,21 @@
     </div>
 </div>
 
-@if(!empty($item->description))
-    <div class="mt-16 text-gray-500">{!! nl2br($item->description) !!}</div>
+@if(!empty($itemType) and $itemType == 'text_lesson')
+    @if(!empty($item->summary))
+        <div class="mt-16 text-gray-500">{!! nl2br($item->summary) !!}</div>
+    @endif
+
+    @if(!empty($item->content))
+        <div class="mt-16 text-gray-500">{!! nl2br($item->content) !!}</div>
+    @endif
+@else
+    @if(!empty($item->description))
+        <div class="mt-16 text-gray-500">{!! nl2br($item->description) !!}</div>
+    @endif
 @endif
+
+
 
 @if(!empty($item->attachments) and count($item->attachments))
     <div class="bg-gray-100 p-12 rounded-16 mt-24">

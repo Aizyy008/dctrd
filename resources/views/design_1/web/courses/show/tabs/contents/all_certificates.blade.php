@@ -5,7 +5,7 @@
         $courseCertificatesCount += 1;
     }
 
-    $userPassedCourseCertificate = $course->getUserPassedCourseCertificate($authUser);
+    $userPassedCourseCertificate = !empty($authUser) ? $course->getUserPassedCourseCertificate($authUser) : null;
 @endphp
 
 @if($courseCertificatesCount > 0)

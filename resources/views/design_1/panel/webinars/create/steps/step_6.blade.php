@@ -19,11 +19,11 @@
 
 
     <div class="row">
-        <div class="col-lg-6 mt-20">
+        <div class="col-lg-6">
             @include('design_1.panel.webinars.create.includes.accordions.faq')
         </div>
 
-        <div class="col-lg-6 mt-36">
+        <div class="col-lg-6 mt-16">
             @if(!empty($webinar->faqs) and count($webinar->faqs))
                 <div class="p-16 rounded-16 border-gray-200">
                     <h3 class="font-14 font-weight-bold">{{ trans('update.faqs') }}</h3>
@@ -36,7 +36,7 @@
 
                 </div>
             @else
-                <div class="d-flex-center flex-column px-32 py-120 text-center">
+                <div class="d-flex-center flex-column px-32 py-120 text-center  rounded-16 border-gray-200">
                     <div class="d-flex-center size-64 rounded-12 bg-primary-30">
                         <x-iconsax-bul-message-question class="icons text-primary" width="32px" height="32px"/>
                     </div>
@@ -62,20 +62,20 @@
 
             <div class="ml-8">
                 <h5 class="font-14 font-weight-bold">{{ trans('update.learning_materials') }}</h5>
-                <p class="mt-4 font-12 text-gray-500">{{ trans('update.add_FAQ_and_display_them_on_the_course_page') }}</p>
+                <p class="mt-4 font-12 text-gray-500">{{ trans('update.add_learning_materials_and_display_them_on_the_course_page') }}</p>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-6 mt-20">
+        <div class="col-lg-6">
             @include('design_1.panel.webinars.create.includes.accordions.extra_description', [
                 'extraDescriptionType' => 'learning_materials',
                 'extraDescriptionParentAccordion' => 'learning_materials_accordion',
             ])
         </div>
 
-        <div class="col-lg-6 mt-36">
+        <div class="col-lg-6 mt-16">
             @if(!empty($learningMaterials) and count($learningMaterials))
                 <div class="p-16 rounded-16 border-gray-200">
                     <h3 class="font-14 font-weight-bold">{{ trans('update.learning_materials') }}</h3>
@@ -94,7 +94,7 @@
 
                 </div>
             @else
-                <div class="d-flex-center flex-column px-32 py-120 text-center">
+                <div class="d-flex-center flex-column px-32 py-120 text-center rounded-16 border-gray-200">
                     <div class="d-flex-center size-64 rounded-12 bg-primary-30">
                         <x-iconsax-bul-teacher class="icons text-primary" width="32px" height="32px"/>
                     </div>
@@ -116,20 +116,20 @@
 
             <div class="ml-8">
                 <h5 class="font-14 font-weight-bold">{{ trans('update.requirements') }}</h5>
-                <p class="mt-4 font-12 text-gray-500">{{ trans('update.add_FAQ_and_display_them_on_the_course_page') }}</p>
+                <p class="mt-4 font-12 text-gray-500">{{ trans('update.add_requirements_and_display_them_on_the_course_page') }}</p>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-6 mt-20">
+        <div class="col-lg-6">
             @include('design_1.panel.webinars.create.includes.accordions.extra_description', [
                 'extraDescriptionType' => 'requirements',
                 'extraDescriptionParentAccordion' => 'requirements_accordion',
             ])
         </div>
 
-        <div class="col-lg-6 mt-36">
+        <div class="col-lg-6 mt-16">
             @if(!empty($requirements) and count($requirements))
                 <div class="p-16 rounded-16 border-gray-200">
                     <h3 class="font-14 font-weight-bold">{{ trans('update.requirements') }}</h3>
@@ -147,7 +147,7 @@
                     </ul>
                 </div>
             @else
-                <div class="d-flex-center flex-column px-32 py-120 text-center">
+                <div class="d-flex-center flex-column px-32 py-120 text-center rounded-16 border-gray-200">
                     <div class="d-flex-center size-64 rounded-12 bg-primary-30">
                         <x-iconsax-bul-shield-tick class="icons text-primary" width="32px" height="32px"/>
                     </div>
@@ -182,5 +182,4 @@
 
 @push('scripts_bottom')
     <script src="/assets/default/vendors/sortable/jquery-ui.min.js"></script>
-
 @endpush

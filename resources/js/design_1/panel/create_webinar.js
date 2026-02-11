@@ -609,7 +609,7 @@
 
                     const secureHostType = $form.find('.js-secure-host-upload-type-field input:checked').val();
 
-                    if (secureHostType) {
+                    if (secureHostType && source === "secure_host") {
                         handleSecureHostUploadType($form, secureHostType)
                     }
                 }

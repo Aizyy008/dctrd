@@ -35,6 +35,12 @@
                 </div>
 
 
+                <div class="form-group">
+                    <label>{{ trans('update.event_guaranty_text') }}</label>
+                    <input type="text" name="value[event_guaranty_text]" value="{{ (!empty($itemValue) and !empty($itemValue['event_guaranty_text'])) ? $itemValue['event_guaranty_text'] : old('event_guaranty_text') }}" class="form-control " required/>
+                </div>
+
+
                 <button type="submit" class="btn btn-success">{{ trans('admin/main.save_change') }}</button>
             </form>
         </div>

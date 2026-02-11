@@ -15,7 +15,7 @@
                 </div>
 
                 @php
-                    $packageItems = ['instructors_count','students_count','courses_capacity','courses_count','meeting_count'];
+                    $packageItems = ['instructors_count','students_count','courses_capacity','courses_count','meeting_count','product_count', 'events_count', 'meeting_packages_count'];
                 @endphp
 
                 @foreach($packageItems as $str)

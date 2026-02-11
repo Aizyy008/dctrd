@@ -1,8 +1,8 @@
 <!-- Modal -->
 <div class="d-none" id="quizzesModal">
-    <h3 class="section-title after-line font-20 text-dark-blue mb-25">{{ trans('public.add_quiz') }}</h3>
+    <h3 class="section-title after-line font-20 text-dark-blue mb-25 p-16">{{ trans('public.add_quiz') }}</h3>
 
-    <div class="js-form text-left" data-action="{{ getAdminPanelUrl() }}/webinar-quiz/store">
+    <div class="js-form text-left p-16" data-action="{{ getAdminPanelUrl() }}/webinar-quiz/store">
         <input type="hidden" name="webinar_id" value="{{  !empty($webinar) ? $webinar->id :''  }}">
 
         <div class="form-group mt-15">

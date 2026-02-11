@@ -10,30 +10,45 @@
         <h2 class="font-16 font-weight-bold">{{ trans('update.meeting_settings') }}</h2>
         <p class="mt-4 text-gray-500">{{ trans('update.manage_your_meeting_settings') }}</p>
 
+        @php
+            $activeTab = request()->get('tab', 'basic');
+        @endphp
 
         <div class="custom-tabs mt-16">
-            <div class="d-flex align-items-center flex-wrap border-bottom-gray-200 border-top-gray-200">
-                <div class="navbar-item navbar-item-h-52 d-flex-center mr-12 mr-md-16 cursor-pointer active" data-tab-toggle data-tab-href="#basicSettingsTab">
+            <div class="custom-tabs-items-scrollable-mobile d-flex align-items-center gap-16 gap-lg-40 border-bottom-gray-200 border-top-gray-200">
+                <div class="navbar-item navbar-item-h-52 d-inline-flex-center cursor-pointer {{ ($activeTab == "basic") ? 'active' : '' }}" data-tab-toggle data-tab-href="#basicSettingsTab">
                     <x-iconsax-lin-profile-2user class="icons" width="20px" height="20px"/>
                     <span class="ml-4">{{ trans('update.basic_settings') }}</span>
                 </div>
 
-                <div class="navbar-item navbar-item-h-52 d-flex-center mr-12 mr-md-16 cursor-pointer" data-tab-toggle data-tab-href="#timesheetTab">
+                <div class="navbar-item navbar-item-h-52 d-inline-flex-center cursor-pointer {{ ($activeTab == "timesheet") ? 'active' : '' }}" data-tab-toggle data-tab-href="#timesheetTab">
                     <x-iconsax-lin-clock-1 class="icons" width="20px" height="20px"/>
                     <span class="ml-4">{{ trans('update.timesheet') }}</span>
                 </div>
+
+                @if(!empty($meetingPackagesFeatureStatus))
+                    <div class="navbar-item navbar-item-h-52 d-inline-flex-center cursor-pointer {{ ($activeTab == "packages") ? 'active' : '' }}" data-tab-toggle data-tab-href="#meetingPackagesTab">
+                        <x-iconsax-lin-box-time class="icons" width="20px" height="20px"/>
+                        <span class="ml-4">{{ trans('update.meeting_packages') }}</span>
+                    </div>
+                @endif
             </div>
 
             <div class="custom-tabs-body mt-16">
 
-                <div class="custom-tabs-content active" id="basicSettingsTab">
+                <div class="custom-tabs-content {{ ($activeTab == "basic") ? 'active' : '' }}" id="basicSettingsTab">
                     @include('design_1.panel.meeting.settings.tabs.basic_settings')
                 </div>
 
-                <div class="custom-tabs-content" id="timesheetTab">
+                <div class="custom-tabs-content {{ ($activeTab == "timesheet") ? 'active' : '' }}" id="timesheetTab">
                     @include('design_1.panel.meeting.settings.tabs.timesheet')
                 </div>
 
+                @if(!empty($meetingPackagesFeatureStatus))
+                    <div class="custom-tabs-content {{ ($activeTab == "packages") ? 'active' : '' }}" id="meetingPackagesTab">
+                        @include('design_1.panel.meeting.settings.tabs.meeting_packages.index')
+                    </div>
+                @endif
 
             </div>
 

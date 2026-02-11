@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @push('styles_top')
-    <link rel="stylesheet" href="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.css">
+
 
 @endpush
 
@@ -12,7 +12,7 @@
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a>
                 </div>
-                <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}/users">{{ trans('admin/main.users') }}</a>
+                <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl('/all-users') }}">{{ trans('admin/main.users') }}</a>
                 </div>
                 <div class="breadcrumb-item">{{ trans('/admin/main.edit') }}</div>
             </div>
@@ -159,7 +159,12 @@
                                                 <x-iconsax-bul-shopping-cart class="icons mb-3 mr-3 text-gray-500" width="26px" height="26px"/>
                                                 <div class="flex-grow-1">
                                                     <span class="font-14 text-gray-500">{{ trans('update.total_purchases') }}</span>
-                                                    <span class="font-16 font-weight-bold d-block">{{ handlePrice($user->getPurchaseAmounts()) }}</span>
+                                                    @php
+                                                        $totalPurchases = App\Models\Sale::where('buyer_id', $user->id)
+                                                            ->whereNull('refund_at')
+                                                            ->sum('total_amount');
+                                                    @endphp
+                                                    <span class="font-16 font-weight-bold d-block">{{ handlePrice($totalPurchases) }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -327,7 +332,7 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.js"></script>
+
 
 
     <script>

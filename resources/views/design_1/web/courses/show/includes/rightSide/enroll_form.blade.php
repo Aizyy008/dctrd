@@ -19,7 +19,7 @@
         </button>
     @elseif($hasBought or !empty($course->getInstallmentOrder()))
         <a href="{{ $course->getLearningPageUrl() }}" class="btn btn-block btn-primary btn-lg">{{ trans('update.go_to_learning_page') }}</a>
-    @elseif(!empty($course->price) and $course->price > 0)
+    @elseif(!isFreeModeEnabled() and !empty($course->price) and $course->price > 0)
         <button type="button" class="btn btn-block btn-primary btn-lg {{ $canSale ? 'js-course-add-to-cart-btn' : ($course->cantSaleStatus($hasBought) .' disabled ') }}">
             @if(!$canSale)
                 @if($course->checkCapacityReached())
@@ -38,13 +38,13 @@
             </a>
         @endif
 
-        @if($canSale and !empty(getFeaturesSettings('direct_classes_payment_button_status')))
+        @if(!isFreeModeEnabled() and $canSale and !empty(getFeaturesSettings('direct_classes_payment_button_status')))
             <button type="button" class="btn btn-outline-accent btn-block btn-lg mt-14 js-course-direct-payment">
                 {{ trans('update.buy_now') }}
             </button>
         @endif
 
-        @if(!empty($installments) and count($installments) and getInstallmentsSettings('display_installment_button'))
+        @if(!isFreeModeEnabled() and !empty($installments) and count($installments) and getInstallmentsSettings('display_installment_button'))
             <a href="/course/{{ $course->slug }}/installments" class="btn btn-outline-primary btn-block btn-lg mt-14">
                 {{ trans('update.pay_with_installments') }}
             </a>
@@ -63,7 +63,7 @@
         </a>
     @endif
 
-    @if($canSale and $course->subscribe)
+    @if(!isFreeModeEnabled() and $canSale and $course->canUseSubscribe())
         <a href="/subscribes/apply/{{ $course->slug }}" class="btn btn-outline-accent btn-block btn-lg mt-14 @if(!$canSale) disabled @endif">{{ trans('public.subscribe') }}</a>
     @endif
 

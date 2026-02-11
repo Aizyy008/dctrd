@@ -157,7 +157,7 @@
                                                         <span class="text-gray-500 font-14">Edit Purchase Code</span>
                                                     </a>
                                                     
-                                                    <a href="https://codecanyon.net/item/universal-plugins-bundle-for-rocket-lms/33297004" target="_blank" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                    <a href="https://codecanyon.net/item/rocket-lms-theme-and-landing-page-builder/59174209" target="_blank" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                         <x-iconsax-lin-global class="icons text-gray-500 mr-2" width="18px" height="18px"/>
                                                         <span class="text-gray-500 font-14">Product Page</span>
                                                     </a>
@@ -201,7 +201,7 @@
                                                         <span class="text-gray-500 font-14">Edit Purchase Code</span>
                                                     </a>
                                                     
-                                                    <a href="https://codecanyon.net" target="_blank" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                    <a href="https://codecanyon.net/item/rocket-lms-mobile-app-learning-management-system-app/36329581" target="_blank" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
                                                         <x-iconsax-lin-global class="icons text-gray-500 mr-2" width="18px" height="18px"/>
                                                         <span class="text-gray-500 font-14">Product Page</span>
                                                     </a>

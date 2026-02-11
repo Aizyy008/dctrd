@@ -15,7 +15,7 @@
             <h3 class="font-16 font-weight-bold">${title}</h3>
             <span class="d-block font-12 text-gray-500 mt-8">${time}</span>
 
-            <p class="text-gray-500 mt-20">${message}</p>
+            <div class="text-gray-500 mt-20">${message}</div>
         </div>`
 
         const footer = `<div class="d-flex align-items-center justify-content-end">

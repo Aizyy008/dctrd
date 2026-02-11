@@ -143,7 +143,10 @@
                 @enderror
 
                 @if(!empty($webinar) and !empty($webinar->icon))
-                    <a href="{{ url($webinar->icon) }}" target="_blank" class="text-danger mt-4 font-12">{{ trans('update.preview') }}</a>
+                    <div class="d-flex align-items-center gap-8 mt-4">
+                        <a href="{{ url($webinar->icon) }}" target="_blank" class="text-warning font-12">{{ trans('update.preview') }}</a>
+                        <a href="/panel/courses/{{ $webinar->id }}/media/delete-icon" class="delete-action text-danger font-12">{{ trans('public.remove') }}</a>
+                    </div>
                 @endif
             </div>
         </div>
@@ -155,12 +158,22 @@
 
     <div class="js-inputs-with-source row">
 
+        @php
+            $selectedVideoSource = (!empty($webinar) and !empty($webinar->video_demo_source)) ? $webinar->video_demo_source : null;
+        @endphp
+
         <div class="col-12 col-lg-6">
             <div class="form-group">
                 <label class="form-group-label">{{ trans('update.video_source') }}</label>
                 <select name="video_demo_source" class="js-upload-source-input form-control @error('video_demo_source') is-invalid @enderror select2" data-minimum-results-for-search="Infinity">
-                    @foreach(\App\Enums\UploadSource::allSources as $source)
-                        <option value="{{ $source }}" {{ (!empty($webinar) and $webinar->video_demo_source == $source) ? 'selected' : '' }}>{{ trans($source) }}</option>
+                    @foreach(getAvailableUploadFileSources() as $source)
+                        @php
+                            if($loop->first and empty($selectedVideoSource)) {
+                                $selectedVideoSource = $source;
+                            }
+                        @endphp
+
+                        <option value="{{ $source }}" {{ (!empty($webinar) and $webinar->video_demo_source == $source) ? 'selected' : '' }}>{{ trans('update.file_source_'.$source) }}</option>
                     @endforeach
                 </select>
 
@@ -171,7 +184,7 @@
         </div>
 
         <div class="col-12 col-lg-6">
-            <div class="form-group js-online-upload {{ (empty($webinar) or !in_array($webinar->video_demo_source, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
+            <div class="form-group js-online-upload {{ (!in_array($selectedVideoSource, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
                 <span class="has-translation bg-transparent">
                     <x-iconsax-lin-link-21 class="icons text-gray-400" width="24px" height="24px"/>
                 </span>
@@ -179,7 +192,7 @@
                 <input type="text" name="demo_video_path" class="form-control" value="{{ !empty($webinar) ? $webinar->video_demo : old('demo_video_path') }}" placeholder="{{ trans('update.insert_demo_video_link') }}">
             </div>
 
-            <div class="form-group js-local-upload {{ (!empty($webinar) and in_array($webinar->video_demo_source, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
+            <div class="form-group js-local-upload {{ (in_array($selectedVideoSource, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
                 <span class="has-translation bg-transparent">
                     <x-iconsax-lin-export class="icons text-gray-400" width="24px" height="24px"/>
                 </span>

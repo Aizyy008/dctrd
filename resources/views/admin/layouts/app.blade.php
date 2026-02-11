@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="/assets/vendors/fontawesome/css/all.min.css"/>
     <link rel="stylesheet" href="/assets/default/vendors/toast/jquery.toast.min.css">
 
-
     @stack('libraries_top')
 
     <link rel="stylesheet" href="/assets/admin/css/style.css">
@@ -34,7 +33,7 @@
 
         {!! getThemeFontsSettings() !!}
 
-        {!! getThemeColorsSettings(true) !!}
+        {!! getThemeColorsSettings(null, true) !!}
     </style>
 </head>
 <body class="{{ $isRtl ? 'rtl' : '' }}">
@@ -92,7 +91,7 @@
 <script src="/assets/admin/vendor/moment/moment.min.js"></script>
 <script src="/assets/admin/js/stisla.js"></script>
 <script src="/assets/default/vendors/toast/jquery.toast.min.js"></script>
-
+<script src="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.js"></script>
 
 <script src="/assets/admin/vendor/daterangepicker/daterangepicker.min.js"></script>
 <script src="/assets/default/vendors/select2/select2.min.js"></script>
@@ -128,10 +127,32 @@
     var deleteAlertSuccessHint = '{{ trans('public.deleteAlertSuccessHint') }}';
     var forbiddenRequestToastTitleLang = '{{ trans('public.forbidden_request_toast_lang') }}';
     var forbiddenRequestToastMsgLang = '{{ trans('public.forbidden_request_toast_msg_lang') }}';
+    var priceInvalidHintLang = '{{ trans('update.price_invalid_hint') }}';
+    var clearLang = '{{ trans('clear') }}';
+    var requestSuccessLang = '{{ trans('public.request_success') }}';
+    var saveSuccessLang = '{{ trans('webinars.success_store') }}';
+    var requestFailedLang = '{{ trans('public.request_failed') }}';
+    var oopsLang = '{{ trans('update.oops') }}';
+    var somethingWentWrongLang = '{{ trans('update.something_went_wrong') }}';
+    var loadingDataPleaseWaitLang = '{{ trans('update.loading_data,_please_wait') }}';
+    var deleteRequestLang = '{{ trans('update.delete_request') }}';
+    var deleteRequestTitleLang = '{{ trans('update.delete_request_title') }}';
+    var deleteRequestDescriptionLang = '{{ trans('update.delete_request_description') }}';
+    var requestDetailsLang = '{{ trans('update.request_details') }}';
+    var sendRequestLang = '{{ trans('update.send_request') }}';
+    var closeLang = '{{ trans('public.close') }}';
     var generatedContentLang = '{{ trans('update.generated_content') }}';
     var copyLang = '{{ trans('public.copy') }}';
     var doneLang = '{{ trans('public.done') }}';
-    var priceInvalidHintLang = '{{ trans('update.price_invalid_hint') }}';
+    var jsCurrentCurrency = '{{ $currency }}';
+    var defaultLocale = '{{ getUserLocale() }}';
+    var appLocale = '{{ app()->getLocale() }}';
+    var dangerCloseIcon = `<x-iconsax-lin-add class="icons text-danger" width="24" height="24"/>`;
+    var directSendIcon = `<x-iconsax-lin-direct-send class="icons text-primary" width="24" height="24"/>`;
+    var closeIcon = `<x-iconsax-lin-add class="close-icon" width="25px" height="25px"/>`;
+    var bulDangerIcon = `<x-iconsax-bul-danger class="icons text-white" width="32px" height="32px"/>`;
+    var defaultAvatarPath = "{{ getDefaultAvatarPath() }}";
+    var themeColorsMode = @json(getThemeColorsMode());
 </script>
 
 <script src="/assets/admin/js/custom.js"></script>

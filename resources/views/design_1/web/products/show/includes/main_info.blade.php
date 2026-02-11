@@ -188,7 +188,7 @@
         </button>
 
         @if(!empty(getFeaturesSettings('direct_products_payment_button_status')))
-            <button type="button" class="js-add-to-cart-btn btn btn-outline-accent btn-lg">
+            <button type="button" class="js-add-to-cart-btn btn btn-outline-accent btn-lg" data-direct-payment="true">
                 <x-iconsax-lin-moneys class="icons " width="24px" height="24px"/>
                 <span class="ml-4 ">{{ trans('update.buy_now') }}</span>
             </button>

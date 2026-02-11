@@ -74,7 +74,7 @@
 
                         <div class="form-group">
                             <label class="form-group-label">{{ trans('public.study_time') }} ({{ trans('update.min') }})</label>
-                            <input type="text" name="study_time" class="form-control" value="{{ !empty($post) ? $post->study_time : old('study_time') }}"/>
+                            <input type="number" name="study_time" class="form-control" value="{{ !empty($post) ? $post->study_time : old('study_time') }}"/>
                         </div>
 
                         @include('design_1.panel.webinars.create.includes.media',[

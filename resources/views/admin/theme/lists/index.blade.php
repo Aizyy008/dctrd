@@ -42,39 +42,38 @@
                                         <x-iconsax-lin-more class="icons text-gray-500" width="24px" height="24px"/>
                                     </button>
 
-                                    <div class="dropdown-menu dropdown-menu-right text-left webinars-lists-dropdown">
+                                    <div class="dropdown-menu dropdown-menu-right">
 
 
-                                       <a href="{{ getAdminPanelUrl("/themes/{$themeItem->id}/edit") }}" target="_blank" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
-                                           <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                                           <span class="text-gray-500 font-14">{{ trans('public.edit') }}</span>
-                                       </a>
+                                        <a href="{{ getAdminPanelUrl("/themes/{$themeItem->id}/edit") }}" target="_blank" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                            <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                            <span class="text-gray-500 font-14">{{ trans('public.edit') }}</span>
+                                        </a>
 
-                                       @if(!$themeItem->enable)
-                                           @include('admin.includes.delete_button',[
-                                               'url' => getAdminPanelUrl("/themes/{$themeItem->id}/enable"),
-                                               'btnClass' => 'dropdown-item text-success mb-3 py-3 px-0 font-14',
-                                               'btnText' => trans('update.enable'),
-                                               'btnIcon' => 'tick-square',
-                                               'iconType' => 'lin',
-                                               'iconClass' => 'text-success mr-2',
-                                           ])
-                                       @endif
+                                        @if(!$themeItem->enable)
+                                            @include('admin.includes.delete_button',[
+                                                'url' => getAdminPanelUrl("/themes/{$themeItem->id}/enable"),
+                                                'btnClass' => 'dropdown-item text-success mb-3 py-3 px-0 font-14',
+                                                'btnText' => trans('update.enable'),
+                                                'btnIcon' => 'tick-square',
+                                                'iconType' => 'lin',
+                                                'iconClass' => 'text-success mr-2',
+                                            ])
+                                        @endif
 
-                                       @if(!$themeItem->is_default)
-                                           @include('admin.includes.delete_button',[
-                                               'url' => getAdminPanelUrl("/themes/{$themeItem->id}/delete"),
-                                               'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
-                                               'btnText' => trans('admin/main.delete'),
-                                               'btnIcon' => 'trash',
-                                               'iconType' => 'lin',
-                                               'iconClass' => 'text-danger mr-2',
-                                           ])
-                                       @endif
+                                        @if(!$themeItem->is_default)
+                                            @include('admin.includes.delete_button',[
+                                                'url' => getAdminPanelUrl("/themes/{$themeItem->id}/delete"),
+                                                'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                'btnText' => trans('admin/main.delete'),
+                                                'btnIcon' => 'trash',
+                                                'iconType' => 'lin',
+                                                'iconClass' => 'text-danger mr-2',
+                                            ])
+                                        @endif
 
                                     </div>
                                 </div>
-
 
 
                             </div>

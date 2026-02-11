@@ -6,6 +6,7 @@
                 'organizations_lists','organizations_header_overlay_image','user_cover','products_lists', 'products_lists_overlay_image', 'upcoming_courses_lists', 'upcoming_courses_lists_overlay_image',
                 'categories_courses_lists_featured_courses_background', 'categories_courses_lists_featured_courses_overlay_image', 'bundles_lists', 'bundles_lists_overlay_image', 'blog_lists', 'blog_lists_overlay_image',
                 'form_default_cover', 'form_default_overlay_image', 'form_default_header_icon', 'meeting_booking_step_1_image', 'meeting_booking_step_2_image', 'classes_lists', 'classes_lists_overlay_image', 'reward_courses', 'reward_courses_overlay_image',
+                'event_ticket_validation', 'event_ticket_validation_overlay_image', 'events_lists', 'events_lists_overlay_image', 'meeting_packages_lists', 'meeting_packages_lists_overlay_image'
             ];
         @endphp
 

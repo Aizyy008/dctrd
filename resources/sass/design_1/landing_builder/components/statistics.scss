@@ -8,6 +8,8 @@
 
     @media (max-width: $screen-sm-max) {
         height: auto;
+        margin-right: 0;
+        margin-left: 0;
     }
 
     &__mask {

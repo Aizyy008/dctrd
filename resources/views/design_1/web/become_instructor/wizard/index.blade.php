@@ -7,8 +7,8 @@
 @endpush
 
 @section('content')
-<div class="container mt-104 pb-140">
-<div class="row justify-content-center">
+    <div class="container mt-104 pb-140">
+        <div class="row justify-content-center">
             <div class="col-12 col-lg-8">
 
                 <div class="d-flex-center flex-column text-center">
@@ -16,7 +16,8 @@
                     <p class="mt-8 font-16 text-gray-500">{{ trans('update.become_instructor_organization_page_top_hint') }}</p>
                 </div>
 
-                <form id="becomeInstructorForm" action="/become-instructor" method="get">
+                <form id="becomeInstructorForm" action="/become-instructor/store" method="post" enctype="multipart/form-data">
+                    {{ csrf_field() }}
 
                     <div class="become-instructor-wizard position-relative bg-white rounded-32 p-16 mt-56">
                         <div class="become-instructor-wizard__mask bg-gray-200"></div>
@@ -34,19 +35,19 @@
                                 @php
                                     $becomeInstructorSettingsData = [];
                                     $theme = getActiveTheme();
-                                    
+
                                     if (!empty($theme)) {
                                         $themeContents = [];
                                         if (!empty($theme->contents)) {
                                             $themeContents = json_decode($theme->contents, true);
                                         }
-                                        
+
                                         $becomeInstructorSettingsData = !empty($themeContents['images']) ? $themeContents['images'] : [];
                                     }
-                                    
+
                                     $mainImage = !empty($becomeInstructorSettingsData['become_instructor']) ? $becomeInstructorSettingsData['become_instructor'] : '';
                                     $overlayImage = !empty($becomeInstructorSettingsData['become_instructor_overlay_image']) ? $becomeInstructorSettingsData['become_instructor_overlay_image'] : '';
-                                    
+
                                     // Fallback to original settings if they exist
                                     if (empty($mainImage) && !empty($becomeInstructorSettings) && !empty($becomeInstructorSettings["main_image"])) {
                                         $mainImage = $becomeInstructorSettings["main_image"];

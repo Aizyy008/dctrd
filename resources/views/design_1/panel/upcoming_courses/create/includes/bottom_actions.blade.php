@@ -28,7 +28,7 @@
             @endif
 
             {{-- Send for Review --}}
-            <button type="button" id="sendForReview" class="btn btn-lg btn-primary ml-16">{{ trans('public.send_for_review') }}</button>
+            <button type="button" id="sendForReview" class="btn btn-lg btn-primary ml-16">{{ !empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? trans('update.publish') : trans('public.send_for_review') }}</button>
 
 
         </div>

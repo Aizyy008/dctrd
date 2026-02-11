@@ -15,7 +15,7 @@
                 </div>
 
                 @php
-                    $packageItems = ['courses_capacity','courses_count','meeting_count'];
+                    $packageItems = ['courses_capacity','courses_count','meeting_count','product_count', 'events_count', 'meeting_packages_count'];
 
                     if(!empty($user) and $user->isOrganization()) {
                         $organizationPackageItems = ['instructors_count','students_count'];

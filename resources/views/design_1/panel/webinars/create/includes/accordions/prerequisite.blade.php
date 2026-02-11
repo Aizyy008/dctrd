@@ -1,7 +1,7 @@
 <li data-id="{{ !empty($prerequisite) ? $prerequisite->id :'' }}" class="accordion bg-white rounded-15 p-16 border-gray-200 mt-16">
     <div class="accordion__title d-flex align-items-center justify-content-between" role="tab" id="prerequisite_{{ !empty($prerequisite) ? $prerequisite->id :'record' }}">
         <div class="font-weight-bold font-14 cursor-pointer" href="#collapsePrerequisite{{ !empty($prerequisite) ? $prerequisite->id :'record' }}" data-parent="#prerequisitesAccordion" role="button" data-toggle="collapse">
-            <span>{{ (!empty($prerequisite) and !empty($prerequisite->prerequisiteWebinar)) ? $prerequisite->prerequisiteWebinar->title .' - '. $prerequisite->prerequisiteWebinar->teacher->full_name : trans('public.add_new_prerequisites') }}</span>
+            <span>{{ (!empty($prerequisite) and !empty($prerequisite->course)) ? $prerequisite->course->title .' - '. $prerequisite->course->teacher->full_name : trans('public.add_new_prerequisites') }}</span>
         </div>
 
         @if(!empty($prerequisite))
@@ -43,8 +43,8 @@
                         data-option=""
                         data-webinar-id="{{  !empty($webinar) ? $webinar->id : '' }}"
                 >
-                    @if(!empty($prerequisite) and !empty($prerequisite->prerequisiteWebinar))
-                        <option selected value="{{ $prerequisite->prerequisiteWebinar->id }}">{{ $prerequisite->prerequisiteWebinar->title .' - '. $prerequisite->prerequisiteWebinar->teacher->full_name }}</option>
+                    @if(!empty($prerequisite) and !empty($prerequisite->course))
+                        <option selected value="{{ $prerequisite->course->id }}">{{ $prerequisite->course->title .' - '. $prerequisite->course->teacher->full_name }}</option>
                     @endif
                 </select>
                 <div class="invalid-feedback"></div>

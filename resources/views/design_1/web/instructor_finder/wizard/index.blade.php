@@ -6,7 +6,7 @@
 @endpush
 
 @section('content')
-    <div class="container mt-56 pb-60">
+    <div class="container mt-104 pb-140">
         <div class="row justify-content-center">
             <div class="col-12 col-lg-8">
 

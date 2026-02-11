@@ -114,3 +114,23 @@ fieldset {
     margin: 0;
     border: 0;
 }
+
+
+@media print {
+    * {
+        // Tells the browser to print the colors and background accurately.
+        -webkit-print-color-adjust: exact !important; /* Chrome, Safari */
+        print-color-adjust: exact !important; /* Firefox */
+        color-adjust: exact !important;
+    }
+}
+
+.rtl .select2-container {
+    left: auto !important;
+    right: 0 !important;
+
+    &.select2-container--open .select2-dropdown {
+        left: auto !important;
+        right: 0 !important;
+    }
+}

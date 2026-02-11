@@ -59,6 +59,9 @@
             </div>
         </div>
 
+
+       
+
         {{-- Assigned Components --}}
         <div class="col-12 col-lg-6 mt-16">
             <div class="bg-gray-100 p-16 rounded-16">

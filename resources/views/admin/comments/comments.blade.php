@@ -159,6 +159,20 @@
                                         </select>
                                     </div>
                                 </div>
+                            @elseif($page == 'events')
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="input-label">{{ trans('update.events') }}</label>
+                                        <select name="event_ids[]" multiple="multiple" class="form-control search-event-select2 " data-placeholder="Search events">
+
+                                            @if(!empty($events) and $events->count() > 0)
+                                                @foreach($events as $event)
+                                                    <option value="{{ $event->id }}" selected>{{ $event->title }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
                             @endif
 
 
@@ -206,6 +220,8 @@
                                             <th class="text-left">{{ trans('admin/main.blog') }}</th>
                                         @elseif($page == 'products')
                                             <th class="text-left">{{ trans('update.product') }}</th>
+                                        @elseif($page == 'events')
+                                            <th class="text-left">{{ trans('update.event') }}</th>
                                         @endif
                                         <th>{{ trans('admin/main.type') }}</th>
                                         <th>{{ trans('admin/main.status') }}</th>
@@ -217,7 +233,9 @@
                                                 <button type="button" class="js-show-description btn-sm btn btn-outline-primary">{{ trans('admin/main.show') }}</button>
                                                 <input type="hidden" value="{!! nl2br($comment->comment) !!}">
                                             </td>
+
                                             <td>{{ dateTimeFormat($comment->created_at, 'j M Y | H:i') }}</td>
+
                                             <td class="text-left">
                                                 <a href="{{ $comment->user->getProfileUrl() }}" target="_blank" class="text-dark">{{ $comment->user->full_name }}</a>
                                             </td>
@@ -235,58 +253,58 @@
                                             </td>
 
                                             <td>
-                                            <span class="badge-status {{ ($comment->status == 'pending') ? 'text-warning bg-warning-30' : 'text-success bg-success-30' }}">{{ ($comment->status == 'pending') ? trans('admin/main.pending') : trans('admin/main.published') }}</span>
+                                                <span class="badge-status {{ ($comment->status == 'pending') ? 'text-warning bg-warning-30' : 'text-success bg-success-30' }}">{{ ($comment->status == 'pending') ? trans('admin/main.pending') : trans('admin/main.published') }}</span>
                                             </td>
 
                                             <td>
-    <div class="btn-group dropdown table-actions position-relative">
-        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
-            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
-        </button>
+                                                <div class="btn-group dropdown table-actions position-relative">
+                                                    <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                                        <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                                    </button>
 
-        <div class="dropdown-menu dropdown-menu-right">
-            @can('admin_comments_status')
-                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $comment->id }}/toggle"
-                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
-                    @if($comment->status == 'pending')
-                        <x-iconsax-lin-eye class="icons text-success mr-2" width="18px" height="18px"/>
-                        <span class="text-success">{{ trans('admin/main.publish') }}</span>
-                    @else
-                        <x-iconsax-lin-eye-slash class="icons text-warning mr-2" width="18px" height="18px"/>
-                        <span class="text-warning">{{ trans('admin/main.pending') }}</span>
-                    @endif
-                </a>
-            @endcan
+                                                    <div class="dropdown-menu dropdown-menu-right">
+                                                        @can('admin_comments_status')
+                                                            <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $comment->id }}/toggle"
+                                                               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                                @if($comment->status == 'pending')
+                                                                    <x-iconsax-lin-eye class="icons text-success mr-2" width="18px" height="18px"/>
+                                                                    <span class="text-success">{{ trans('admin/main.publish') }}</span>
+                                                                @else
+                                                                    <x-iconsax-lin-eye-slash class="icons text-warning mr-2" width="18px" height="18px"/>
+                                                                    <span class="text-warning">{{ trans('admin/main.pending') }}</span>
+                                                                @endif
+                                                            </a>
+                                                        @endcan
 
-            @can('admin_comments_reply')
-                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ !empty($comment->reply_id) ? $comment->reply_id : $comment->id }}/reply"
-                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
-                    <x-iconsax-lin-messages-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                    <span class="text-gray-500 font-14">{{ trans('admin/main.reply') }}</span>
-                </a>
-            @endcan
+                                                        @can('admin_comments_reply')
+                                                            <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ !empty($comment->reply_id) ? $comment->reply_id : $comment->id }}/reply"
+                                                               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                                <x-iconsax-lin-messages-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                                <span class="text-gray-500 font-14">{{ trans('admin/main.reply') }}</span>
+                                                            </a>
+                                                        @endcan
 
-            @can('admin_comments_edit')
-                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $comment->id }}/edit"
-                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
-                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
-                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
-                </a>
-            @endcan
+                                                        @can('admin_comments_edit')
+                                                            <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $comment->id }}/edit"
+                                                               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                                <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                                <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                                                            </a>
+                                                        @endcan
 
-            @can('admin_comments_delete')
-                @include('admin.includes.delete_button',[
-                    'url' => getAdminPanelUrl().'/comments/'.$page.'/'.$comment->id.'/delete',
-                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
-                    'btnText' => trans('admin/main.delete'),
-                    'btnIcon' => 'trash',
-                    'iconType' => 'lin',
-                    'iconClass' => 'text-danger mr-2'
-                ])
-            @endcan
-        </div>
-    </div>
-</td>
+                                                        @can('admin_comments_delete')
+                                                            @include('admin.includes.delete_button',[
+                                                                'url' => getAdminPanelUrl().'/comments/'.$page.'/'.$comment->id.'/delete',
+                                                                'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                                'btnText' => trans('admin/main.delete'),
+                                                                'btnIcon' => 'trash',
+                                                                'iconType' => 'lin',
+                                                                'iconClass' => 'text-danger mr-2'
+                                                            ])
+                                                        @endcan
+                                                    </div>
+                                                </div>
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </table>

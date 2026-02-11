@@ -1,5 +1,5 @@
 <div id="multiCurrencyModal" class="{{ empty($editCurrency) ? 'd-none' : ''}}">
-    <div class="custom-modal-body">
+    <div class="custom-modal-body p-16">
         <h2 class="section-title after-line">{{ trans('update.multi_currency') }}</h2>
 
         <div class="currency-form" data-action="{{ getAdminPanelUrl("/settings/financial/currency") }}">

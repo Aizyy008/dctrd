@@ -19,60 +19,115 @@
         </a>
 
         {{-- Card --}}
-        @foreach($openMeetings['reserveMeetings'] as $openReserveMeeting)
-            <div class="bg-gray-100 rounded-16 p-12 mt-16">
+        @if(!empty($openMeetings['reserveMeetings']))
+            @foreach($openMeetings['reserveMeetings'] as $openReserveMeeting)
+                <div class="bg-gray-100 rounded-16 p-12 mt-16">
 
-                <div class="d-flex align-items-center justify-content-between bg-white p-12 rounded-12">
-                    <div class="d-flex align-items-center">
-                        <div class="size-48 rounded-circle bg-gray-100">
-                            <img src="{{ $openReserveMeeting->user->getAvatar() }}" alt="" class="rounded-circle img-cover">
-                        </div>
-                        <div class="ml-8">
-                            <h6 class="font-14 text-dark">{{ truncate($openReserveMeeting->user->full_name, 28) }}</h6>
-                            <div class="d-flex align-items-center gap-8 font-12 text-gray-500 mt-4">
-                                <span class="">{{ dateTimeFormat($openReserveMeeting->start_at, 'j M Y') }}</span>
+                    <div class="d-flex align-items-center justify-content-between bg-white p-12 rounded-12">
+                        <div class="d-flex align-items-center">
+                            <div class="size-48 rounded-circle bg-gray-100">
+                                <img src="{{ $openReserveMeeting->user->getAvatar() }}" alt="" class="rounded-circle img-cover">
+                            </div>
+                            <div class="ml-8">
+                                <h6 class="font-14 text-dark">{{ truncate($openReserveMeeting->user->full_name, 28) }}</h6>
+                                <div class="d-flex align-items-center gap-8 font-12 text-gray-500 mt-4">
+                                    <span class="">{{ dateTimeFormat($openReserveMeeting->start_at, 'j M Y') }}</span>
 
-                                <div class="d-flex align-items-center font-12 text-gray-500">
-                                    <span class="">{{ dateTimeFormat($openReserveMeeting->start_at, 'H:i') }}</span>
-                                    <span class="mx-2">-</span>
-                                    <span class="">{{ dateTimeFormat($openReserveMeeting->end_at, 'H:i') }}</span>
+                                    <div class="d-flex align-items-center font-12 text-gray-500">
+                                        <span class="">{{ dateTimeFormat($openReserveMeeting->start_at, 'H:i') }}</span>
+                                        <span class="mx-2">-</span>
+                                        <span class="">{{ dateTimeFormat($openReserveMeeting->end_at, 'H:i') }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <x-iconsax-lin-arrow-right-1 class="icons text-gray-500" width="16px" height="16px"/>
                     </div>
 
-                    <x-iconsax-lin-arrow-right-1 class="icons text-gray-500" width="16px" height="16px"/>
-                </div>
+                    <div class="d-flex align-items-center justify-content-between mt-16">
+                        <div class="d-flex align-items-center gap-16">
+                            @if($openReserveMeeting->student_count > 1)
+                                <div class="d-flex-center p-8 rounded-8 bg-gray-200 font-12 text-gray-500">{{ trans('update.group') }}</div>
+                            @endif
 
-                <div class="d-flex align-items-center justify-content-between mt-16">
-                    <div class="d-flex align-items-center gap-16">
-                        @if($openReserveMeeting->student_count > 1)
-                            <div class="d-flex-center p-8 rounded-8 bg-gray-200 font-12 text-gray-500">{{ trans('update.group') }}</div>
-                        @endif
-
-                        <div class="d-flex-center p-8 rounded-8 bg-gray-200 font-12 text-gray-500">{{ trans('update.'.$openReserveMeeting->meeting_type) }}</div>
-                    </div>
-
-                    <div class="d-flex align-items-center gap-16">
-                        <a href="{{ $openReserveMeeting->addToCalendarLink() }}" target="_blank" class="d-flex-center size-40 rounded-circle bg-gray-200 bg-hover-gray-300"
-                           data-tippy-content="{{ trans('public.add_to_calendar') }}"
-                        >
-                            <x-iconsax-bul-notification-bing class="icons text-gray-500" width="24px" height="24px"/>
-                        </a>
-
-                        <div class="js-join-to-meeting-session d-flex-center size-40 rounded-circle bg-gray-200 bg-hover-gray-300 cursor-pointer"
-                             data-tippy-content="{{ trans('footer.join') }}"
-                             data-path="/panel/meetings/{{ $openReserveMeeting->id }}/join-modal"
-                        >
-                            <x-iconsax-bul-video class="icons text-primary" width="24px" height="24px"/>
+                            <div class="d-flex-center p-8 rounded-8 bg-gray-200 font-12 text-gray-500">{{ trans('update.'.$openReserveMeeting->meeting_type) }}</div>
                         </div>
 
-                        <input type="hidden" class="js-meeting-password-{{ $openReserveMeeting->id }}" value="{{ $openReserveMeeting->password }}">
-                        <input type="hidden" class="js-meeting-link-{{ $openReserveMeeting->id }}" value="{{ $openReserveMeeting->link }}">
+                        <div class="d-flex align-items-center gap-16">
+                            <a href="{{ $openReserveMeeting->addToCalendarLink() }}" target="_blank" class="d-flex-center size-40 rounded-circle bg-gray-200 bg-hover-gray-300"
+                               data-tippy-content="{{ trans('public.add_to_calendar') }}"
+                            >
+                                <x-iconsax-bul-notification-bing class="icons text-gray-500" width="24px" height="24px"/>
+                            </a>
+
+                            <div class="js-join-to-meeting-session d-flex-center size-40 rounded-circle bg-gray-200 bg-hover-gray-300 cursor-pointer"
+                                 data-tippy-content="{{ trans('footer.join') }}"
+                                 data-path="/panel/meetings/{{ $openReserveMeeting->id }}/join-modal"
+                            >
+                                <x-iconsax-bul-video class="icons text-primary" width="24px" height="24px"/>
+                            </div>
+
+                            <input type="hidden" class="js-meeting-password-{{ $openReserveMeeting->id }}" value="{{ $openReserveMeeting->password }}">
+                            <input type="hidden" class="js-meeting-link-{{ $openReserveMeeting->id }}" value="{{ $openReserveMeeting->link }}">
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endforeach
+            @endforeach
+        @endif
+
+        {{-- Meeting Package Scheduled Sessions --}}
+        @if(!empty($openMeetings['meetingPackageScheduledSessions']))
+            @foreach($openMeetings['meetingPackageScheduledSessions'] as $meetingPackageScheduledSession)
+                <div class="bg-gray-100 rounded-16 p-12 mt-16">
+                    <div class="d-flex align-items-center justify-content-between bg-white p-12 rounded-12">
+                        <div class="d-flex align-items-center">
+                            <div class="size-48 rounded-circle bg-gray-100">
+                                <img src="{{ $meetingPackageScheduledSession->meetingPackageSold->user->getAvatar() }}" alt="" class="rounded-circle img-cover">
+                            </div>
+                            <div class="ml-8">
+                                <h6 class="font-14 text-dark">{{ truncate($meetingPackageScheduledSession->meetingPackageSold->user->full_name, 28) }}</h6>
+                                <div class="d-flex align-items-center gap-8 font-12 text-gray-500 mt-4">
+                                    <span class="">{{ dateTimeFormat($meetingPackageScheduledSession->date, 'j M Y') }}</span>
+
+                                    <div class="d-flex align-items-center font-12 text-gray-500">
+                                        <span class="">{{ dateTimeFormat($meetingPackageScheduledSession->date, 'H:i') }}</span>
+                                        <span class="mx-2">-</span>
+                                        <span class="">{{ dateTimeFormat(($meetingPackageScheduledSession->date + ($meetingPackageScheduledSession->duration * 60)), 'H:i') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <x-iconsax-lin-arrow-right-1 class="icons text-gray-500" width="16px" height="16px"/>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between mt-16">
+                        <div class="d-flex align-items-center gap-16">
+                            <div class="d-flex-center p-8 rounded-8 bg-gray-200 font-12 text-gray-500">{{ trans('update.package') }}</div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-16">
+                            <a href="{{ $meetingPackageScheduledSession->addToCalendarLink() }}" target="_blank" class="d-flex-center size-40 rounded-circle bg-gray-200 bg-hover-gray-300"
+                               data-tippy-content="{{ trans('public.add_to_calendar') }}"
+                            >
+                                <x-iconsax-bul-notification-bing class="icons text-gray-500" width="24px" height="24px"/>
+                            </a>
+
+                            <div class="js-join-to-meeting-session d-flex-center size-40 rounded-circle bg-gray-200 bg-hover-gray-300 cursor-pointer"
+                                 data-tippy-content="{{ trans('footer.join') }}"
+                                 data-path="/panel/meetings/sold-packages/{{ $meetingPackageScheduledSession->meeting_package_sold_id }}/sessions/{{ $meetingPackageScheduledSession->id }}/join-modal"
+                                 data-title="{{ trans('update.join_to_session') }}"
+                            >
+                                <x-iconsax-bul-video class="icons text-primary" width="24px" height="24px"/>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            @endforeach
+        @endif
 
         {{-- Join To Meeting Modal --}}
 

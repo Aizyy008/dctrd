@@ -5,10 +5,14 @@
         <div class="post-author-info-card__details d-flex flex-column flex-1 py-16">
             <div class="d-flex align-items-center {{ empty($post->author->about) ? 'mb-24' : '' }}">
                 <div class="d-flex-center size-80 rounded-12 bg-gray-200">
-                    <img src="{{ $post->author->getAvatar(80) }}" alt="{{ $post->author->full_name }}" class="img-cover rounded-12">
+                    <a href="{{ $post->author->getProfileUrl() }}" target="_blank">
+                        <img src="{{ $post->author->getAvatar(80) }}" alt="{{ $post->author->full_name }}" class="img-cover rounded-12">
+                    </a>
                 </div>
                 <div class="ml-12 flex-1">
-                    <h6 class="font-14 font-weight-bold text-dark">{{ $post->author->full_name }}</h6>
+                    <h6 class="font-14 font-weight-bold text-dark">
+                        <a href="{{ $post->author->getProfileUrl() }}" target="_blank" class="text-dark">{{ $post->author->full_name }}</a>
+                    </h6>
 
                     @php
                         $authorRates = $post->author->rates(true);

@@ -31,6 +31,7 @@
             showToast("success", pleaseWaitLang, transferringToLang)
 
             const channelName = $selectedChannel.attr('data-class');
+            const gatewayId = $selectedChannel.attr('id');
 
             if (channelName === 'Razorpay') {
                 $('.razorpay-payment-button').trigger('click');
@@ -39,6 +40,20 @@
             }
         } else {
             showToast('error', '', selectPaymentGatewayLang)
+        }
+    });
+
+    // Update button label when user selects offline gateway without clicking pay
+    $('body').on('change', 'input[name="gateway"]', function () {
+        const id = $(this).attr('id');
+        const $btnTextEl = $('.js-pay-now-text');
+        if ($btnTextEl && $btnTextEl.length) {
+            if (id === 'gateway_offline') {
+                $btnTextEl.text('Submit offline payment');
+            } else {
+                $btnTextEl.text($('#gateway_credit').length ? $('#gateway_credit').closest('label').find('h6').text() ? 'Pay Now!' : 'Pay Now!' : 'Pay Now!');
+                $btnTextEl.text('Pay Now!');
+            }
         }
     });
 

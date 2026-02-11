@@ -8,7 +8,7 @@
 
 
 @section('content')
-    <div class="container mt-56 mb-64">
+    <div class="container mt-88 mb-64">
 
         {{-- Hero --}}
         @include('design_1.web.forums.posts.includes.hero')

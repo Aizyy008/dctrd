@@ -23,6 +23,14 @@ $grid-columns: map-merge(
 
 @media (min-width: $screen-sm-max) {
     @each $name, $val in $grid-columns {
+        .grid-md-columns-#{$name} {
+            grid-template-columns: repeat(#{$val}, 1fr);
+        }
+    }
+}
+
+@media (min-width: $screen-lg-max) {
+    @each $name, $val in $grid-columns {
         .grid-lg-columns-#{$name} {
             grid-template-columns: repeat(#{$val}, 1fr);
         }

@@ -14,7 +14,7 @@
     @include('design_1.panel.certificates.my_achievements.potential_certificates')
 
     {{-- Lists --}}
-    @if(!empty($certificatesItems) and $certificatesItems->isNotEmpty())
+    @if($userHaveCertificatesItems)
         <div class="bg-white rounded-24 pt-16 mt-28">
             <div class="px-16">
                 <h4 class="font-16 font-weight-bold">{{ trans('update.active_certificates') }}</h4>
@@ -64,9 +64,11 @@
                     </tr>
                     </thead>
                     <tbody class="js-table-tbody-lists">
-                    @foreach($certificatesItems as $certificateItem)
-                        @include('design_1.panel.certificates.my_achievements.quiz_item_table',['quizItem' => $certificateItem])
-                    @endforeach
+                    @if(!empty($certificatesItems) and $certificatesItems->isNotEmpty())
+                        @foreach($certificatesItems as $certificateItem)
+                            @include('design_1.panel.certificates.my_achievements.quiz_item_table',['quizItem' => $certificateItem])
+                        @endforeach
+                    @endif
                     </tbody>
                 </table>
 

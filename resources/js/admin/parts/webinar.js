@@ -89,16 +89,14 @@
 
                     html += '<div class="col-12 col-md-3">\n' +
                         '<div class="webinar-category-filters">\n' +
-                        '<strong class="category-filter-title d-block">' + filter.title + '</strong>\n' +
-                        '<div class="py-10"></div>\n' +
-                        '\n';
+                        '<strong class="category-filter-title d-block mb-16">' + filter.title + '</strong>\n';
 
                     if (options.length) {
                         Object.keys(options).forEach(index => {
                             let option = options[index];
 
-                            html += '<div class="form-group mt-20 d-flex align-items-center justify-content-between">\n' +
-                                '<label class="" for="filterOption' + option.id + '">' + option.title + '</label>\n' +
+                            html += '<div class="form-group mt-8 mb-0 d-flex align-items-center justify-content-between">\n' +
+                                '<label class="text-gray-500 font-14 mb-0" for="filterOption' + option.id + '">' + option.title + '</label>\n' +
                                 '<div class="custom-control custom-checkbox">\n' +
                                 '<input type="checkbox" name="filters[]" value="' + option.id + '" class="custom-control-input" id="filterOption' + option.id + '">\n' +
                                 '<label class="custom-control-label" for="filterOption' + option.id + '"></label>\n' +
@@ -1638,7 +1636,7 @@
         const $this = $(this);
         const answer = $this.parent().find('input').val();
 
-        var html = '<div class="my-2">' + answer + '</div>';
+        var html = '<div class="p-16">' + answer + '</div>';
 
         Swal.fire({
             html: html,

@@ -168,6 +168,18 @@
                             </div>
                         </div>
 
+                        @if(!empty(getAttendanceSettings("status")))
+                            <div class="form-group mt-20">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <label class="cursor-pointer input-label" for="sessionAttendanceStatusSwitch{{ !empty($session) ? $session->id : '_record' }}">{{ trans('update.enable_attendance') }}</label>
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" name="ajax[{{ !empty($session) ? $session->id : 'new' }}][enable_attendance]" class="custom-control-input" id="sessionAttendanceStatusSwitch{{ !empty($session) ? $session->id : '_record' }}" {{ (!empty($session) and $session->enable_attendance) ? 'checked' : ''  }}>
+                                        <label class="custom-control-label" for="sessionAttendanceStatusSwitch{{ !empty($session) ? $session->id : '_record' }}"></label>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="js-agora-chat-and-rec  {{ (empty($session) or $session->session_api !== 'agora') ? 'd-none' : '' }}">
                             @if(getFeaturesSettings('agora_chat'))
                                 <div class="form-group mt-20">

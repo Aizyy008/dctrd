@@ -28,7 +28,7 @@
     <script>
         var saveSuccessLang = '{{ trans('webinars.success_store') }}';
         var zoomJwtTokenInvalid = '{{ trans('webinars.zoom_jwt_token_invalid') }}';
-        var hasZoomApiToken = '{{ (!empty($authUser->zoomApi) and !empty($authUser->zoomApi->api_key) and !empty($authUser->zoomApi->api_secret)) ? 'true' : 'false' }}';
+        var hasZoomApiToken = '{{ (!empty(getFeaturesSettings('zoom_client_id')) and !empty(getFeaturesSettings('zoom_client_secret'))) ? 'true' : 'false' }}';
         var editChapterLang = '{{ trans('public.edit_chapter') }}';
         var requestFailedLang = '{{ trans('public.request_failed') }}';
         var maxFourImageCanSelect = '{{ trans('update.max_four_image_can_select') }}';

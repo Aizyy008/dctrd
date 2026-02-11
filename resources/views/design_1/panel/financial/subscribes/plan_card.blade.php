@@ -71,21 +71,15 @@
             $subscribeHasInstallment = $subscribe->hasInstallment();
         @endphp
 
-        <form action="/panel/financial/pay-subscribes" method="post" class="btn-block mt-auto">
-            {{ csrf_field() }}
-            <input name="amount" value="{{ $subscribe->price }}" type="hidden">
-            <input name="id" value="{{ $subscribe->id }}" type="hidden">
+        <div class="d-flex align-items-center gap-8 w-100">
+            <a href="/subscribes/{{ $subscribe->id }}/details" target="_blank" class="btn btn-primary btn-lg flex-1 {{ $subscribeHasInstallment ? '' : 'btn-block' }}">{{ trans('update.purchase') }}</a>
 
-            <div class="d-flex align-items-center gap-8 w-100">
-                <button type="submit" class="btn btn-primary btn-lg flex-1 {{ $subscribeHasInstallment ? '' : 'btn-block' }}">{{ trans('update.purchase') }}</button>
-
-                @if($subscribeHasInstallment)
-                    <a href="/panel/financial/subscribes/{{ $subscribe->id }}/installments" class="d-flex-center size-48 rounded-12 border-2 border-gray-400 bg-white" data-tippy-content="{{ trans('update.installments') }}">
-                        <x-iconsax-lin-moneys class="icons text-gray-500" width="24px" height="24px"/>
-                    </a>
-                @endif
-            </div>
-        </form>
+            @if($subscribeHasInstallment)
+                <a href="/panel/financial/subscribes/{{ $subscribe->id }}/installments" class="d-flex-center size-48 rounded-12 border-2 border-gray-400 bg-white" data-tippy-content="{{ trans('update.installments') }}">
+                    <x-iconsax-lin-moneys class="icons text-gray-500" width="24px" height="24px"/>
+                </a>
+            @endif
+        </div>
 
     </div>
 </div>

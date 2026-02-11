@@ -92,7 +92,7 @@
             </div>
         </div>
 
-        <p class="text-gray-500 font-12">{{ trans('update.create_product_enable_ordering_hint') }}</p>
+        <p class="text-gray-500 font-12 mt-6">{{ trans('update.create_product_enable_ordering_hint') }}</p>
     </div>
 
 </div>

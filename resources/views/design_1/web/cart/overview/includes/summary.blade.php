@@ -55,7 +55,7 @@
             <span class="js-cart-total font-16 font-weight-bold">{{ handlePrice($calculatePrices["total"]) }}</span>
         </div>
 
-        <button type="button" class="{{ !empty($isCartPaymentPage) ? 'js-cart-payment-btn' : 'js-cart-checkout' }} btn btn-lg btn-block btn-primary mt-20">
+        <button type="button" class="{{ !empty($isCartPaymentPage) ? 'js-cart-payment-btn' : 'js-cart-checkout' }} btn btn-lg btn-block btn-primary mt-20 js-pay-now-text">
             @if(!empty($isCartPaymentPage))
                 {{ trans('update.pay_now') }}
             @else

@@ -15,14 +15,14 @@
             <p class="font-12 text-gray-500 mt-4">{{ !empty($totalEvents) ? $totalEvents : 0 }} {{ trans('update.total_events') }}</p>
         </div>
 
-        <a href="/panel/events" target="_blank" class="d-flex-center size-40 rounded-circle border-gray-200 bg-hover-gray-100">
+        <a href="/panel/events-calender" target="_blank" class="d-flex-center size-40 rounded-circle border-gray-200 bg-hover-gray-100">
             <x-iconsax-lin-arrow-right class="icons text-gray-500" width="16px" height="16px"/>
         </a>
     </div>
 
     @if(!empty($upcomingEvents) and count($upcomingEvents))
         @foreach($upcomingEvents as $upcomingEventName => $upcomingEvent)
-            <a href="/panel/events?date={{ $upcomingEvent['event_at'] }}" target="_blank" class="d-flex align-items-center mt-16 p-12 rounded-16 bg-gray-100 text-dark">
+            <a href="/panel/events-calender?date={{ $upcomingEvent['event_at'] }}" target="_blank" class="d-flex align-items-center mt-16 p-12 rounded-16 bg-gray-100 text-dark">
                 <div class="dashboard-events-calendar__day-box d-flex-center flex-column text-center rounded-8 bg-gray-200">
                     <span class="font-weight-bold text-dark">{{ dateTimeFormat($upcomingEvent['event_at'], 'j') }}</span>
                     <span class="font-12 text-gray-400 mt-2">{{ dateTimeFormat($upcomingEvent['event_at'], 'D') }}</span>

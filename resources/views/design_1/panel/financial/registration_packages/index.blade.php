@@ -74,88 +74,115 @@
             <div class="mt-16 pt-16 border-top-gray-100">
                 <h4 class="font-14 font-weight-bold">{{ trans('update.plan_statistics') }}</h4>
 
-                <div class="row">
-                    <div class="col-6 col-lg-3 mt-16">
-                        <div class="bg-white p-16 rounded-16 border-gray-200">
-                            <div class="d-flex align-items-start justify-content-between">
-                                <span class="text-gray-500 mt-8">{{ trans('product.course') }}</span>
+                <div class="d-grid grid-columns-1 grid-lg-columns-3 gap-16 mt-16">
+                    <div class="bg-white p-16 rounded-16 border-gray-200">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('product.course') }}</span>
 
-                                <div class="size-48 d-flex-center bg-primary-30 rounded-12">
-                                    <x-iconsax-bul-video-play class="icons text-primary" width="24px" height="24px"/>
-                                </div>
+                            <div class="size-48 d-flex-center bg-primary-30 rounded-12">
+                                <x-iconsax-bul-video-play class="icons text-primary" width="24px" height="24px"/>
                             </div>
-
-                            <h5 class="font-24 mt-12 line-height-1">
-                                @if(!empty($activePackage) and isset($activePackage->courses_count))
-                                    {{ $accountStatistics['myCoursesCount'] }}/{{ $activePackage->courses_count }}
-                                @else
-                                    {{ trans('update.unlimited') }}
-                                @endif
-                            </h5>
                         </div>
+
+                        <h5 class="font-20 mt-12 line-height-1">
+                            @if(!empty($activePackage) and isset($activePackage->courses_count))
+                                {{ $accountStatistics['myCoursesCount'] }}/{{ $activePackage->courses_count }}
+                            @else
+                                {{ trans('update.unlimited') }}
+                            @endif
+                        </h5>
+                    </div>
+
+                    <div class="bg-white p-16 rounded-16 border-gray-200">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('update.live_students') }}</span>
+
+                            <div class="size-48 d-flex-center bg-danger-30 rounded-12">
+                                <x-iconsax-bul-video class="icons text-danger" width="24px" height="24px"/>
+                            </div>
+                        </div>
+
+                        <h5 class="font-20 mt-12 line-height-1">
+                            @if(!empty($activePackage) and isset($activePackage->courses_capacity))
+                                {{ $activePackage->courses_capacity }}
+                            @else
+                                {{ trans('update.unlimited') }}
+                            @endif
+                        </h5>
+                    </div>
+
+                    <div class="bg-white p-16 rounded-16 border-gray-200">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('update.meeting_hours') }}</span>
+
+                            <div class="size-48 d-flex-center bg-success-30 rounded-12">
+                                <x-iconsax-bul-clock class="icons text-success" width="24px" height="24px"/>
+                            </div>
+                        </div>
+
+                        <h5 class="font-20 mt-12 line-height-1">
+                            @if(!empty($activePackage) and isset($activePackage->meeting_count))
+                                {{ $accountStatistics['myMeetingCount'] }}/{{ $activePackage->meeting_count }}
+                            @else
+                                {{ trans('update.unlimited') }}
+                            @endif
+                        </h5>
+                    </div>
+
+                    <div class="bg-white p-16 rounded-16 border-gray-200">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('update.products') }}</span>
+
+                            <div class="size-48 d-flex-center bg-warning-30 rounded-12">
+                                <x-iconsax-bul-box class="icons text-warning" width="24px" height="24px"/>
+                            </div>
+                        </div>
+
+                        <h5 class="font-20 mt-12 line-height-1">
+                            @if(!empty($activePackage) and isset($activePackage->product_count))
+                                {{ $accountStatistics['myProductCount'] }}/{{ $activePackage->product_count }}
+                            @else
+                                {{ trans('update.unlimited') }}
+                            @endif
+                        </h5>
+                    </div>
+
+                    <div class="bg-white p-16 rounded-16 border-gray-200">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('update.events') }}</span>
+
+                            <div class="size-48 d-flex-center bg-warning-30 rounded-12">
+                                <x-iconsax-bul-ticket class="icons text-warning" width="24px" height="24px"/>
+                            </div>
+                        </div>
+
+                        <h5 class="font-24 mt-12 line-height-1">
+                            @if(!empty($activePackage) and isset($activePackage->events_count))
+                                {{ $accountStatistics['myEventsCount'] }}/{{ $activePackage->events_count }}
+                            @else
+                                {{ trans('update.unlimited') }}
+                            @endif
+                        </h5>
                     </div>
 
 
-                    <div class="col-6 col-lg-3 mt-16">
-                        <div class="bg-white p-16 rounded-16 border-gray-200">
-                            <div class="d-flex align-items-start justify-content-between">
-                                <span class="text-gray-500 mt-8">{{ trans('update.live_students') }}</span>
+                    <div class="bg-white p-16 rounded-16 border-gray-200">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{ trans('update.meeting_packages') }}</span>
 
-                                <div class="size-48 d-flex-center bg-danger-30 rounded-12">
-                                    <x-iconsax-bul-video class="icons text-danger" width="24px" height="24px"/>
-                                </div>
+                            <div class="size-48 d-flex-center bg-accent-30 rounded-12">
+                                <x-iconsax-bul-box-time class="icons text-accent" width="24px" height="24px"/>
                             </div>
-
-                            <h5 class="font-24 mt-12 line-height-1">
-                                @if(!empty($activePackage) and isset($activePackage->courses_capacity))
-                                    {{ $activePackage->courses_capacity }}
-                                @else
-                                    {{ trans('update.unlimited') }}
-                                @endif
-                            </h5>
                         </div>
+
+                        <h5 class="font-24 mt-12 line-height-1">
+                            @if(!empty($activePackage) and isset($activePackage->meeting_packages_count))
+                                {{ $accountStatistics['myMeetingPackagesCount'] }}/{{ $activePackage->meeting_packages_count }}
+                            @else
+                                {{ trans('update.unlimited') }}
+                            @endif
+                        </h5>
                     </div>
-
-                    <div class="col-6 col-lg-3 mt-16">
-                        <div class="bg-white p-16 rounded-16 border-gray-200">
-                            <div class="d-flex align-items-start justify-content-between">
-                                <span class="text-gray-500 mt-8">{{ trans('update.meeting_hours') }}</span>
-
-                                <div class="size-48 d-flex-center bg-success-30 rounded-12">
-                                    <x-iconsax-bul-clock class="icons text-success" width="24px" height="24px"/>
-                                </div>
-                            </div>
-
-                            <h5 class="font-24 mt-12 line-height-1">
-                                @if(!empty($activePackage) and isset($activePackage->meeting_count))
-                                    {{ $accountStatistics['myMeetingCount'] }}/{{ $activePackage->meeting_count }}
-                                @else
-                                    {{ trans('update.unlimited') }}
-                                @endif
-                            </h5>
-                        </div>
-                    </div>
-
-                    <div class="col-6 col-lg-3 mt-16">
-                        <div class="bg-white p-16 rounded-16 border-gray-200">
-                            <div class="d-flex align-items-start justify-content-between">
-                                <span class="text-gray-500 mt-8">{{ trans('update.products') }}</span>
-
-                                <div class="size-48 d-flex-center bg-warning-30 rounded-12">
-                                    <x-iconsax-bul-box class="icons text-warning" width="24px" height="24px"/>
-                                </div>
-                            </div>
-
-                            <h5 class="font-24 mt-12 line-height-1">
-                                @if(!empty($activePackage) and isset($activePackage->product_count))
-                                    {{ $accountStatistics['myProductCount'] }}/{{ $activePackage->product_count }}
-                                @else
-                                    {{ trans('update.unlimited') }}
-                                @endif
-                            </h5>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -223,6 +250,8 @@
                              ['name' => trans('update.live_students'), 'value' => $package->courses_capacity],
                              ['name' => trans('update.meeting_hours'), 'value' => $package->instructors_count],
                              ['name' => trans('update.products'), 'value' => $package->product_count],
+                             ['name' => trans('update.events'), 'value' => $package->events_count],
+                             ['name' => trans('update.meeting_packages'), 'value' => $package->meeting_packages_count],
                         ];
                         if($authUser->isOrganization()) {
                             $items[] = ['name' => trans('home.instructors'), 'value' => $package->instructors_count];

@@ -24,8 +24,32 @@
 
 
     {{-- List Table --}}
-    @if(!empty($courses) and $courses->isNotEmpty())
-        <div id="tableListContainer" class="" data-view-data-path="/panel/courses/organization_classes">
+    @if(!empty($organizationHaveItems))
+
+        <div class="d-flex align-items-center gap-20 gap-lg-40 border-bottom-gray-100">
+
+            @php
+                $tabs = [
+                    'courses' => 'teacher',
+                    'bundles' => 'box',
+                ];
+            @endphp
+
+            @foreach($tabs as $tabName => $tabIcon)
+                <div class="js-get-view-data-by-tab navbar-item navbar-item-h-52 d-flex align-items-center  cursor-pointer {{ $loop->first ? 'active' : '' }}"
+                     data-filter-name="source" data-filter-value="{{ $tabName }}"
+                     data-container-id="tableListContainer"
+                >
+                    @svg("iconsax-lin-{$tabIcon}", ['width' => '20px', 'height' => '20px', 'class' => 'icons'])
+
+                    <span class="ml-4">{{ trans("update.{$tabName}") }}</span>
+                </div>
+            @endforeach
+
+        </div>
+
+
+        <div id="tableListContainer" class="" data-view-data-path="/panel/courses/organization_classes" data-body=".js-page-courses-lists">
             <div class="js-page-courses-lists row mt-20">
                 @foreach($courses as $courseItem)
                     <div class="col-12 col-md-4 col-lg-3 col-xl-2 mt-20">

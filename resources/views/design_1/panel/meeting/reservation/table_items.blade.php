@@ -47,16 +47,16 @@
     <td class="text-center">
         @switch($reserveMeeting->status)
             @case(\App\Models\ReserveMeeting::$pending)
-                <span class="text-warning =">{{ trans('public.pending') }}</span>
+                <div class="d-inline-flex-center px-8 py-6 rounded-8 bg-warning-30 font-12 text-warning">{{ trans('public.pending') }}</div>
                 @break
             @case(\App\Models\ReserveMeeting::$open)
-                <span class="text-gray-500 =">{{ trans('public.open') }}</span>
+               <div class="d-inline-flex-center px-8 py-6 rounded-8 bg-primary-30 font-12 text-primary">{{ trans('public.open') }}</div>
                 @break
             @case(\App\Models\ReserveMeeting::$finished)
-                <span class="= text-primary">{{ trans('public.finished') }}</span>
+               <div class="d-inline-flex-center px-8 py-6 rounded-8 bg-success-30 font-12 text-success">{{ trans('public.finished') }}</div>
                 @break
             @case(\App\Models\ReserveMeeting::$canceled)
-                <span class="text-danger =">{{ trans('public.canceled') }}</span>
+                 <div class="d-inline-flex-center px-8 py-6 rounded-8 bg-danger-30 font-12 text-danger">{{ trans('public.canceled') }}</div>
                 @break
         @endswitch
     </td>
@@ -77,7 +77,7 @@
 
                         @if($reserveMeeting->meeting_type != 'in_person' and $reserveMeeting->status == \App\Models\ReserveMeeting::$open and (!empty($reserveMeeting->link) or !empty($reserveMeeting->session)))
                             <li class="actions-dropdown__dropdown-menu-item">
-                                <button type="button" data-path="/panel/meetings/{{ $reserveMeeting->id }}/join-modal" class="js-join-to-session ">{{ trans('footer.join') }}</button>
+                                <button type="button" data-path="/panel/meetings/{{ $reserveMeeting->id }}/join-modal" class="js-join-to-meeting-session ">{{ trans('footer.join') }}</button>
                             </li>
                         @endif
 

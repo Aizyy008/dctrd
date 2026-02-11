@@ -127,13 +127,22 @@
     <h3 class="font-14 font-weight-bold my-24">{{ trans('public.demo_video') }} ({{ trans('public.optional') }})</h3>
 
     <div class="js-inputs-with-source row">
+        @php
+            $selectedVideoSource = (!empty($upcomingCourse) and !empty($upcomingCourse->video_demo_source)) ? $upcomingCourse->video_demo_source : null;
+        @endphp
 
         <div class="col-12 col-md-6">
             <div class="form-group">
                 <label class="form-group-label">{{ trans('update.video_source') }}</label>
                 <select name="video_demo_source" class="js-upload-source-input form-control @error('video_demo_source') is-invalid @enderror">
-                    @foreach(\App\Enums\UploadSource::allSources as $source)
-                        <option value="{{ $source }}" {{ (!empty($upcomingCourse) and $upcomingCourse->video_demo_source == $source) ? 'selected' : '' }}>{{ trans($source) }}</option>
+                    @foreach(getAvailableUploadFileSources() as $source)
+                        @php
+                            if($loop->first and empty($selectedVideoSource)) {
+                                $selectedVideoSource = $source;
+                            }
+                        @endphp
+
+                        <option value="{{ $source }}" {{ (!empty($upcomingCourse) and $upcomingCourse->video_demo_source == $source) ? 'selected' : '' }}>{{ trans('update.file_source_'.$source) }}</option>
                     @endforeach
                 </select>
 
@@ -144,7 +153,7 @@
         </div>
 
         <div class="col-12 col-md-6">
-            <div class="form-group js-online-upload {{ (empty($upcomingCourse) or !in_array($upcomingCourse->video_demo_source, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
+            <div class="form-group js-online-upload {{ (!in_array($selectedVideoSource, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
                 <span class="has-translation bg-transparent">
                     <x-iconsax-lin-link-21 class="icons text-gray-400" width="24px" height="24px"/>
                 </span>
@@ -152,7 +161,7 @@
                 <input type="text" name="demo_video_path" class="form-control" value="{{ !empty($upcomingCourse) ? $upcomingCourse->video_demo : old('demo_video_path') }}" placeholder="{{ trans('update.insert_demo_video_link') }}">
             </div>
 
-            <div class="form-group js-local-upload {{ (!empty($upcomingCourse) and in_array($upcomingCourse->video_demo_source, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
+            <div class="form-group js-local-upload {{ (in_array($selectedVideoSource, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
                 <span class="has-translation bg-transparent">
                     <x-iconsax-lin-export class="icons text-gray-400" width="24px" height="24px"/>
                 </span>

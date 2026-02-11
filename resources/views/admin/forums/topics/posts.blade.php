@@ -2,7 +2,7 @@
 
 @push('styles_top')
     <link rel="stylesheet" href="/assets/vendors/summernote/summernote-bs4.min.css">
-    <link rel="stylesheet" href="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.css">
+
 @endpush
 
 @section('content')
@@ -141,7 +141,7 @@
         var editPostLang = '{{ trans('update.edit_post') }}';
     </script>
 
-    <script src="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.js"></script>
+
     <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
     <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>
     <script src="/assets/admin/js/parts/topic_posts.min.js"></script>

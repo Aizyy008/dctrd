@@ -15,13 +15,16 @@
             inline: true,
             altField: '#inlineEventsCalender',
             initialValue: true,
-            calendarType: 'gregorian',
+            calendarType: (typeof appLocale !== "undefined" && (appLocale === "fa" || appLocale === "FA")) ? 'persian' : 'gregorian',
             initialValueType: true,
             autoClose: true,
             altFormat: 'DD MMMM YY',
             calendar: {
                 gregorian: {
                     locale: 'en'
+                },
+                persian: {
+                    locale: 'fa'
                 }
             },
             toolbox: {
@@ -73,7 +76,7 @@
             const data = {
                 timestamp: unix / 1000,
             }
-            const path = "/panel/events/get-by-day";
+            const path = "/panel/events-calender/get-by-day";
 
             $.post(path, data, function (result) {
                 if (result.code === 200) {

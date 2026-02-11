@@ -53,6 +53,23 @@
                     </div>
                 </div>
 
+                <div class="form-group mt-15">
+                    <label class="input-label">{{ trans('public.certificate_and_documents') }}</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button type="button" class="input-group-text admin-file-manager" data-input="certificate" data-preview="holder">
+                                <i class="fa fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <input type="text" name="certificate" id="certificate" value="{{ !empty($user->certificate) ? $user->certificate : old('certificate') }}" class="form-control"/>
+                        <div class="input-group-append">
+                            <button type="button" class="input-group-text admin-file-view" data-input="certificate">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>{{ trans('financial.address') }}</label>
                     <input type="text" name="address"

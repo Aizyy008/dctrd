@@ -28,10 +28,16 @@
         </button>
     </div>
 
-    <div class="py-8 custom-swl-modal-body has-footer px-16">
+    <div class="py-8 custom-swl-modal-body has-footer px-48">
         <div class="d-flex-center flex-column text-center mt-36">
-            <div class="d-flex-center size-136">
-                <img src="/assets/design_1/img/panel/gift/gift_received.svg" alt="{{ trans('gift_received') }}" class="img-fluid">
+            <div class="position-relative d-flex-center size-136">
+                <img src="/assets/design_1/img/panel/gift/gift_received.svg" alt="{{ trans('gift_received') }}" class="img-fluid" width="136px" height="136px">
+
+                <div class="gift-received-modal__sender-avatar d-flex-center size-48 bg-primary rounded-circle">
+                    <div class="size-40 bg-gray-100 rounded-circle">
+                        <img src="{{ $gift->user->getAvatar(40) }}" alt="{{ $gift->user->full_name }}" class="img-cover rounded-circle">
+                    </div>
+                </div>
             </div>
 
             <h4 class="font-14 font-weight-bold mt-20">{{ trans('update.you_received_a_gift_from_a_friend') }}</h4>
@@ -39,13 +45,13 @@
             <div class="font-12 mt-4 text-gray-500">{!! trans('update.user_send_item_to_you_as_a_gift',['user' => $gift->user->full_name, 'item_title' => $gift->getItemTitle()]) !!}</div>
 
             <div class="d-flex align-items-center mt-24 p-8 rounded-16 border-gray-200 bg-white">
-                <div class="gift-modal-item-img rounded-8">
+                <div class="gift-modal-item-img rounded-8 bg-gray-100">
                     <img src="{{ $itemImage }}" alt="" class="img-cover rounded-8">
                 </div>
                 <div class="ml-8">
                     <h5 class="font-12">{{ $itemTitle }}</h5>
 
-                    @include('design_1.web.components.rate', ['rate' => $itemRate, 'rateClassName' => 'mt-8'])
+                    @include('design_1.web.components.rate', ['rate' => $itemRate, 'rateClassName' => 'mt-8', 'showRateStars' => true])
                 </div>
             </div>
         </div>

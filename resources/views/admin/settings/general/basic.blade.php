@@ -27,16 +27,6 @@
                     <input type="text" name="value[site_phone]" value="{{ (!empty($itemValue) and !empty($itemValue['site_phone'])) ? $itemValue['site_phone'] : old('site_phone') }}" class="form-control "/>
                 </div>
 
-                <div class="form-group">
-                    <label class="input-label d-block">{{ trans('admin/main.site_language') }}</label>
-                    <select name="value[site_language]" class="form-control select2" data-placeholder="{{ trans('admin/main.site_language') }}">
-                        <option value=""></option>
-                        @foreach(getLanguages() as $key => $language)
-                            <option value="{{ $key }}" @if((!empty($itemValue) and !empty($itemValue['site_language'])) and $itemValue['site_language'] == $key) selected @endif >{{ $language }}</option>
-                        @endforeach
-                    </select>
-                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.default_language_hint') }}</div>
-                </div>
 
                 <div class="form-group">
                     <label class="input-label d-block">{{ trans('admin/main.register_method') }}</label>
@@ -72,6 +62,26 @@
                     </select>
                 </div>
 
+                   <div class="form-group">
+                    <label class="input-label d-block">{{ trans('admin/main.site_language') }}</label>
+                    <select name="value[site_language]" class="form-control select2" data-placeholder="{{ trans('admin/main.site_language') }}">
+                        <option value=""></option>
+                        @foreach(getLanguages() as $key => $language)
+                            <option value="{{ $key }}" @if((!empty($itemValue) and !empty($itemValue['site_language'])) and $itemValue['site_language'] == $key) selected @endif >{{ $language }}</option>
+                        @endforeach
+                    </select>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.default_language_hint') }}</div>
+                </div>
+
+                 <div class="form-group">
+                    <label class="input-label d-block">{{ trans('admin/main.guest_default_language') }}</label>
+                    <select name="value[visitors_default_language]" class="form-control">
+                        <option value="default" @if(empty($itemValue) or empty($itemValue['visitors_default_language']) or $itemValue['visitors_default_language'] == 'default') selected @endif>{{ trans('admin/main.use_default_language') }}</option>
+                        <option>{{ trans('admin/main.use_ip_language') }} (Paid Plugin)</option>
+                    </select>
+                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.guest_default_language_hint') }}</div>
+                </div>
+
                 <div class="form-group">
                     <label class="input-label d-block">{{ trans('admin/main.user_languages_lists') }}</label>
                     <select name="value[user_languages][]" multiple class="form-control select2" data-placeholder="{{ trans('admin/main.user_languages_lists') }}">
@@ -82,7 +92,6 @@
                     </select>
                     <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.user_languages_lists_hint') }}</div>
                 </div>
-
 
                 <div class="form-group">
                     <label class="input-label d-block">{{ trans('admin/main.rtl_languages') }}</label>
@@ -150,6 +159,7 @@
                     </label>
                 </div>
 
+
                 <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
                         <input type="hidden" name="value[content_translate]" value="0">
@@ -158,7 +168,7 @@
                     </label>
                     <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
-
+                
                 <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
                         <input type="hidden" name="value[app_debugbar]" value="0">

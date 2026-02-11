@@ -12,6 +12,7 @@
 
     <!-- General CSS File -->
     <link rel="stylesheet" href="/assets/default/vendors/simplebar/simplebar.css">
+    <link rel="stylesheet" href="/assets/default/vendors/daterangepicker/daterangepicker.min.css">
     <link rel="stylesheet" href="/assets/design_1/css/app.min.css">
     <link rel="stylesheet" href="/assets/design_1/landing_builder/app.min.css">
 
@@ -57,6 +58,7 @@
 
 <!-- Template JS File -->
 <script>
+    var landingBuilderPrefixUrl = '{{ getLandingBuilderUrl('') }}';
     var siteDomain = '{{ url('') }}';
     var deleteAlertTitle = '{{ trans('public.are_you_sure') }}';
     var deleteAlertHint = '{{ trans('public.deleteAlertHint') }}';
@@ -98,6 +100,8 @@
 
 <script type="text/javascript" src="/assets/design_1/js/app.min.js"></script>
 <script type="text/javascript" src="/assets/default/vendors/simplebar/simplebar.min.js"></script>
+<script src="/assets/default/vendors/moment.min.js"></script>
+<script src="/assets/default/vendors/daterangepicker/daterangepicker.min.js"></script>
 
 @if(session()->has('toast'))
     <script>

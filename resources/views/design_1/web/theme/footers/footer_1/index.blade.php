@@ -4,28 +4,29 @@
         $themeFooterBackground = null;
         $themeFooterDarkBackground = null;
         $themeFooterBackgroundColor = "secondary";
+        $themeFooterHasNewsletter = (!empty($themeFooterContent['newsletter']) and $themeFooterContent['newsletter']['enable'] == "on");
 
-        if (!empty($themeFooterData['contents']['dark_mode_background'])) {
-            $themeFooterDarkBackground = $themeFooterData['contents']['dark_mode_background'];
+        if (!empty($themeFooterContent['dark_mode_background'])) {
+            $themeFooterDarkBackground = $themeFooterContent['dark_mode_background'];
         }
 
-        if (!empty($themeFooterData['contents']['background'])) {
-            $themeFooterBackground = $themeFooterData['contents']['background'];
+        if (!empty($themeFooterContent['background'])) {
+            $themeFooterBackground = $themeFooterContent['background'];
         }
 
-        if (!empty($themeFooterData['contents']['background_color'])) {
-            $themeFooterBackgroundColor = $themeFooterData['contents']['background_color'];
+        if (!empty($themeFooterContent['background_color'])) {
+            $themeFooterBackgroundColor = $themeFooterContent['background_color'];
         }
     @endphp
 
-    <div class="theme-footer-1 has-newsletter position-relative">
+    <div class="theme-footer-1 position-relative {{ $themeFooterHasNewsletter ? 'has-newsletter' : '' }}">
         <div class="theme-footer-1__section position-relative">
             <div class="theme-footer-1__section-bg-wrapper light-only" style="background-color: var({{ "--".$themeFooterBackgroundColor }}); {{ (!empty($themeFooterBackground) ? "background-image: url({$themeFooterBackground}); " : '') }}"></div>
             <div class="theme-footer-1__section-bg-wrapper dark-only" style="background-color: var({{ "--".$themeFooterBackgroundColor }}); {{ (!empty($themeFooterDarkBackground) ? "background-image: url({$themeFooterDarkBackground}); " : '') }}"></div>
 
 
             {{-- Newsletter --}}
-            @if(!empty($themeFooterContent['newsletter']) and $themeFooterContent['newsletter']['enable'] == "on")
+            @if($themeFooterHasNewsletter)
                 @include('design_1.web.theme.footers.footer_1.newsletter', ['newsletterData' => $themeFooterContent['newsletter']])
             @endif
 
@@ -71,8 +72,8 @@
                             @if(!empty($themeFooterContent['specific_links']) and is_array($themeFooterContent['specific_links']))
                                 @foreach($themeFooterContent['specific_links'] as $specificLink1Data)
                                     @if(!empty($specificLink1Data['title']) and !empty($specificLink1Data['url']))
-                                        <a href="{{ $specificLink1Data['url'] }}" target="_blank" class="btn-flip-effect btn-flip-effect__slow-effect btn-flip-effect__left-0 d-block font-16 text-white opacity-70 {{ $loop->first ? 'mt-16' : 'mt-12' }}" data-text="{{ $specificLink1Data['title'] }}">
-                                            <span class="btn-flip-effect__text">{{ $specificLink1Data['title'] }}</span>
+                                        <a href="{{ $specificLink1Data['url'] }}" target="_blank" class="d-block font-16 text-white opacity-70 {{ $loop->first ? 'mt-16' : 'mt-12' }}">
+                                            <span class="">{{ $specificLink1Data['title'] }}</span>
                                         </a>
                                     @endif
                                 @endforeach
@@ -87,8 +88,8 @@
                             @if(!empty($themeFooterContent['specific_links_2']) and is_array($themeFooterContent['specific_links_2']))
                                 @foreach($themeFooterContent['specific_links_2'] as $specificLink2Data)
                                     @if(!empty($specificLink2Data['title']) and !empty($specificLink2Data['url']))
-                                        <a href="{{ $specificLink2Data['url'] }}" target="_blank" class="btn-flip-effect btn-flip-effect__slow-effect btn-flip-effect__left-0 d-block font-16 text-white opacity-70 {{ $loop->first ? 'mt-16' : 'mt-12' }}" data-text="{{ $specificLink2Data['title'] }}">
-                                            <span class="btn-flip-effect__text">{{ $specificLink2Data['title'] }}</span>
+                                        <a href="{{ $specificLink2Data['url'] }}" target="_blank" class="d-block font-16 text-white opacity-70 {{ $loop->first ? 'mt-16' : 'mt-12' }}">
+                                            <span class="">{{ $specificLink2Data['title'] }}</span>
                                         </a>
                                     @endif
                                 @endforeach
@@ -169,9 +170,8 @@
                                 @endif
                             @endforeach
                         @endif
-
-
                     </div>
+
                 </div>
             </div>
         </div>

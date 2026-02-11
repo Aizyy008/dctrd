@@ -19,11 +19,11 @@
 
 
     <div class="row">
-        <div class="col-lg-6 mt-20">
+        <div class="col-lg-6">
             @include('design_1.panel.webinars.create.includes.accordions.prerequisite')
         </div>
 
-        <div class="col-lg-6 mt-36">
+        <div class="col-lg-6 mt-16">
             @if(!empty($webinar->prerequisites) and count($webinar->prerequisites))
                 <div class="p-16 rounded-16 border-gray-200">
                     <h3 class="font-14 font-weight-bold">{{ trans('public.prerequisites') }}</h3>
@@ -35,7 +35,7 @@
                     </ul>
                 </div>
             @else
-                <div class="d-flex-center flex-column px-32 py-120 text-center">
+                <div class="d-flex-center flex-column px-32 py-120 text-center rounded-16 border-gray-200">
                     <div class="d-flex-center size-64 rounded-12 bg-primary-30">
                         <x-iconsax-bul-document-sketch class="icons text-primary" width="32px" height="32px"/>
                     </div>
@@ -64,11 +64,11 @@
 
 
     <div class="row">
-        <div class="col-lg-6 mt-20">
+        <div class="col-lg-6">
             @include('design_1.panel.webinars.create.includes.accordions.related_courses')
         </div>
 
-        <div class="col-lg-6 mt-36">
+        <div class="col-lg-6 mt-16">
             @if(!empty($webinar->relatedCourses) and count($webinar->relatedCourses))
                 <div class="p-16 rounded-16 border-gray-200">
                     <h3 class="font-14 font-weight-bold">{{ trans('update.related_courses') }}</h3>
@@ -80,7 +80,7 @@
                     </ul>
                 </div>
             @else
-                <div class="d-flex-center flex-column px-32 py-120 text-center">
+                <div class="d-flex-center flex-column px-32 py-120 text-center rounded-16 border-gray-200">
                     <div class="d-flex-center size-64 rounded-12 bg-primary-30">
                         <x-iconsax-bul-arrange-circle-2 class="icons text-primary" width="32px" height="32px"/>
                     </div>

@@ -219,7 +219,7 @@
                             
                             <div class="alert-custom bg-warning-20">
                                 <h5 class="text-warning"> <x-iconsax-bul-danger class="icons text-warning" width="32px" height="32px"/> Important Note:</h5>
-                                <p class="text-warning">Each purchase code is valid for a single domain only. If you want to use Theme Builder on multiple domains or installations, you must obtain a separate license for each one.</p>
+                                <p class="text-warning">Each purchase code is valid for a single domain only. If you want to use Plugins Bundle on multiple domains or installations, you must obtain a separate license for each one.</p>
                             </div>
 
                             <div class=" align-items-center text-center mt-24">

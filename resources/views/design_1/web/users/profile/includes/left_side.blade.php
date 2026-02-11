@@ -17,7 +17,7 @@
 
         <div class="profile-followers-card position-relative d-flex align-items-center justify-content-around mt-16 w-100">
             <div class="flex-1 text-center">
-                <span class="d-block font-14 font-weight-bold">{{ shortNumbers($userFollowers->count()) }}</span>
+                <span class="js-user-profile-followers-count d-block font-14 font-weight-bold">{{ shortNumbers($userFollowers->count()) }}</span>
                 <span class="d-block mt-4 font-12 text-gray-500">{{ trans('panel.followers') }}</span>
             </div>
 
@@ -80,7 +80,10 @@
         @if($user->offline)
             <div class="mt-24 p-12 rounded-12 border-warning bg-warning-10">
                 <h5 class="font-14 font-weight-bold text-warning">{{ trans('update.the_user_is_temporarily_unavailable') }}</h5>
-                <p class="mt-8 font-12 text-warning opacity-75">{{ trans('update.the_user_is_temporarily_unavailable_hint') }}</p>
+
+                @if(!empty($user->offline_message))
+                    <p class="mt-8 font-12 text-warning opacity-75">{{ $user->offline_message }}</p>
+                @endif
             </div>
         @endif
 

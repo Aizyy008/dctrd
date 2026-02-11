@@ -174,7 +174,7 @@
                         <label class="form-group-label">{{ trans('update.expiry_date') }}</label>
                         <span class="has-translation bg-gray-200 rounded-8 p-8 text-gray-500 font-14"><x-iconsax-lin-calendar-2 class="icons text-gray-500" width="24px" height="24px"/></span>
                         <input type="text" name="expired_at" class="form-control datetimepicker js-default-init-date-picker @error('expired_at') is-invalid @enderror"
-                               aria-describedby="dateRangeLabel" autocomplete="off"
+                               aria-describedby="dateRangeLabel" autocomplete="off" data-drops="up"
                                value="{{ !empty($discount) ? dateTimeFormat($discount->expired_at, 'Y-m-d H:i', false) : '' }}"/>
 
                         @error('expired_at')

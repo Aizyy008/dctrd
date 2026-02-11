@@ -29,7 +29,7 @@
                             @can('admin_notifications_template_create')
                                    <a href="{{ getAdminPanelUrl("/notifications/templates/create") }}" target="_blank" class="btn btn-primary">
                                        <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
-                                       <span class="ml-4 font-12">{{ trans('admin\main.add_new') }}</span>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.add_new') }}</span>
                                    </a>
                                @endcan
 

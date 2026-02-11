@@ -46,6 +46,35 @@
     </div>
 @endif
 
+
+@if(!empty($userMeetingPackages) and $userMeetingPackages->isNotEmpty())
+    @push('styles_top')
+        <link rel="stylesheet" href="/assets/default/vendors/swiper/swiper-bundle.min.css">
+    @endpush
+
+    @push('scripts_bottom')
+        <script src="/assets/default/vendors/swiper/swiper-bundle.min.js"></script>
+        <script src="{{ getDesign1ScriptPath("swiper_slider") }}"></script>
+    @endpush
+
+    <div class="mt-16 ">
+        <h4 class="font-16">{{ trans('update.meeting_packages') }} ({{ $userMeetingPackages->count() }})</h4>
+        <p class="font-12 text-gray-500 mt-4">{{ trans('update.book_multiple_sessions_in_one_package') }}</p>
+    </div>
+
+    <div class="position-relative mt-12">
+        <div class="swiper-container js-make-swiper meeting-packages-swiper pb-0"
+             data-item="meeting-packages-swiper"
+             data-autoplay="true"
+             data-breakpoints="1440:2.6,769:1.8,320:1.1"
+        >
+            <div class="swiper-wrapper py-0">
+                @include('design_1.web.meeting_packages.components.cards.grids.index',['meetingPackages' => $userMeetingPackages, 'gridCardClassName' => "card-with-border swiper-slide"])
+            </div>
+        </div>
+    </div>
+@endif
+
 @push('scripts_bottom')
     <script src="/assets/default/vendors/persian-datepicker/persian-date.js"></script>
     <script src="/assets/default/vendors/persian-datepicker/persian-datepicker.js"></script>

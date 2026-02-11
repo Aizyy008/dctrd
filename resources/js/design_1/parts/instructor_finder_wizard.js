@@ -5,10 +5,10 @@
 
         const regionCard = $('#regionCard');
 
-        if ($(this).val() === 'in_person') {
-            regionCard.removeClass('d-none');
-        } else {
+        if ($(this).val() === 'online') {
             regionCard.addClass('d-none');
+        } else {
+            regionCard.removeClass('d-none');
         }
     });
 

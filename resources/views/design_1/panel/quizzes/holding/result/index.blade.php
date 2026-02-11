@@ -6,7 +6,7 @@
 @endpush
 
 @section('content')
-    <form id="quizHoldingForm" action="{{ !empty($newQuizStart) ? '/panel/quizzes/'. $newQuizStart->quiz->id .'/update-result' : '' }} " method="post">
+    <form id="quizHoldingForm" action="{{ !empty($newQuizStart) ? "/panel/quizzes/results/{$newQuizStart->id}/update" : '' }} " method="post">
         {{ csrf_field() }}
         <input type="hidden" name="quiz_result_id" value="{{ !empty($newQuizStart) ? $newQuizStart->id : ''}}" class="form-control" placeholder=""/>
         <input type="hidden" name="attempt_number" value="{{  $numberOfAttempt }}" class="form-control" placeholder=""/>

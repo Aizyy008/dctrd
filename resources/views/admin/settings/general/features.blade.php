@@ -61,16 +61,6 @@
                     <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
 
-                    {{--
-                                        <div class="form-group custom-switches-stacked">
-                                            <label class="custom-switch pl-0">
-                                                <input type="hidden" name="value[agora_cloud_rec]" value="0">
-                                                <input type="checkbox" name="value[agora_cloud_rec]" id="agoraRecordingSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['agora_cloud_rec']) and $itemValue['agora_cloud_rec']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                                                <span class="custom-switch-indicator"></span>
-                                                <label class="custom-switch-description mb-0 cursor-pointer" for="agoraRecordingSwitch">{{ trans('update.agora_recording') }}</label>
-                                            </label>
-                                        </div>
-                    --}}
 
                      <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
@@ -105,6 +95,17 @@
                             <option value="multiple" {{ (!empty($itemValue) and !empty($itemValue['course_live_stream_type']) and $itemValue['course_live_stream_type'] == 'multiple') ? 'selected="selected"' : '' }}>{{ trans('update.meeting_multiple') }}</option>
                         </select><label class="label"></label>
                     </div>
+                    
+                <div class="form-group custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.agora_for_events') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+                
+
             
 
                 </div>
@@ -171,6 +172,37 @@
                     <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
 
+                 <div class="mb-5">
+                    <h5>{{ trans('admin/main.free_mode') }}</h5>
+                    
+                 <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('admin/main.active') }}</label>
+                    </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
+                </div>
+
+                    <div class="form-group mt-3 custom-switches-stacked">
+                        <label class="custom-switch pl-0">
+                            <input type="hidden" name="value[free_mode_show_price]" value="0">
+                            <input type="checkbox" name="value[free_mode_show_price]" id="freeModeShowPriceSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['free_mode_show_price']) and $itemValue['free_mode_show_price']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                            <span class="custom-switch-indicator"></span>
+                            <label class="custom-switch-description mb-0 cursor-pointer" for="freeModeShowPriceSwitch">{{ trans('admin/main.display_prices') }}</label>
+                        </label>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('admin/main.display_prices_hint') }}</p>
+                    </div>
+
+                    <div class="form-group mt-3 custom-switches-stacked">
+                        <label class="custom-switch pl-0">
+                            <input type="hidden" name="value[free_mode_show_cart]" value="0">
+                            <input type="checkbox" name="value[free_mode_show_cart]" id="freeModeShowCartSwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['free_mode_show_cart']) and $itemValue['free_mode_show_cart']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                            <span class="custom-switch-indicator"></span>
+                            <label class="custom-switch-description mb-0 cursor-pointer" for="freeModeShowCartSwitch">{{ trans('admin/main.display_cart') }}</label>
+                        </label>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans('admin/main.display_cart_hint') }}</p>
+                    </div>
                 </div>
 
                 <div class="mb-5">
@@ -211,8 +243,6 @@
 
 
                 </div>
-
-
 
                 <div class="mb-5">
                     <h5>{{ trans('update.direct_classes_payment_button_settings') }}</h5>
@@ -387,6 +417,7 @@
 
                 <div class="mb-5">
                     <h5>{{ trans('update.live_chat_widget') }}</h5>
+
                     <div class="form-group custom-switches-stacked">
                         <label class="custom-switch pl-0">
                             <input type="hidden" name="value[show_live_chat_widget]" value="0">
@@ -400,7 +431,7 @@
                 </div>
 
 
-                <div class="mb-5">
+                 <div class="mb-5">
                     <h5>{{ trans('update.cashback') }}</h5>
 
                     <div class="form-group mt-3 custom-switches-stacked">
@@ -430,7 +461,6 @@
                     <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
                 </div>
-
 
                 <div class="mb-5">
                     <h5>{{ trans('update.session_api') }}</h5>
@@ -466,6 +496,8 @@
                         <p class="text-gray-500 font-12 mt-1">{{ trans('update.upload_sources_hint') }}</p>
                     </div>
                 </div>
+
+
 
 
                 <div class="mb-5">
@@ -565,8 +597,6 @@
                     </div>
                 </div>
 
-              
-
                 <div class="mb-5">
                 <h5>{{ trans('update.course_notes') }}</h5>
 
@@ -618,9 +648,10 @@
                 </div>
 
 
-
                 <button type="submit" class="btn btn-primary">{{ trans('admin/main.save_change') }}</button>
             </form>
         </div>
     </div>
+</div>
+</div>
 </div>

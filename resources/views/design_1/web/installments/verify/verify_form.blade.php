@@ -1,4 +1,4 @@
-<form action="/installments/{{ $installment->id }}/store" method="post">
+<form action="/installments/{{ $installment->id }}/store" method="post" enctype="multipart/form-data">
     {{ csrf_field() }}
     <input type="hidden" name="item" value="{{ request()->get('item') }}">
     <input type="hidden" name="item_type" value="{{ request()->get('item_type') }}">

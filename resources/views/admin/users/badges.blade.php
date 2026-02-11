@@ -8,7 +8,7 @@
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a>
                 </div>
-                <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}/users">{{ trans('admin/main.users') }}</a>
+                <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl("/all-users") }}">{{ trans('admin/main.users') }}</a>
                 </div>
                 <div class="breadcrumb-item">{{ trans('admin/main.badges') }}</div>
             </div>

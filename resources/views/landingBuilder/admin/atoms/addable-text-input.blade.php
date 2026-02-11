@@ -23,7 +23,7 @@
                 <div class="js-addable-item-card d-flex align-items-center gap-12 mt-24">
                     <div class="form-group mb-0 flex-1">
                         <label class="form-group-label bg-white">{{ $inputLabel }}</label>
-                        <input type="text" name="{{ $clearName }}" class="form-control bg-white" value="{{ $item }}" placeholder="{{ $placeholder ?? '' }}">
+                        <input type="text" name="{{ $clearName }}" class="form-control bg-white" value="{!! $item !!}" placeholder="{{ $placeholder ?? '' }}">
                     </div>
 
                     <div class="js-addable-items-remove-btn d-flex-center size-48 rounded-12 bg-danger-30 text-danger cursor-pointer">

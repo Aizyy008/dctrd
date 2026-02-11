@@ -38,19 +38,34 @@
 
         <div class="d-flex align-items-center justify-content-between mt-auto pt-12 border-top-gray-100">
             <div class="d-flex align-items-center font-16 font-weight-bold text-primary">
-                @if($item->price > 0)
-                    @if($item->bestTicket() < $item->price)
-                        <span class="">{{ handlePrice($item->bestTicket(), true, true, false, null, true, $taxType) }}</span>
-                        <span class="font-14 font-weight-400 text-gray-500 ml-8 text-decoration-line-through">{{ handlePrice($item->price, true, true, false, null, true, $taxType) }}</span>
+                @if($itemType == 'product')
+                    @if($item->price > 0)
+                        @php
+                            $itemPriceWithActiveDiscountPrice = $item->getPriceWithActiveDiscountPrice();
+                        @endphp
+
+                        @if($itemPriceWithActiveDiscountPrice < $item->price)
+                            <span class="">{{ ($itemPriceWithActiveDiscountPrice > 0) ? handlePrice($itemPriceWithActiveDiscountPrice, true, true, false, null, true, 'store') : trans('public.free') }}</span>
+                            <span class="font-14 font-weight-400 text-gray-500 ml-8 text-decoration-line-through">{{ handlePrice($item->price, true, true, false, null, true, 'store') }}</span>
+                        @else
+                            <span class="">{{ handlePrice($item->price, true, true, false, null, true, 'store') }}</span>
+                        @endif
                     @else
-                        <span class="">{{ handlePrice($item->price, true, true, false, null, true, $taxType) }}</span>
+                        <span class="">{{ trans('public.free') }}</span>
                     @endif
                 @else
-                    <span class="">{{ trans('public.free') }}</span>
+                    @if($item->price > 0)
+                        @if($item->bestTicket() < $item->price)
+                            <span class="">{{ handlePrice($item->bestTicket(), true, true, false, null, true, $taxType) }}</span>
+                            <span class="font-14 font-weight-400 text-gray-500 ml-8 text-decoration-line-through">{{ handlePrice($item->price, true, true, false, null, true, $taxType) }}</span>
+                        @else
+                            <span class="">{{ handlePrice($item->price, true, true, false, null, true, $taxType) }}</span>
+                        @endif
+                    @else
+                        <span class="">{{ trans('public.free') }}</span>
+                    @endif
                 @endif
             </div>
-
-
         </div>
 
     </div>

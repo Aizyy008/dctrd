@@ -95,7 +95,7 @@
                 <div class="mt-4 font-12 text-gray-500">{{ trans('update.start_learning_today_by_watching_your_purchased_courses_enroll_on_new_courses') }}</div>
 
                 <div class="d-flex align-items-center gap-8 mt-28 p-8 rounded-16 bg-white">
-                    <a href="/panel/courses" class="d-flex-center p-16 rounded-12 border-dashed border-gray-200 bg-white bg-hover-gray-100">
+                    <a href="/courses/purchases" class="d-flex-center p-16 rounded-12 border-dashed border-gray-200 bg-white bg-hover-gray-100">
                         <x-iconsax-bul-video-play class="icons text-primary" width="24px" height="24px"/>
                         <span class="text-dark ml-8">{{ trans('update.my_courses') }}</span>
                     </a>

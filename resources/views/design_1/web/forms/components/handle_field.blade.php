@@ -39,6 +39,7 @@
             <label class="form-group-label {{ $field->required ? 'is-required' : '' }} ">{{ $field->title }}</label>
 
             <div class="custom-file bg-white">
+                <input type="hidden" name="fields[{{ $field->id }}]" value="{{ (!empty($uploadPath)) ? $uploadPath : '' }}">
                 <input type="file" name="fields[{{ $field->id }}]" class="custom-file-input bg-white @error($field->id) is-invalid @enderror" id="field_{{ $field->id }}">
                 <span class="custom-file-text">{{ (!empty($uploadPath)) ? $uploadPath : '' }}</span>
                 <label class="custom-file-label" for="field_{{ $field->id }}">{{ trans('browse') }}</label>

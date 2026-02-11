@@ -29,7 +29,7 @@
     </div>
 
     <div id="collapseFiles{{ $file->id }}" class="accordion__collapse border-0 " role="tabpanel">
-        <div class="p-16 rounded-12 border-gray-200 bg-gray-100 ">
+        <div class="p-16 rounded-12 border-gray-200 bg-gray-100 mt-16">
             <div class="font-14 text-gray-500">
                 {!! nl2br(clean($file->description)) !!}
             </div>

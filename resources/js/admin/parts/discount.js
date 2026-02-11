@@ -23,11 +23,15 @@
         const categoriesInput = $('.js-categories-input');
         const productsInput = $('.js-products-input');
         const bundlesInput = $('.js-bundles-input');
+        const eventsInput = $('.js-events-input');
+        const meetingPackageInput = $('.js-meeting_package-input');
 
         courseInput.addClass('d-none');
         categoriesInput.addClass('d-none');
         productsInput.addClass('d-none');
         bundlesInput.addClass('d-none');
+        eventsInput.addClass('d-none');
+        meetingPackageInput.addClass('d-none');
 
         if (value === 'course') {
             courseInput.removeClass('d-none');
@@ -37,6 +41,10 @@
             productsInput.removeClass('d-none');
         } else if (value === 'bundle') {
             bundlesInput.removeClass('d-none');
+        } else if (value === 'event') {
+            eventsInput.removeClass('d-none');
+        } else if (value === 'meeting_package') {
+            meetingPackageInput.removeClass('d-none');
         }
     });
 })(jQuery);

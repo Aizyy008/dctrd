@@ -1,5 +1,9 @@
 @if(!empty($webinar->chapters) and count($webinar->chapters))
-    <ul class="draggable-content-lists draggable-webinar-chapters" data-path="/panel/webinar_chapters/orders" data-drag-class="draggable-webinar-chapters">
+    <ul class="draggable-content-lists draggable-webinar-chapters"
+        data-path="/panel/courses/order-items"
+        data-order-table="webinar_chapters"
+        data-drag-class="draggable-webinar-chapters"
+    >
 
         @foreach($webinar->chapters as $chapter)
             <li data-id="{{ $chapter->id }}" data-chapter-order="{{ $chapter->order }}" class="accordion bg-white rounded-15 p-16 border-gray-200 mt-16">
@@ -101,7 +105,11 @@
 
                     <div class="accordion-content-wrapper mt-20" id="chapterContentAccordion{{ $chapter->id }}" role="tablist" aria-multiselectable="true">
                         @if(!empty($chapter->chapterItems) and count($chapter->chapterItems))
-                            <ul class="draggable-content-lists draggable-lists-chapter-{{ $chapter->id }}" data-path="/panel/webinar_chapters/items/orders" data-drag-class="draggable-lists-chapter-{{ $chapter->id }}">
+                            <ul class="draggable-content-lists draggable-lists-chapter-{{ $chapter->id }}"
+                                data-path="/panel/courses/order-items"
+                                data-order-table="webinar_chapter_items"
+                                data-drag-class="draggable-lists-chapter-{{ $chapter->id }}"
+                            >
                                 @foreach($chapter->chapterItems as $chapterItem)
                                     @if($chapterItem->type == \App\Models\WebinarChapterItem::$chapterSession and !empty($chapterItem->session))
                                         @include('design_1.panel.webinars.create.includes.accordions.session' ,['session' => $chapterItem->session , 'chapter' => $chapter, 'chapterItem' => $chapterItem, 'webinar' => $webinar])

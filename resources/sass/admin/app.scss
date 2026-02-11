@@ -14,6 +14,7 @@
 @import "../design_1/bootstrap/parts/display-grid";
 @import "../design_1/bootstrap/parts/badge";
 @import "../design_1/bootstrap/parts/position";
+@import "../design_1/bootstrap/parts/modal";
 
 /* For Header */
 @import "../design_1/public/language_select";
@@ -22,6 +23,8 @@
 
 // Toast
 @import "../design_1/public/toast";
+@import "../design_1/public/sweetalert2";
+@import "../design_1/public/lists";
 
 /*  Parts */
 @import "parts/reset";

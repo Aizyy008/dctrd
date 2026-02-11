@@ -20,7 +20,9 @@
 
 .sliding-testimonials-2-rows-section {
 
+
     .testimonials-scroll-wrapper {
+        direction: ltr !important;
 
         .testimonials-scroll-animation {
             position: relative;
@@ -67,6 +69,12 @@
         &__comment {
             height: 172px;
             overflow: hidden;
+        }
+
+        @media (max-width: $screen-sm-max) {
+            width: 340px;
+            min-width: 340px;
+            height: 264px;
         }
     }
 

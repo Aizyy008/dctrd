@@ -14,7 +14,7 @@
                     ])
                 </div>
 
-                <div class="col-12 col-md-8">
+                <div class="col-12 col-md-12">
                     <div class="form-group">
                         <label class="form-group-label">{{ trans('quiz.question_title') }}</label>
                         <input type="text" name="ajax[title]" class="js-ajax-title form-control" value="{{ !empty($question_edit) ? $question_edit->title : '' }}"/>
@@ -22,7 +22,7 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
                     <div class="form-group">
                         <label class="form-group-label">{{ trans('quiz.grade') }}</label>
                         <input type="text" name="ajax[grade]" class="js-ajax-grade form-control" value="{{ !empty($question_edit) ? $question_edit->grade : '' }}"/>
@@ -31,6 +31,15 @@
                 </div>
 
                 <div class="col-12 col-md-6">
+                    <div class="form-group">
+                        <label class="form-group-label">{{ trans('quiz.negative_grade') }}</label>
+                        <input type="text" name="ajax[negative_grade]" class="js-ajax-negative_grade form-control" value="{{ !empty($question_edit) ? $question_edit->negative_grade : '' }}"/>
+                        <span class="invalid-feedback"></span>
+                        <p class="font-12 text-gray-500 mt-4">{{ trans('quiz.leave_empty_for_no_negative') }}</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-12">
                     <div class="form-group">
                         <label class="form-group-label">{{ trans('public.image') }} ({{ trans('public.optional') }})</label>
 
@@ -48,7 +57,7 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-12">
                     <div class="form-group">
                         <label class="form-group-label">{{ trans('update.video') }} ({{ trans('public.optional') }})</label>
 

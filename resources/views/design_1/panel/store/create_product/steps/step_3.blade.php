@@ -4,7 +4,7 @@
 
 <div class="bg-white rounded-16 p-16 mt-32">
 
-    <h3 class="font-14 font-weight-bold mt-24">{{ trans('update.thumbnail_&_cover') }}</h3>
+    <h3 class="font-14 font-weight-bold">{{ trans('update.thumbnail_&_cover') }}</h3>
 
     <div class="row">
 
@@ -75,13 +75,22 @@
     <h3 class="font-14 font-weight-bold my-24">{{ trans('public.demo_video') }} ({{ trans('public.optional') }})</h3>
 
     <div class="js-inputs-with-source row">
+        @php
+            $selectedVideoSource = (!empty($product) and !empty($product->video_demo_source)) ? $product->video_demo_source : null;
+        @endphp
 
         <div class="col-12 col-md-6">
             <div class="form-group ">
                 <label class="form-group-label">{{ trans('update.video_source') }}</label>
                 <select name="video_demo_source" class="js-upload-source-input form-control select2 @error('video_demo_source') is-invalid @enderror" data-minimum-results-for-search="Infinity">
-                    @foreach(\App\Enums\UploadSource::allSources as $source)
-                        <option value="{{ $source }}" {{ (!empty($product) and $product->video_demo_source == $source) ? 'selected' : '' }}>{{ trans($source) }}</option>
+                    @foreach(getAvailableUploadFileSources() as $source)
+                        @php
+                            if($loop->first and empty($selectedVideoSource)) {
+                                $selectedVideoSource = $source;
+                            }
+                        @endphp
+
+                        <option value="{{ $source }}" {{ (!empty($product) and $product->video_demo_source == $source) ? 'selected' : '' }}>{{ trans('update.file_source_'.$source) }}</option>
                     @endforeach
                 </select>
 
@@ -92,7 +101,7 @@
         </div>
 
         <div class="col-12 col-md-6">
-            <div class="form-group js-online-upload {{ (empty($product) or !in_array($product->video_demo_source, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
+            <div class="form-group js-online-upload {{ (!in_array($selectedVideoSource, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
                 <span class="has-translation bg-transparent">
                     <x-iconsax-lin-link-21 class="icons text-gray-400" width="24px" height="24px"/>
                 </span>
@@ -100,7 +109,7 @@
                 <input type="text" name="demo_video_path" class="form-control" value="{{ !empty($product) ? $product->video_demo : old('demo_video_path') }}" placeholder="{{ trans('update.insert_demo_video_link') }}">
             </div>
 
-            <div class="form-group js-local-upload {{ (!empty($product) and in_array($product->video_demo_source, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
+            <div class="form-group js-local-upload {{ (in_array($selectedVideoSource, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
                 <span class="has-translation bg-transparent">
                     <x-iconsax-lin-export class="icons text-gray-400" width="24px" height="24px"/>
                 </span>
@@ -133,11 +142,11 @@
         </div>
 
         <div class="row">
-            <div class="col-lg-6 mt-20">
+            <div class="col-lg-6">
                 @include('design_1.panel.store.create_product.includes.accordions.file')
             </div>
 
-            <div class="col-lg-6 mt-36">
+            <div class="col-lg-6 mt-16">
                 @if(!empty($product->files) and count($product->files))
                     <div class="p-16 rounded-16 border-gray-200">
                         <h3 class="font-14 font-weight-bold">{{ trans('public.files') }}</h3>
@@ -149,7 +158,7 @@
                         </ul>
                     </div>
                 @else
-                    <div class="d-flex-center flex-column px-32 py-120 text-center">
+                    <div class="d-flex-center flex-column px-32 py-120 text-center rounded-16 border-gray-200">
                         <div class="d-flex-center size-64 rounded-12 bg-primary-30">
                             <x-iconsax-bul-document-download class="icons text-primary" width="32px" height="32px"/>
                         </div>

@@ -190,6 +190,15 @@
                                     <textarea name="bottom_seo_content" class="form-control" rows="5">{{ !empty($category) ? $category->bottom_seo_content : old('bottom_seo_title') }}</textarea>
                                 </div>
 
+                                <div class="form-group custom-switches-stacked">
+                                    <label class="custom-switch pl-0">
+                                        <input type="hidden" name="enable" value="">
+                                        <input type="checkbox" name="enable" id="enableSwitch" value="on" {{ (!empty($category) and $category->enable) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                                        <span class="custom-switch-indicator"></span>
+                                        <label class="custom-switch-description mb-0 cursor-pointer" for="enableSwitch">{{ trans('admin/main.active') }}</label>
+                                    </label>
+                                </div>
+
                                 <div class="form-group">
                                     <div class="custom-control custom-checkbox">
                                         <input id="hasSubCategory" type="checkbox" name="has_sub"
@@ -229,7 +238,9 @@
                                                                 @include('admin.includes.delete_button',[
                                                                          'url' => getAdminPanelUrl("/categories/{$subCategory->id}/delete"),
                                                                          'deleteConfirmMsg' => trans('update.category_delete_confirm_msg'),
-                                                                         'btnClass' => 'btn btn-danger text-white',
+                                                                         'btnClass' => 'input-group-text btn-danger text-white',
+                                                                         'btnIcon' => 'trash',
+                                                                         'iconClass' => 'text-white',
                                                                          'noBtnTransparent' => true
                                                                      ])
                                                             </div>
@@ -312,6 +323,14 @@
                                                             <textarea name="sub_categories[{{ $subCategory->id }}][bottom_seo_content]" class="form-control" rows="5" placeholder="{{ trans('update.bottom_seo_content') }}">{{ $subCategory->bottom_seo_content }}</textarea>
                                                         </div>
 
+                                                        <div class="form-group custom-switches-stacked mb-0">
+                                                            <label class="custom-switch pl-0">
+                                                                <input type="hidden" name="sub_categories[{{ $subCategory->id }}][enable]" value="">
+                                                                <input type="checkbox" name="sub_categories[{{ $subCategory->id }}][enable]" id="enableSwitch_{{ $subCategory->id }}" value="on" {{ ($subCategory->enable) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                                                                <span class="custom-switch-indicator"></span>
+                                                                <label class="custom-switch-description mb-0 cursor-pointer" for="enableSwitch_{{ $subCategory->id }}">{{ trans('admin/main.active') }}</label>
+                                                            </label>
+                                                        </div>
                                                     </div>
                                                 </li>
                                             @endforeach
@@ -338,7 +357,9 @@
                                                placeholder="{{ trans('admin/main.choose_title') }}"/>
 
                                         <div class="input-group-append">
-                                            <button type="button" class="btn remove-btn btn-danger"><i class="fa fa-times"></i></button>
+                                            <button type="button" class="remove-btn input-group-text btn-danger text-white">
+                                                <x-iconsax-lin-trash class="text-white" width="18px" height="18px"/>
+                                            </button>
                                         </div>
                                     </div>
 
@@ -416,6 +437,15 @@
 
                                     <div class="input-group mt-1">
                                         <textarea name="sub_categories[record][bottom_seo_content]" class="form-control" rows="5" placeholder="{{ trans('update.bottom_seo_content') }}"></textarea>
+                                    </div>
+
+                                    <div class="form-group custom-switches-stacked mb-0">
+                                        <label class="custom-switch pl-0">
+                                            <input type="hidden" name="sub_categories[record][enable]" value="">
+                                            <input type="checkbox" name="sub_categories[record][enable]" id="enableSwitch_record" value="on" class="custom-switch-input"/>
+                                            <span class="custom-switch-indicator"></span>
+                                            <label class="custom-switch-description mb-0 cursor-pointer" for="enableSwitch_record">{{ trans('admin/main.active') }}</label>
+                                        </label>
                                     </div>
 
                                 </div>

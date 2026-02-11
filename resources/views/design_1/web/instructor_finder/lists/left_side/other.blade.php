@@ -86,7 +86,7 @@
                     id="priceRange"
                     data-minLimit="{{ removeCurrencyFromPrice(request()->get('min_price', 0)) }}"
                     data-maxLimit="{{ removeCurrencyFromPrice(request()->get('max_price', $filterMaxPrice)) }}"
-                    data-step="100"
+                    data-step="{{ ($filterMaxPrice < 100) ? 2 : (($filterMaxPrice < 500) ? 50 : 100) }}"
             >
                 <input type="hidden" name="min_price" value="{{ removeCurrencyFromPrice(request()->get('min_price')) }}">
                 <input type="hidden" name="max_price" value="{{ removeCurrencyFromPrice(request()->get('max_price')) }}">

@@ -64,7 +64,9 @@
             </div>
 
             <div class="d-flex align-items-center gap-12 mt-auto">
-                <a href="{{ $course->getUrl() }}" class="course-row-card-1__add-to-cart-btn btn btn-primary btn-lg rounded-12">{{ trans('public.add_to_cart') }}</a>
+                @if(!isFreeModeEnabled())
+                    <a href="{{ $course->getUrl() }}" class="course-row-card-1__add-to-cart-btn btn btn-primary btn-lg rounded-12">{{ trans('public.add_to_cart') }}</a>
+                @endif
 
                 <a @if(auth()->guest()) href="/login" @else href="/favorites/{{ $course->slug }}/toggle" id="favoriteToggle" @endif class="d-flex-center size-48 rounded-12 border-gray-200 {{ ($course->isFavoriteAuthUser()) ? 'text-danger' : 'text-gray-500' }}">
                     <x-iconsax-bol-heart class="icons " width="24px" height="24px"/>

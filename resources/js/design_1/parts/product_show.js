@@ -103,19 +103,30 @@
         data['item_name'] = "product_id";
         data['quantity'] = $quantity.val();
 
-        const path = "/cart/store";
+        let path = "/cart/store";
+
+        if ($this.attr('data-direct-payment') === 'true') {
+            path = "/products/direct-payment";
+        }
 
         $.post(path, data, function (result) {
             showToast('success', result.title, result.msg);
 
-            setTimeout(function () {
-                window.location.reload();
-            }, 2000)
+            if (result.redirect_to && result.redirect_to !== '') {
+                window.location.href = result.redirect_to;
+            } else {
+                setTimeout(function () {
+                    window.location.reload();
+                }, 2000)
+            }
         }).fail(function (err) {
             $this.removeClass('loadingbar primary').prop('disabled', false);
             const errors = err.responseJSON;
 
-            if (errors && errors.msg) {
+            // toast
+            if (errors && errors.toast_alert) {
+                showToast('error', errors.toast_alert.title, errors.toast_alert.msg)
+            } else if (errors && errors.msg) {
                 showToast('error', errors.title, errors.msg);
             } else {
                 showToast('error', oopsLang, somethingWentWrongLang);
@@ -123,6 +134,10 @@
         })
     });
 
+
+    /*===========
+    * Installment
+    * =========*/
     $('body').on('click', '.js-installments-btn', function (e) {
         e.preventDefault();
 

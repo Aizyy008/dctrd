@@ -28,6 +28,22 @@
                                 <a href="/panel" class="btn btn-primary btn-lg">{{ trans('public.my_panel') }}</a>
                             </div>
                         @else
+                            @php
+                                $isOfflineSubmitted = (!empty($order) && $order->status === \App\Models\Order::$paying);
+                            @endphp
+                            @if($isOfflineSubmitted)
+                                <div class="system-status-page-image">
+                                    <img src="/assets/design_1/img/cart/successful_payment.png" alt="{{ trans('update.successful_payment') }}" class="img-cover">
+                                </div>
+
+                                <h1 class="font-16 font-weight-bold mt-14">{{ trans('update.offline_payment_submitted') }}</h1>
+
+                                <p class="font-14 text-gray-500 mt-4">{{ trans('update.offline_payment_submitted_hint') }}</p>
+
+                                <div class="d-flex align-items-center gap-16 mt-16">
+                                    <a href="/panel" class="btn btn-primary btn-lg">{{ trans('public.my_panel') }}</a>
+                                </div>
+                            @else
                             <div class="system-status-page-image">
                                 <img src="/assets/design_1/img/cart/failed_payment.png" alt="{{ trans('update.failed_payment') }}" class="img-cover">
                             </div>
@@ -41,6 +57,7 @@
 
                                 <a href="/panel" class="btn btn-primary btn-lg">{{ trans('public.my_panel') }}</a>
                             </div>
+                            @endif
                         @endif
                     </div>
                 </div>

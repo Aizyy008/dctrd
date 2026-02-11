@@ -16,7 +16,7 @@
 
             <div class="row mb-160">
                 {{-- Items --}}
-                <div class="col-12 col-md-7 col-lg-9 mt-32">
+                <div class="col-12 col-md-7 col-lg-9 mt-32 mb-104">
 
                     {{-- CashBack --}}
                     @if(!empty($totalCashbackAmount))

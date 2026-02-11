@@ -114,7 +114,7 @@
                 @endif
 
                 <div class="d-flex align-items-center font-16 font-weight-bold text-success">
-                    @if($course->price > 0)
+                    @if((!isFreeModeEnabled() || isFreeModeShowPriceEnabled()) and $course->price > 0)
                         @if($course->bestTicket() < $course->price)
                             <span class="">{{ handlePrice($course->bestTicket(), true, true, false, null, true) }}</span>
                             <span class="font-14 font-weight-400 text-gray-500 ml-8 text-decoration-line-through">{{ handlePrice($course->price, true, true, false, null, true) }}</span>

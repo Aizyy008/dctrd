@@ -37,8 +37,12 @@
 
     $(document).ready(function () {
         const $countryCodeSelect2 = $('.country-code-select2');
+
+        const dropdownParent = $countryCodeSelect2.attr('data-dropdown-parent') ?? 'body'
+
         $countryCodeSelect2.select2({
             dropdownCssClass: "country-code-select2-dropdown",
+            dropdownParent: $(dropdownParent),
         })
 
         handleResendTimer()

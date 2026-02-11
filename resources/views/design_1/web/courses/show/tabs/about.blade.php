@@ -158,9 +158,9 @@
 
             <div class="row">
                 @foreach($course->prerequisites as $prerequisite)
-                    @if(!empty($prerequisite->prerequisiteWebinar))
+                    @if(!empty($prerequisite->course))
                         <div class="col-12 col-md-6 col-lg-3 mt-16">
-                            @include('design_1.web.courses.show.includes.prerequisite',['courseItem' => $prerequisite->prerequisiteWebinar])
+                            @include('design_1.web.courses.show.includes.prerequisite',['courseItem' => $prerequisite->course])
                         </div>
                     @endif
                 @endforeach

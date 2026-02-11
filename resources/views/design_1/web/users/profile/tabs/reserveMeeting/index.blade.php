@@ -32,6 +32,16 @@
         </div>
     @endif
 
+    @if(!empty($userMeetingPackages) and $userMeetingPackages->isNotEmpty())
+        <div class="mt-16 ">
+            <h4 class="font-16">{{ trans('update.meeting_packages') }}</h4>
+            <p class="font-12 text-gray-500 mt-4">{{ trans('update.book_multiple_sessions_in_one_package') }}</p>
+        </div>
+
+        <div class="row">
+            @include('design_1.web.meeting_packages.components.cards.grids.index',['meetingPackages' => $userMeetingPackages, 'gridCardClassName' => "card-with-border col-12 col-md-6 col-lg-4 mt-12"])
+        </div>
+    @endif
 
     @push('scripts_bottom2')
         <script src="/assets/default/vendors/persian-datepicker/persian-date.js"></script>

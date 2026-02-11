@@ -17,9 +17,8 @@
             <span class="js-side-cart-subtotal text-dark font-weight-bold"></span>
         </div>
 
-        <div class="d-grid grid-columns-2 gap-8 mt-12">
-            <a href="/cart" class="btn btn-outline-primary">{{ trans('update.view_cart') }}</a>
-            <a href="/cart" class="btn btn-primary">{{ trans('update.checkout') }}</a>
+        <div class="mt-12">
+            <a href="/cart" class="btn btn-outline-primary btn-block">{{ trans('update.view_cart') }}</a>
         </div>
     </div>
 </div>

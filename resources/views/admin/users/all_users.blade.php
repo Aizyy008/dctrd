@@ -268,7 +268,7 @@
                             </td>
 
                             <td>
-                                {{ $user->role->caption }}
+                                {{ optional($user->role)->caption ?? '-' }}
                             </td>
 
                             <td>{{ handlePrice($user->getAccountingBalance()) }}</td>

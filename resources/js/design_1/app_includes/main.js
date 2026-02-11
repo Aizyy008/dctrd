@@ -32,8 +32,14 @@
     }
 
     $(document).ready(function () {
-        tippyTooltip()
+        if (typeof tippy !== "undefined") {
+            tippyTooltip()
+        }
     })
+
+    window.isBodyRtl = function () {
+        return ($('body').hasClass('rtl'))
+    }
 
     /**
      * select
@@ -48,11 +54,14 @@
     window.handleSelect2 = ($element) => {
         const placeholder = $element.attr('data-placeholder')
         const dropdownParent = $element.attr('data-dropdown-parent') ?? 'body'
+        const maximumSelectionLength = $element.attr('data-maximumSelectionLength') ?? 0; // default 0 means not limitation
 
         return $element.select2({
             placeholder: placeholder,
             width: '100%',
             dropdownParent: $(dropdownParent),
+            maximumSelectionLength: maximumSelectionLength,
+            dir: isBodyRtl() ? 'rtl' : 'ltr',
         });
     }
 
@@ -64,13 +73,16 @@
         const webinarId = $element.attr('data-webinar-id')
         const itemId = $element.attr('data-item-id')
         const dropdownParent = $element.attr('data-dropdown-parent') ?? 'body'
+        const maximumSelectionLength = $element.attr('data-maximumSelectionLength') ?? 0; // default 0 means not limitation
 
         $element.select2({
             placeholder: placeholder,
             minimumInputLength: 3,
             allowClear: true,
             width: '100%',
+            dir: isBodyRtl() ? 'rtl' : 'ltr',
             dropdownParent: $(dropdownParent),
+            maximumSelectionLength: maximumSelectionLength,
             ajax: {
                 url: apiPath,
                 dataType: 'json',
@@ -112,6 +124,11 @@
                 handleSelect2($(select2El))
             }
         }
+
+        const $iconsSelect2 = $('.js-icons-select2');
+        if ($iconsSelect2.length) {
+            handleChooseIconSelect2($iconsSelect2)
+        }
     })
 
     /**
@@ -123,7 +140,7 @@
     * loading Swl
     * */
     window.loadingSwl = () => {
-        const loadingHtml = '<div class="d-flex align-items-center justify-content-center py-56 "><img src="/assets/default/images/loading.svg" width="80" height="80"></div>';
+        const loadingHtml = '<div class="d-flex align-items-center justify-content-center py-56 "><img src="/assets/design_1/img/loading.svg" width="80" height="80"></div>';
         Swal.fire({
             html: loadingHtml,
             showCancelButton: false,
@@ -139,6 +156,7 @@
         e.stopPropagation();
         const href = $(this).attr('href');
 
+        const modalTitle = $(this).attr('data-modal-title') ?? deleteRequestLang;
         const title = $(this).attr('data-title') ?? deleteAlertTitle;
         const msg = $(this).attr('data-msg') ?? deleteAlertHint;
         const confirm = $(this).attr('data-confirm') ?? deleteAlertConfirm;
@@ -157,7 +175,7 @@
             <button type="button" id="swlDelete" data-href="${href}" class="btn btn-danger">${confirm}</button>
         </div>`;
 
-        const html = makeModalHtml(deleteRequestLang, closeIcon, bodyHtml, $footerHtml)
+        const html = makeModalHtml(modalTitle, closeIcon, bodyHtml, $footerHtml)
 
         Swal.fire({
             html: html,
@@ -565,6 +583,7 @@
     window.makeDateRangePicker = function ($el, drops = 'down') {
         const format1 = $el.attr('data-format') ?? 'YYYY-MM-DD';
         const timepicker1 = !!$el.attr('data-timepicker');
+        const elParent = $el.attr('data-el-parent') ?? 'body'
 
         $el.daterangepicker({
             locale: {
@@ -575,7 +594,8 @@
             autoUpdateInput: false,
             timePicker: timepicker1,
             timePicker24Hour: true,
-            opens: 'right'
+            opens: 'right',
+            parentEl: elParent,
         });
         $el.on('apply.daterangepicker', function (ev, picker) {
             $(this).val(picker.startDate.format(format1) + ' - ' + picker.endDate.format(format1));
@@ -589,6 +609,7 @@
     window.makeDateTimepicker = function ($el, drops = 'down') {
         const format2 = $el.attr('data-format') ?? 'YYYY-MM-DD HH:mm';
         const showDropdowns = !!($el.attr('data-show-drops'));
+        const elParent = $el.attr('data-el-parent') ?? 'body'
 
         $el.daterangepicker({
             locale: {
@@ -601,6 +622,7 @@
             autoUpdateInput: false,
             showDropdowns: showDropdowns,
             drops: drops,
+            parentEl: elParent,
             period: 'day' | 'month' | 'year'
         });
         $el.on('apply.daterangepicker', function (ev, picker) {
@@ -615,6 +637,7 @@
     window.makeSingleDatePicker = function ($el, drops = 'down') {
         const format3 = $el.attr('data-format') ?? 'YYYY-MM-DD';
         const showDropdowns = !!($el.attr('data-show-drops'));
+        const elParent = $el.attr('data-el-parent') ?? 'body'
 
         $el.daterangepicker({
             locale: {
@@ -626,6 +649,7 @@
             autoUpdateInput: false,
             showDropdowns: showDropdowns,
             drops: drops,
+            parentEl: elParent,
         });
         $el.on('apply.daterangepicker', function (ev, picker) {
             $(this).val(picker.startDate.format('YYYY-MM-DD'));
@@ -669,23 +693,40 @@
         }
     }
 
+    window.handleTimePicker = function ($timePicker) {
+        $timePicker.persianDatepicker({
+            format: 'HH:mm',
+            calendarType: 'gregorian',
+            calendar: {
+                persian: {
+                    locale: 'en'
+                }
+            },
+            onlyTimePicker: true,
+            timePicker: {
+                minute: {
+                    step: 5
+                },
+                second: {
+                    enabled: false
+                }
+            }
+        });
+    }
+
     /*
     * Select locale change
     * */
-    $('body').on('change', '.js-reload-when-selected', function (e) {
+    $('body').on('change', '.js-edit-content-locale, .js-reload-when-selected', function (e) {
         e.preventDefault();
 
         const value = $(this).val();
+        if (!value) return;
 
-        if (value) {
-            let url = window.location.origin + window.location.pathname;
+        const url = new URL(window.location.href);
+        url.searchParams.set('locale', value);
 
-            url += (url.indexOf('?') > -1) ? '&' : '?';
-
-            url += 'locale=' + value;
-
-            window.location.href = url;
-        }
+        window.location.href = url.toString();
     })
 
     /*
@@ -701,8 +742,13 @@
         }
 
 
-        function updateToDatabase(path, idString) {
-            $.post(path, {items: idString}, function (result) {
+        function updateToDatabase(path, table, idString) {
+            const data = {
+                table: table,
+                items: idString,
+            };
+
+            $.post(path, data, function (result) {
                 if (result && result.title && result.msg) {
                     showToast('success', result.title, result.msg)
                 }
@@ -716,10 +762,11 @@
                     handle: '.move-icon',
                     axis: "y",
                     update: function (e, ui) {
-                        var sortData = target.sortable('toArray', {attribute: 'data-id'});
-                        var path = e.target.getAttribute('data-path');
+                        const sortData = target.sortable('toArray', {attribute: 'data-id'});
+                        const path = e.target.getAttribute('data-path');
+                        const table = e.target.getAttribute('data-order-table');
 
-                        updateToDatabase(path, sortData.join(','))
+                        updateToDatabase(path, table, sortData.join(','))
                     }
                 });
             }
@@ -842,17 +889,20 @@
                     });
 
                     if (scrollToError) {
-                        const $swlModalBody = $('.custom-swl-modal-body');
                         const $elScroll = $form.find('.is-invalid');
 
-                        if ($swlModalBody.length) {
-                            $swlModalBody.animate({
-                                scrollTop: $elScroll.offset().top
-                            }, 1000);
-                        } else {
-                            $('html, body').animate({
-                                scrollTop: $elScroll.offset().top
-                            }, 1000);
+                        if ($elScroll.length) {
+                            const $swlModalBody = $('.custom-swl-modal-body');
+
+                            if ($swlModalBody.length) {
+                                $swlModalBody.animate({
+                                    scrollTop: $elScroll.offset().top
+                                }, 1000);
+                            } else {
+                                $('html, body').animate({
+                                    scrollTop: $elScroll.offset().top
+                                }, 1000);
+                            }
                         }
                     }
                 }
@@ -961,6 +1011,14 @@
         $form.trigger('submit');
     })
 
+    window.handleBootstrapTags = function ($el) {
+        if (jQuery().tagsinput) {
+            $el.tagsinput({
+                tagClass: 'bg-primary px-8 py-4 rounded-5',
+                maxTags: ($el.data('max-tag') ? $el.data('max-tag') : 10),
+            });
+        }
+    }
 
     $(document).ready(function () {
         $('img.js-avatar-img').on('error', function () {
@@ -968,6 +1026,10 @@
                 $(this).attr('src', defaultAvatarPath);
             }
         });
+
+        /// Tags
+        var $inputTags = $('.inputtags');
+        handleBootstrapTags($inputTags)
     });
 
     window.updateQueryParamAndReload = function (key, value) {
@@ -997,6 +1059,18 @@
         $parent.find('.custom-file-text').text(text);
 
         $this.remove()
+    })
+
+    /* Back to top */
+    $('body').on('click', '.js-back-to-top-btn', function (e) {
+        e.preventDefault();
+        const $this = $(this);
+        const speed = $this.attr('data-speed') ?? 5000;
+
+
+        $('html, body').animate({
+            scrollTop: 0
+        }, Number(speed));
     })
 
 })(jQuery)

@@ -130,6 +130,11 @@
                                                     </button>
                                                 </div>
                                                 <input type="text" name="image" id="image" value="{{ (!empty($post)) ? $post->image : old('image') }}" class="form-control @error('image') is-invalid @enderror" placeholder="{{ trans('update.blog_cover_image_placeholder') }}"/>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="input-group-text admin-file-view" data-input="image">
+                                                        <i class="fa fa-eye"></i>
+                                                    </button>
+                                                </div>
                                                 @error('image')
                                                 <div class="invalid-feedback">
                                                     {{ $message }}

@@ -25,35 +25,23 @@
     }
 
     function handlePDatepicker() {
-        let calendarType = "gregorian";
-        let calendarLocale = {
-            gregorian: {
-                locale: 'en'
-            }
-        };
-
-        /*if (typeof appLocale !== "undefined" && (appLocale === "fa" || appLocale === "FA")) {
-            calendarType = "persian";
-
-            calendarLocale = {
-                persian: {
-                    locale: 'fa'
-                },
-                gregorian: {
-                    locale: 'en'
-                }
-            };
-        }*/
 
         $(".inline-reservation-calender").pDatepicker({
             inline: true,
             altField: '#inlineCalender',
             initialValue: true,
-            calendarType: calendarType,
+            calendarType: (typeof appLocale !== "undefined" && (appLocale === "fa" || appLocale === "FA")) ? 'persian' : 'gregorian',
             initialValueType: true,
             autoClose: true,
             altFormat: 'DD MMMM YY',
-            calendar: calendarLocale,
+            calendar: {
+                gregorian: {
+                    locale: 'en'
+                },
+                persian: {
+                    locale: 'fa'
+                }
+            },
             toolbox: {
                 calendarSwitch: {
                     enabled: false

@@ -14,11 +14,11 @@
 
         <div class="ml-12">
             <h6 class="js-notification-title font-14 font-weight-bold">{{ $notification->title }}</h6>
-            <p class="mt-4 font-12 text-gray-500">{!! truncate($notification->message, 150, true) !!}</p>
+            <p class="mt-4 font-12 text-gray-500">{!! truncate(strip_tags($notification->message), 150, true) !!}</p>
         </div>
     </div>
 
     <span class="js-notification-time text-gray-500 mt-16 mt-lg-0">{{ dateTimeFormat($notification->created_at, 'j M Y | H:i') }}</span>
 
-    <input type="hidden" class="js-notification-message" value="{!! $notification->message !!}">
+    <input type="hidden" class="js-notification-message" value="{{ $notification->message }}">
 </div>

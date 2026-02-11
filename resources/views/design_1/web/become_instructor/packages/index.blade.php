@@ -1,4 +1,4 @@
-@extends("design_1.web.layouts.app")
+@extends('design_1.web.layouts.app', ['appFooter' => false])
 
 @push("styles_top")
     <link rel="stylesheet" href="{{ getDesign1StylePath("registration-packages") }}">

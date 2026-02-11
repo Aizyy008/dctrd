@@ -14,6 +14,9 @@
             @elseif($itemName == "product_id")
                 <h5 class="font-14 font-weight-bold mt-12">{{ trans('update.review_this_product') }}</h5>
                 <p class="font-12 text-gray-500 mt-4">{{ trans('update.you_need_to_enroll_of_the_product_to_review_this_product') }}</p>
+            @elseif($itemName == "event_id")
+                <h5 class="font-14 font-weight-bold mt-12">{{ trans('update.review_this_event') }}</h5>
+                <p class="font-12 text-gray-500 mt-4">{{ trans('update.you_need_to_enroll_of_the_tickets_to_review_this_event') }}</p>
             @endif
         </div>
     @elseif($itemRow->reviews()->where('creator_id', $authUser->id)->count() < 1)

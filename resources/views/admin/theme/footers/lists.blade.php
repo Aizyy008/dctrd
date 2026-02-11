@@ -14,13 +14,13 @@
         <div class="section-body">
 
             <div class="card">
-            <div class="card-header justify-content-between">
-                            
-                            <div>
-                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
-                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_items_in_a_single_place') }}</p>
-                           </div>
-                           
+                <div class="card-header justify-content-between">
+
+                    <div>
+                        <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                        <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_items_in_a_single_place') }}</p>
+                    </div>
+
                 </div>
 
                 <div class="card-body">
@@ -42,13 +42,9 @@
 
                                     <td width="100">
                                         <a href="{{ getAdminPanelUrl("/themes/footers/{$themeFooter->id}/edit") }}" class="btn-transparent  text-primary mr-1" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                        <x-iconsax-lin-edit-2 class="icons text-gray-500" width="18px" height="18px"/>
+                                            <x-iconsax-lin-edit-2 class="icons text-gray-500" width="18px" height="18px"/>
                                         </a>
                                     </td>
-
-
-
-
 
 
                                 </tr>

@@ -13,13 +13,15 @@
         <div class="d-flex align-items-center gap-24 mt-16 mt-lg-0">
 
             <div class="d-flex align-items-center">
-                <div class="size-40 rounded-circle">
-                    <img src="{{ $post->author->getAvatar(40) }}" alt="{{ $post->author->full_name }}" class="img-cover rounded-circle">
-                </div>
-                <div class="ml-8">
-                    <span class="d-block font-12 text-gray-400">{{ trans('update.written_by') }}</span>
-                    <span class="d-block font-14 font-weight-bold text-gray-500">{{ $post->author->full_name }}</span>
-                </div>
+                <a href="{{ $post->author->getProfileUrl() }}" target="_blank" class="d-flex align-items-center">
+                    <div class="size-40 rounded-circle">
+                        <img src="{{ $post->author->getAvatar(40) }}" alt="{{ $post->author->full_name }}" class="img-cover rounded-circle">
+                    </div>
+                    <div class="ml-8">
+                        <span class="d-block font-12 text-gray-400">{{ trans('update.written_by') }}</span>
+                        <span class="d-block font-14 font-weight-bold text-gray-500">{{ $post->author->full_name }}</span>
+                    </div>
+                </a>
             </div>
 
             @if(!empty( $post->study_time ))

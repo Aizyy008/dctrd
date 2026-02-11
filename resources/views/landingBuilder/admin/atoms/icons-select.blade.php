@@ -2,7 +2,7 @@
 <div class="form-group select2-bg-white {{ $className ?? '' }}">
     <label class="form-group-label bg-white">{{ $label }}</label>
 
-    <select name="{{ $name }}" class="form-control bg-white {{ $selectClassName ?? '' }}" data-allow-clear="true" data-placeholder="{{ $placeholder ?? '' }}">
+    <select name="{{ $name }}" class="form-control bg-white {{ $selectClassName ?? '' }}" data-allow-clear="true" data-placeholder="{{ $placeholder ?? '' }}" data-dropdown-parent="{{ !empty($dropdownParent) ? $dropdownParent : '' }}">
         <option value="">{{ trans('update.search_icons') }}</option>
 
         @if(!empty($value))

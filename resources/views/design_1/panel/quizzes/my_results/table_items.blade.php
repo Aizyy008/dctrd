@@ -44,7 +44,7 @@
 
                     @if((!$quizResult->can_try and $quizResult->status != 'waiting') or ($quizResult->status == 'passed'))
                         <li class="actions-dropdown__dropdown-menu-item">
-                            <a href="/panel/quizzes/{{ $quizResult->id }}/result" class="">{{ trans('public.view_answers') }}</a>
+                            <a href="/panel/quizzes/results/{{ $quizResult->id }}/details" target="_blank" class="">{{ trans('public.view_answers') }}</a>
                         </li>
                     @endif
 

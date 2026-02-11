@@ -9,9 +9,19 @@
 
     &__hello-box {
         height: 376px;
-        background-image: url("/assets/design_1/img/panel/dashboard/student/hello-box-bg.png");
-        background-repeat: no-repeat;
-        background-size: cover;
+
+        &-bg {
+            position: absolute;
+            inset: 0;
+            background-color: var(--primary);
+            background-image: url("/assets/design_1/img/panel/dashboard/student/hello-box-bg.png");
+            background-repeat: no-repeat;
+            background-size: cover;
+
+            .rtl & {
+                transform: scaleX(-1);
+            }
+        }
 
 
         @media (max-width: $screen-sm-max) {
@@ -34,11 +44,20 @@
 
     &__active-subscribe-card {
         height: 130px;
-        background-color: var(--dark);
-        background-image: url("/assets/design_1/img/panel/dashboard/student/active-subscribe-bg.png");
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: bottom;
+
+        &-bg {
+            position: absolute;
+            inset: 0;
+            background-color: var(--dark);
+            background-image: url("/assets/design_1/img/panel/dashboard/student/active-subscribe-bg.png");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: bottom;
+
+            .rtl & {
+                transform: scaleX(-1);
+            }
+        }
 
         .progress-card {
             width: 60%;
@@ -47,11 +66,20 @@
 
     &__no-subscribe-card {
         height: 147px;
-        background-color: var(--primary);
-        background-image: url("/assets/design_1/img/panel/dashboard/student/no-subscribe-bg.png");
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: bottom;
+
+        &-bg {
+            position: absolute;
+            inset: 0;
+            background-color: var(--primary);
+            background-image: url("/assets/design_1/img/panel/dashboard/student/no-subscribe-bg.png");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: bottom;
+
+            .rtl & {
+                transform: scaleX(-1);
+            }
+        }
     }
 
     &__my-assignment-box {
@@ -356,13 +384,23 @@
 
     &__hello-box {
         height: 376px;
-        background-color: var(--dark);
-        background-image: url("/assets/design_1/img/panel/dashboard/instructor/hello-box-bg.png");
-        background-repeat: no-repeat;
-        background-size: cover;
 
-        &.organ-hello-box {
-            background-image: url("/assets/design_1/img/panel/dashboard/organ/hello-box-bg.png");
+
+        &-bg {
+            position: absolute;
+            inset: 0;
+            background-color: var(--dark);
+            background-image: url("/assets/design_1/img/panel/dashboard/instructor/hello-box-bg.png");
+            background-repeat: no-repeat;
+            background-size: cover;
+
+            &.organ-hello-box {
+                background-image: url("/assets/design_1/img/panel/dashboard/organ/hello-box-bg.png");
+            }
+
+            .rtl & {
+                transform: scaleX(-1);
+            }
         }
 
         .hello-box-user-vector {
@@ -407,11 +445,20 @@
 
     &__active-registration-card {
         height: 130px;
-        background-color: var(--dark);
-        background-image: url("/assets/design_1/img/panel/dashboard/instructor/active-registration-bg.png");
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: bottom;
+
+        &-bg {
+            position: absolute;
+            inset: 0;
+            background-color: var(--dark);
+            background-image: url("/assets/design_1/img/panel/dashboard/instructor/active-registration-bg.png");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: bottom;
+
+            .rtl & {
+                transform: scaleX(-1);
+            }
+        }
 
         .progress-card {
             width: 60%;
@@ -420,11 +467,20 @@
 
     &__no-registration-card {
         height: 147px;
-        background-color: var(--primary);
-        background-image: url("/assets/design_1/img/panel/dashboard/instructor/no-registration-bg.png");
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: bottom;
+
+        &-bg {
+            position: absolute;
+            inset: 0;
+            background-color: var(--primary);
+            background-image: url("/assets/design_1/img/panel/dashboard/instructor/no-registration-bg.png");
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: bottom;
+
+            .rtl & {
+                transform: scaleX(-1);
+            }
+        }
     }
 
     &__visitors-statistics-chart {

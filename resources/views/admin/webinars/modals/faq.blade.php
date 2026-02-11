@@ -1,8 +1,8 @@
 <!-- Modal -->
 <div class="d-none" id="webinarFaqModal">
-    <h3 class="section-title after-line font-20 text-dark-blue mb-25">{{ trans('public.add_faq') }}</h3>
+    <h3 class="section-title after-line font-20 text-dark-blue mb-25 p-16">{{ trans('public.add_faq') }}</h3>
 
-    <div class="js-faq-form" data-action="{{ getAdminPanelUrl() }}/faqs/store">
+    <div class="js-faq-form p-16" data-action="{{ getAdminPanelUrl() }}/faqs/store">
         <input type="hidden" name="webinar_id" value="{{  !empty($webinar) ? $webinar->id :''  }}">
 
         @if(!empty(getGeneralSettings('content_translate')))

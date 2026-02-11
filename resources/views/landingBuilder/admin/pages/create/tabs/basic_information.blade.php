@@ -55,6 +55,20 @@
                     @endif
                 </div>
 
+                <div class="form-group">
+                    <label class="form-group-label">{{ trans('update.color_combination') }}</label>
+                    <select name="color_id" class="form-control @error('color_id') is-invalid @enderror">
+                        <option value="">{{ trans('update.theme_color') }}</option>
+
+                        @foreach($themeColors as $themeColor)
+                            <option value="{{ $themeColor->id }}" {{ (!empty($landingItem) and $landingItem->color_id == $themeColor->id) ? 'selected' : '' }}>{{ $themeColor->title }}</option>
+                        @endforeach
+                    </select>
+
+                    @error('color_id')
+                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+                </div>
 
                 <div class="form-group d-flex align-items-center">
                     <div class="custom-switch mr-8">

@@ -6,6 +6,8 @@
         e.preventDefault();
 
         const $this = $(this);
+        const $followersCount = $('.js-user-profile-followers-count');
+
         $this.addClass('loadingbar').prop('disabled', true);
         const user_id = $this.attr('data-user-id');
 
@@ -22,6 +24,8 @@
                     $this.removeClass('btn-danger').addClass('btn-primary');
                     $this.text(followLang);
                 }
+
+                $followersCount.html(result.followers)
             }
         })
     });

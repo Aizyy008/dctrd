@@ -54,7 +54,7 @@
             {{-- Students --}}
             <div class="d-flex align-items-center font-12 text-white">
                 <x-iconsax-lin-teacher class="icons text-white" width="16px" height="16px"/>
-                <span class="mx-4 font-weight-bold">{{ count($course->sales) }}</span>
+                <span class="mx-4 font-weight-bold">{{ $course->getSalesCount() }}</span>
                 <span class="opacity-50">{{ trans('quiz.students') }}</span>
             </div>
 

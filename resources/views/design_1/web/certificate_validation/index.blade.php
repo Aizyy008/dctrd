@@ -1,11 +1,11 @@
 @extends('design_1.web.layouts.app')
 
 @push('styles_top')
-    <link rel="stylesheet" href="{{ getDesign1StylePath("system_status_pages") }}">
+    <link rel="stylesheet" href="{{ getDesign1StylePath("instructor_finder") }}">
 @endpush
 
 @section('content')
-    <div class="container mt-104 pb-104">
+    <div class="container mt-104 pb-140">
         <div class="row justify-content-center">
             <div class="col-12 col-lg-8">
 
@@ -31,7 +31,7 @@
                                     @include('design_1.web.includes.captcha_input')
 
                                     <div class="mt-16">
-                                        <button type="button" class="js-submit-certificate-validation-form-btn btn btn-primary btn-block btn-lg">{{ trans('cart.validate') }}</button>
+                                        <button type="button" class="js-submit-certificate-validation-form-btn btn btn-primary btn-block btn-lg" data-title="{{ trans('site.certificate_validation') }}">{{ trans('cart.validate') }}</button>
                                     </div>
                                 </div>
                             </div>
@@ -48,7 +48,7 @@
                                     @endif
 
                                     @if(!empty($overlayImage))
-                                    <div class="system-status-page-right-float-image">
+                                    <div class="wizard-overlay-image">
                                     <img src="{{ $overlayImage }}" alt="{{ trans('update.overlay_image') }}" class="img-fluid">
                                         </div>
                                     @endif
@@ -68,9 +68,5 @@
 
 
 @push('scripts_bottom')
-    <script>
-        var certificateValidationLang = '{{ trans('site.certificate_validation') }}';
-    </script>
-
     <script src="{{ getDesign1ScriptPath("certificate_validation") }}"></script>
 @endpush

@@ -240,7 +240,7 @@
                                     className=""
                                     show=""
                             >
-                                @include('landingBuilder.admin.components.manage.footer_1.link_item',['inputNamePrefix' => "contents[specific_links][{$sKey}]", 'footerLinkData' => $footerLinkItemData])
+                                @include('admin.theme.footers.components.footer_1.link_item',['inputNamePrefix' => "contents[specific_links][{$sKey}]", 'footerLinkData' => $footerLinkItemData])
                             </x-landingBuilder-accordion>
                         @endif
                     @endforeach
@@ -277,7 +277,7 @@
                                 className=""
                                 show=""
                             >
-                                @include('landingBuilder.admin.components.manage.footer_1.link_item',['inputNamePrefix' => "contents[specific_links_2][{$bKey}]", 'footerLinkData' => $footerLink2ItemData])
+                                @include('admin.theme.footers.components.footer_1.link_item',['inputNamePrefix' => "contents[specific_links_2][{$bKey}]", 'footerLinkData' => $footerLink2ItemData])
                             </x-landingBuilder-accordion>
                         @endif
                     @endforeach
@@ -334,7 +334,7 @@
             className=""
             show="true"
     >
-        @include('landingBuilder.admin.components.manage.footer_1.link_item', ['inputNamePrefix' => "contents[specific_links][record]"])
+        @include('admin.theme.footers.components.footer_1.link_item', ['inputNamePrefix' => "contents[specific_links][record]"])
     </x-landingBuilder-accordion>
 </div>
 
@@ -346,6 +346,6 @@
             className=""
             show="true"
     >
-        @include('landingBuilder.admin.components.manage.footer_1.link_item', ['inputNamePrefix' => "contents[specific_links_2][record]"])
+        @include('admin.theme.footers.components.footer_1.link_item', ['inputNamePrefix' => "contents[specific_links_2][record]"])
     </x-landingBuilder-accordion>
 </div>

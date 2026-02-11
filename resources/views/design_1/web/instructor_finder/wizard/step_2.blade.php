@@ -43,7 +43,7 @@
         @enderror
     </div>
 
-    <div id="regionCard" class="js-instructor-location d-none">
+    <div id="regionCard" class="js-instructor-location">
         <h5 class="font-12 font-weight-bold my-24">{{ trans('update.instructor_location') }}</h5>
 
         <div class="d-flex align-items-center flex-wrap gap-16">

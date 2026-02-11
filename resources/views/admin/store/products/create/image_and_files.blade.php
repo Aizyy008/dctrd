@@ -13,6 +13,11 @@
                         </button>
                     </div>
                     <input type="text" name="thumbnail" id="thumbnail" value="{{ !empty($product) ? $product->thumbnail : old('thumbnail') }}" class="form-control @error('thumbnail')  is-invalid @enderror" placeholder="{{ trans('update.thumbnail_images_size') }}"/>
+                    <div class="input-group-append">
+                        <button type="button" class="input-group-text admin-file-view" data-input="thumbnail">
+                            <i class="fa fa-eye"></i>
+                        </button>
+                    </div>
                     @error('thumbnail')
                     <div class="invalid-feedback">
                         {{ $message }}
@@ -125,7 +130,7 @@
                                                 </button>
 
                                                 <div class="dropdown-menu dropdown-menu-right">
-                                                    <button type="button" 
+                                                    <button type="button"
                                                             data-file-id="{{ $file->id }}"
                                                             data-product-id="{{ !empty($product) ? $product->id : '' }}"
                                                             class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 edit-file">

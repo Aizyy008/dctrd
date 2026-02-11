@@ -4,7 +4,7 @@
     <select name="{{ $name }}" class="form-control bg-white {{ $selectClassName ?? '' }}" data-change-action="{{ !empty($changeActionEls) ? $changeActionEls : '' }}" data-change-parent="{{ !empty($changeActionParent) ? $changeActionParent : '' }}">
         @if(!empty($items) and is_array($items))
             @foreach($items as $item)
-                <option value="{{ $item }}" {{ (!empty($value) and $value == $item) ? 'selected' : '' }}>{{ trans("update.{$item}") }}</option>
+                <option value="{{ $item }}" {{ (!empty($value) and $value == $item) ? 'selected' : '' }}>{{ !empty($selectItemDontTrans) ? $item : trans("update.{$item}") }}</option>
             @endforeach
         @endif
     </select>

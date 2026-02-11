@@ -1,5 +1,5 @@
 {{-- Price Plans --}}
-@if(!empty($bundle->tickets) and count($bundle->tickets))
+@if((!isFreeModeEnabled() || isFreeModeShowPriceEnabled()) and !empty($bundle->tickets) and count($bundle->tickets))
     <div class="mt-16 px-16">
         <h6 class="font-12 font-weight-bold mb-16">{{ trans('update.select_a_pricing_plan') }}</h6>
 
@@ -22,7 +22,7 @@
 @endif
 
 {{-- Price --}}
-@if($bundle->price > 0)
+@if((!isFreeModeEnabled() || isFreeModeShowPriceEnabled()) and $bundle->price > 0)
     @php
         $realPrice = handleCoursePagePrice($bundle->price);
     @endphp
@@ -57,7 +57,7 @@
             @endif
         </div>
     </div>
-@else
+    @else
     <div class="d-flex align-items-center justify-content-center mt-20 px-16">
         <span class="font-24 font-weight-bold">{{ trans('public.free') }}</span>
     </div>

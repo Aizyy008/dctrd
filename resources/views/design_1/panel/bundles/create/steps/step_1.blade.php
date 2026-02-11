@@ -96,12 +96,22 @@
 
     <div class="js-inputs-with-source row">
 
+        @php
+            $selectedVideoSource = (!empty($bundle) and !empty($bundle->video_demo_source)) ? $bundle->video_demo_source : null;
+        @endphp
+
         <div class="col-12 col-md-6">
             <div class="form-group ">
                 <label class="form-group-label">{{ trans('update.video_source') }}</label>
                 <select name="video_demo_source" class="js-upload-source-input form-control select2 @error('video_demo_source') is-invalid @enderror" data-minimum-results-for-search="Infinity">
-                    @foreach(\App\Enums\UploadSource::allSources as $source)
-                        <option value="{{ $source }}" {{ (!empty($bundle) and $bundle->video_demo_source == $source) ? 'selected' : '' }}>{{ trans($source) }}</option>
+                    @foreach(getAvailableUploadFileSources() as $source)
+                        @php
+                            if($loop->first and empty($selectedVideoSource)) {
+                                $selectedVideoSource = $source;
+                            }
+                        @endphp
+
+                        <option value="{{ $source }}" {{ (!empty($bundle) and $bundle->video_demo_source == $source) ? 'selected' : '' }}>{{ trans('update.file_source_'.$source) }}</option>
                     @endforeach
                 </select>
 
@@ -112,7 +122,7 @@
         </div>
 
         <div class="col-12 col-md-6">
-            <div class="form-group js-online-upload {{ (empty($bundle) or !in_array($bundle->video_demo_source, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
+            <div class="form-group js-online-upload {{ (!in_array($selectedVideoSource, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
                 <span class="has-translation bg-transparent">
                     <x-iconsax-lin-link-21 class="icons text-gray-400" width="24px" height="24px"/>
                 </span>
@@ -120,7 +130,7 @@
                 <input type="text" name="demo_video_path" class="form-control" value="{{ !empty($bundle) ? $bundle->video_demo : old('demo_video_path') }}" placeholder="{{ trans('update.insert_demo_video_link') }}">
             </div>
 
-            <div class="form-group js-local-upload {{ (!empty($bundle) and in_array($bundle->video_demo_source, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
+            <div class="form-group js-local-upload {{ (in_array($selectedVideoSource, \App\Enums\UploadSource::uploadItems)) ? '' : 'd-none' }}">
                 <span class="has-translation bg-transparent">
                     <x-iconsax-lin-export class="icons text-gray-400" width="24px" height="24px"/>
                 </span>
@@ -162,6 +172,26 @@
         </div>
         @enderror
     </div>
+
+
+    @if($isOrganization)
+        <div class="row mt-20">
+            <div class="col-12 col-lg-6">
+                <div class="form-group d-flex align-items-center">
+                    <div class="custom-switch mr-8">
+                        <input id="privateSwitch" type="checkbox" name="private" class="custom-control-input" {{ (!empty($bundle) and $bundle->private) ? 'checked' :  '' }}>
+                        <label class="custom-control-label cursor-pointer" for="privateSwitch"></label>
+                    </div>
+
+                    <div class="">
+                        <label class="cursor-pointer" for="privateSwitch">{{ trans('webinars.private') }}</label>
+                    </div>
+                </div>
+                <p class="text-gray-500 font-12">{{ trans('webinars.create_private_course_hint') }}</p>
+            </div>
+        </div>
+    @endif
+
 
 </div>
 

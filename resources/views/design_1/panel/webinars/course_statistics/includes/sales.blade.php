@@ -3,7 +3,7 @@
         <h4 class="font-14 font-weight-bold text-dark">{{ trans('update.month_sales') }}</h4>
     </div>
 
-    <div class="d-grid grid-columns-3 grid-columns-lg-3 gap-16 mt-16 px-16">
+    <div class="d-grid grid-columns-2 grid-columns-lg-3 gap-16 mt-16 px-16">
         {{-- Totla Sales --}}
         <div class="d-flex align-items-start justify-content-between p-16 rounded-16 bg-gray-100">
             <div class="d-flex flex-column pt-8">

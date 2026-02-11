@@ -68,7 +68,7 @@
         </a>
 
         {{-- Actions Dropdown (positioned outside the link) --}}
-        <div class="actions-dropdown-container position-absolute" style="top: 28px; right: 28px; z-index: 10;">
+        <div class="item-card-actions-dropdown-container">
             @include("design_1.panel.store.my_products.product_card.actions_dropdown")
         </div>
     </div>

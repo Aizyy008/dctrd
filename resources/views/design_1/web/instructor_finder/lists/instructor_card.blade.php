@@ -31,7 +31,7 @@
 
         @if(!empty($instructor->occupations) and count($instructor->occupations))
             <div class="d-flex align-items-center flex-wrap gap-12 mb-16">
-                @foreach($instructor->occupations as $occupation)
+                @foreach($instructor->occupations->take(10) as $occupation)
                     @if(!empty($occupation->category))
                         <div class="d-flex-center p-10 rounded-8 bg-gray-100 text-center font-14 text-gray-500">{{ $occupation->category->title }}</div>
                     @endif

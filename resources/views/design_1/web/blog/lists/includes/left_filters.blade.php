@@ -86,7 +86,7 @@
                 <div
                     class="range wrunner-value-bottom no-bottom-value-note mt-8"
                     id="studyTimeRange"
-                    data-minLimit="{{ 0 }}"
+                    data-minLimit="0"
                     data-maxLimit="{{ $filterMaxStudyTime }}"
                     data-step="1"
                 >

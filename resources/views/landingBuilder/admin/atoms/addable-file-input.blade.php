@@ -22,7 +22,7 @@
                             <label class="form-group-label bg-white">{{ $inputLabel }}</label>
 
                             <div class="custom-file bg-white">
-                                <input type="hidden" name="{{ str_replace('record', $itemKey, $inputName) }}" value="{{ $item }}">
+                                <input type="hidden" name="{{ str_replace('record', $itemKey, $inputName) }}" value="{!! $item !!}">
                                 <input type="file" name="{{ str_replace('record', $itemKey, $inputName) }}" class="custom-file-input" id="{{ $inputName }}_file_{{ $itemKey }}" {{ !empty($accept) ? 'accept='.$accept : '' }}>
                                 <span class="custom-file-text text-dark">{{ getFileNameByPath($item) }}</span>
 

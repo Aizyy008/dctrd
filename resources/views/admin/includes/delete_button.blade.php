@@ -1,4 +1,4 @@
-<button class="d-flex align-items-center btn-transparent gap-4 {{ $btnClass ?? '' }}"
+<button class="d-flex align-items-center gap-4 {{ !empty($noBtnTransparent) ? '' : 'btn-transparent' }} {{ $btnClass ?? '' }}"
         data-confirm="{{ $deleteConfirmMsg ?? trans('admin/main.delete_confirm_msg') }}"
         data-confirm-href="{{ $url }}"
         data-confirm-text-yes="{{ trans('admin/main.yes') }}"

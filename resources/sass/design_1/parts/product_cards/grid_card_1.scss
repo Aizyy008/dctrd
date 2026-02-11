@@ -30,6 +30,11 @@
         transition: all 0.3s ease;
     }
 
+    .profile-container &, .profile-container &__mask {
+        border: 1px solid var(--gray-200);
+        border-radius: 16px;
+    }
+
     &:hover &__mask {
         top: -8px;
         bottom: 8px;

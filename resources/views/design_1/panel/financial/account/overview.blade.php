@@ -23,7 +23,7 @@
                 <div class="col-12 col-lg-6 mt-16 mt-lg-0">
                     <div class="position-relative">
                         <div class="payout-bank-card-mask"></div>
-                        <div class="payout-bank-card d-flex flex-column w-100 h-100 z-index-2">
+                        <div class="payout-bank-card d-flex flex-column w-100 z-index-2">
                             <img src="/assets/design_1/img/panel/payout/circle-left-top.svg" alt="" class="circle-left-top">
                             <img src="/assets/design_1/img/panel/payout/circle-bottom-right.svg" alt="" class="circle-bottom-right">
                             <img src="/assets/design_1/img/panel/payout/logo_mask.svg" alt="" class="logo-mask-right">

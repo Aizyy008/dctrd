@@ -57,10 +57,12 @@
                                 @include('design_1.web.theme.headers.header_1.includes.currency')
 
                                 {{-- Cart --}}
-                                <div class="js-view-cart-drawer position-relative d-flex-center size-32 bg-white-10 rounded-8 cursor-pointer">
-                                    <x-iconsax-lin-bag class="icons text-white opacity-75" width="20px" height="20px"/>
-                                    <span class="js-cart-counter theme-header-1__top-navbar-cart-counter d-inline-flex-center font-12 text-white {{ ($userCartCount < 1) ? 'd-none' : '' }}">{{ $userCartCount }}</span>
-                                </div>
+                                @if(!isFreeModeEnabled() || isFreeModeShowCartEnabled())
+                                    <div class="js-view-cart-drawer position-relative d-flex-center size-32 bg-white-10 rounded-8 cursor-pointer">
+                                        <x-iconsax-lin-bag class="icons text-white opacity-75" width="20px" height="20px"/>
+                                        <span class="js-cart-counter theme-header-1__top-navbar-cart-counter d-inline-flex-center font-12 text-white {{ ($userCartCount < 1) ? 'd-none' : '' }}">{{ $userCartCount }}</span>
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="d-flex align-items-center">
