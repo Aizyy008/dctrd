@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
+use App\Models\Event;
 use App\Models\Prerequisite;
 use App\Models\Webinar;
 use Illuminate\Http\Request;
@@ -10,13 +11,44 @@ use Validator;
 
 class PrerequisiteController extends Controller
 {
+    private function getColumnName($data)
+    {
+        $name = "webinar_id";
+
+        if (!empty($data['event_id'])) {
+            $name = "event_id";
+        }
+
+        return $name;
+    }
+
+    private function checkUserCanAccessToItem($data)
+    {
+        $access = true;
+        $user = auth()->user();
+
+        if (!empty($data['event_id'])) {
+            $event = Event::query()->where('id', $data['event_id'])
+                ->where('creator_id', $user->id)
+                ->first();
+
+            $access = !empty($event);
+        } else {
+            $webinar = Webinar::find($data['webinar_id']);
+            $access = (!empty($webinar) and $webinar->canAccess());
+        }
+
+        return $access;
+    }
+
     public function store(Request $request)
     {
         $data = $request->get('ajax')['new'];
+        $columnName = $this->getColumnName($data);
 
         $validator = Validator::make($data, [
-            'webinar_id' => 'required',
-            'prerequisite_id' => 'required|unique:prerequisites,prerequisite_id,null,id,webinar_id,' . $data['webinar_id'],
+            "{$columnName}" => "required",
+            'prerequisite_id' => "required|unique:prerequisites,prerequisite_id,null,id,{$columnName},{$data[$columnName]}",
         ]);
 
         if ($validator->fails()) {
@@ -26,14 +58,11 @@ class PrerequisiteController extends Controller
             ], 422);
         }
 
-        $webinar = Webinar::find($data['webinar_id']);
-
-        if (!empty($webinar) and $webinar->canAccess()) {
-
-            $required = (!empty($data['required']) and $data['required'] == 'on') ? true : false;
+        if ($this->checkUserCanAccessToItem($data)) {
+            $required = (!empty($data['required']) and $data['required'] == 'on');
 
             Prerequisite::create([
-                'webinar_id' => $data['webinar_id'],
+                "{$columnName}" => $data[$columnName],
                 'prerequisite_id' => $data['prerequisite_id'],
                 'required' => $required,
                 'created_at' => time()
@@ -51,10 +80,11 @@ class PrerequisiteController extends Controller
     {
         $user = auth()->user();
         $data = $request->get('ajax')[$id];
+        $columnName = $this->getColumnName($data);
 
         $validator = Validator::make($data, [
-            'webinar_id' => 'required',
-            'prerequisite_id' => 'required|unique:prerequisites,prerequisite_id,' . $id . ',id,webinar_id,' . $data['webinar_id'],
+            "{$columnName}" => "required",
+            'prerequisite_id' => "required|unique:prerequisites,prerequisite_id,{$id},id,{$columnName},{$data[$columnName]}",
         ]);
 
         if ($validator->fails()) {
@@ -64,31 +94,24 @@ class PrerequisiteController extends Controller
             ], 422);
         }
 
-        $webinar = Webinar::find($data['webinar_id']);
+        if ($this->checkUserCanAccessToItem($data)) {
+            $required = (!empty($data['required']) and $data['required'] == 'on');
 
-        if (!empty($webinar) and $webinar->canAccess($user)) {
+            $prerequisite = Prerequisite::where('id', $id)
+                ->where($columnName, $data[$columnName])
+                ->first();
 
-            $required = (!empty($data['required']) and $data['required'] == 'on') ? true : false;
+            if (!empty($prerequisite)) {
+                $prerequisite->update([
+                    "{$columnName}" => $data[$columnName],
+                    'prerequisite_id' => $data['prerequisite_id'],
+                    'required' => $required,
+                    'updated_at' => time()
+                ]);
 
-            $webinarIds = $user->webinars()->pluck('id')->toArray();
-
-            if (in_array($data['webinar_id'], $webinarIds)) {
-                $prerequisite = Prerequisite::where('id', $id)
-                    ->where('webinar_id', $data['webinar_id'])
-                    ->first();
-
-                if (!empty($prerequisite)) {
-                    $prerequisite->update([
-                        'webinar_id' => $data['webinar_id'],
-                        'prerequisite_id' => $data['prerequisite_id'],
-                        'required' => $required,
-                        'updated_at' => time()
-                    ]);
-
-                    return response()->json([
-                        'code' => 200,
-                    ], 200);
-                }
+                return response()->json([
+                    'code' => 200,
+                ], 200);
             }
         }
 
@@ -102,7 +125,13 @@ class PrerequisiteController extends Controller
         $webinarIds = $user->webinars()->pluck('id')->toArray();
 
         $prerequisite = Prerequisite::where('id', $id)
-            ->whereIn('webinar_id', $webinarIds)
+            ->where(function ($query) use ($webinarIds, $user) {
+                $query->whereIn('webinar_id', $webinarIds);
+
+                $query->orWhereHas('event', function ($query) use ($user) {
+                    $query->where('creator_id', $user->id);
+                });
+            })
             ->first();
 
         if (!empty($prerequisite)) {

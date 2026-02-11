@@ -90,14 +90,18 @@ function getThemeColorsMode()
 /**
  * @return string ("primary_color"|"secondary_color") || null
  * */
-function getThemeColorsSettings($isAdminSide = false)
+function getThemeColorsSettings($landingItem = null, $isAdminSide = false)
 {
     $rootResult = '';
-    $theme = getActiveTheme();
-
     $colorContents = [];
-    if (!empty($theme) and !empty($theme->color)) {
-        $colorContents = json_decode($theme->color->content, true);
+
+    if (empty($landingItem) or empty($landingItem->color) or empty($landingItem->color->content)) {
+        $theme = getActiveTheme();
+        if (!empty($theme) and !empty($theme->color)) {
+            $colorContents = json_decode($theme->color->content, true);
+        }
+    } else {
+        $colorContents = json_decode($landingItem->color->content, true);
     }
 
     $mode = $isAdminSide ? 'light' : getUserThemeColorMode();

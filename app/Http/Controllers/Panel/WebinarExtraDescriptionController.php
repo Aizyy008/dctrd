@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bundle;
+use App\Models\Event;
 use App\Models\Translation\WebinarExtraDescriptionTranslation;
 use App\Models\UpcomingCourse;
 use App\Models\Webinar;
@@ -13,14 +14,31 @@ use Illuminate\Support\Facades\Validator;
 
 class WebinarExtraDescriptionController extends Controller
 {
+
+    private function getItemColumnName($data)
+    {
+        $columnName = "webinar_id";
+
+        if (!empty(!empty($data['upcoming_course_id']))) {
+            $columnName = "upcoming_course_id";
+        } else if (!empty(!empty($data['event_id']))) {
+            $columnName = "event_id";
+        }
+
+        return $columnName;
+    }
+
+
     public function store(Request $request)
     {
         $user = auth()->user();
         $data = $request->get('ajax')['new'];
+        $columnName = $this->getItemColumnName($data);
 
         $validator = Validator::make($data, [
             'type' => 'required|in:' . implode(',', WebinarExtraDescription::$types),
             'value' => 'required',
+            "{$columnName}" => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -34,8 +52,7 @@ class WebinarExtraDescriptionController extends Controller
 
         if ($canStore) {
             $locale = $request->get("locale", getDefaultLocale());
-            $columnName = !empty($data['webinar_id']) ? 'webinar_id' : 'upcoming_course_id';
-            $columnValue = !empty($data['webinar_id']) ? $data['webinar_id'] : $data['upcoming_course_id'];
+            $columnValue = $data[$columnName];
 
             $order = WebinarExtraDescription::query()
                     ->where($columnName, $columnValue)
@@ -44,8 +61,7 @@ class WebinarExtraDescriptionController extends Controller
 
             $webinarExtraDescription = WebinarExtraDescription::create([
                 'creator_id' => $user->id,
-                'webinar_id' => !empty($data['webinar_id']) ? $data['webinar_id'] : null,
-                'upcoming_course_id' => !empty($data['upcoming_course_id']) ? $data['upcoming_course_id'] : null,
+                "{$columnName}" => $columnValue,
                 'type' => $data['type'],
                 'order' => $order,
                 'created_at' => time()
@@ -86,8 +102,7 @@ class WebinarExtraDescriptionController extends Controller
 
                 $webinarExtraDescription = WebinarExtraDescription::create([
                     'creator_id' => $user->id,
-                    'webinar_id' => ($columnName == "webinar_id") ? $columnValue : null,
-                    'upcoming_course_id' => ($columnName == "upcoming_course_id") ? $columnValue : null,
+                    "{$columnName}" => $columnValue,
                     'type' => 'company_logos',
                     'order' => $order,
                     'created_at' => time()
@@ -120,6 +135,12 @@ class WebinarExtraDescriptionController extends Controller
             if (!empty($upcomingCourse) and $upcomingCourse->canAccess($user)) {
                 $canStore = true;
             }
+        } elseif (!empty($data['event_id'])) {
+            $event = Event::find($data['event_id']);
+
+            if (!empty($event) and $event->creator_id == $user->id) {
+                $canStore = true;
+            }
         }
 
         return $canStore;
@@ -129,10 +150,12 @@ class WebinarExtraDescriptionController extends Controller
     {
         $user = auth()->user();
         $data = $request->get('ajax')[$id];
+        $columnName = $this->getItemColumnName($data);
 
         $validator = Validator::make($data, [
             'type' => 'required|in:' . implode(',', WebinarExtraDescription::$types),
-            'value' => 'required'
+            'value' => 'required',
+            "{$columnName}" => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -146,8 +169,7 @@ class WebinarExtraDescriptionController extends Controller
 
         if ($canStore) {
             $locale = $request->get("locale", getDefaultLocale());
-            $columnName = !empty($data['webinar_id']) ? 'webinar_id' : 'upcoming_course_id';
-            $columnValue = !empty($data['webinar_id']) ? $data['webinar_id'] : $data['upcoming_course_id'];
+            $columnValue = $data[$columnName];
 
             $webinarExtraDescription = WebinarExtraDescription::where('id', $id)
                 ->where(function ($query) use ($user, $columnName, $columnValue) {
@@ -181,14 +203,16 @@ class WebinarExtraDescriptionController extends Controller
             ->first();
 
         if (!empty($webinarExtraDescription)) {
-            $item = null;
-            if (!empty($webinarExtraDescription->webinar_id)) {
-                $item = Webinar::query()->find($webinarExtraDescription->webinar_id);
-            } else if (!empty($webinarExtraDescription->upcoming_course_id)) {
-                $item = UpcomingCourse::find($webinarExtraDescription->upcoming_course_id);
-            }
 
-            if ($webinarExtraDescription->creator_id == $user->id or (!empty($item) and $item->canAccess($user))) {
+            $data = [
+                'webinar_id' => $webinarExtraDescription->webinar_id,
+                'upcoming_course_id' => $webinarExtraDescription->upcoming_course_id,
+                'event_id' => $webinarExtraDescription->event_id,
+            ];
+
+            $canAccess = $this->checkItem($user, $data);
+
+            if ($webinarExtraDescription->creator_id == $user->id or $canAccess) {
                 $filePath = null;
 
                 if ($webinarExtraDescription->type == WebinarExtraDescription::$COMPANY_LOGOS) {

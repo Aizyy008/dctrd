@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\Meeting;
+use App\Models\MeetingPackageSold;
 use App\Models\MeetingTime;
 use App\Models\Quiz;
 use App\Models\ReserveMeeting;
@@ -71,10 +72,29 @@ class ReserveMeetingController extends Controller
             'openReserveCount' => $openReserveCount,
             'totalReserveCount' => $totalReserveCount,
             'activeHoursCount' => round($activeHoursCount / 3600, 2),
+            'meetingPackageScheduledSessions' => $this->getMeetingPackageScheduledSessions($user),
         ];
         $data = array_merge($data, $pageListData);
 
         return view('design_1.panel.meeting.reservation.index', $data);
+    }
+
+    private function getMeetingPackageScheduledSessions($user)
+    {
+        $meetingPackagesSoldIds = MeetingPackageSold::query()
+            ->where('user_id', $user->id)
+            ->pluck('id')
+            ->toArray();
+
+        if (!empty($meetingPackagesSoldIds)) {
+            return Session::query()
+                ->whereIn('meeting_package_sold_id', $meetingPackagesSoldIds)
+                ->where('status', '!=', 'finished')
+                ->whereNotNull('date')
+                ->get();
+        }
+
+        return null;
     }
 
     public function requests(Request $request)
@@ -359,15 +379,24 @@ class ReserveMeetingController extends Controller
     {
         $user = auth()->user();
         $meetingIds = Meeting::where('creator_id', $user->id)->pluck('id');
-        $ReserveMeeting = ReserveMeeting::where('id', $id)
+
+        $reserveMeeting = ReserveMeeting::where('id', $id)
             ->where(function ($query) use ($user, $meetingIds) {
                 $query->where('user_id', $user->id)
                     ->orWhereIn('meeting_id', $meetingIds);
             })
             ->first();
 
-        if (!empty($ReserveMeeting) and !empty($ReserveMeeting->link)) {
-            return Redirect::away($ReserveMeeting->link);
+        if($reserveMeeting->meeting_type != 'in_person' and $reserveMeeting->status == ReserveMeeting::$open and (!empty($reserveMeeting->link) or !empty($reserveMeeting->session))) {
+            $link = $reserveMeeting->link;
+
+            if (!empty($reserveMeeting->session)) {
+                $link = $reserveMeeting->session->getJoinLink();
+            }
+
+            if (!empty($link)) {
+                return Redirect::away($link);
+            }
         }
 
         abort(403);

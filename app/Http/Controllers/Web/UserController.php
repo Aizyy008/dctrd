@@ -114,6 +114,10 @@ class UserController extends Controller
                 $query->whereHas('blog');
             }
 
+            if ($option === "except_user") {
+                $query->where('role_name', '!=', Role::$user);
+            }
+
             $users = $query->get();
 
             return response()->json($users, 200);

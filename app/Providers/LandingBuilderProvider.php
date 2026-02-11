@@ -26,7 +26,7 @@ class LandingBuilderProvider extends ServiceProvider
     {
         $files = [
             'input', 'file', 'switch', 'addable-text-input', 'addable-file-input', 'textarea', 'make-button', 'select', 'addable-accordions', 'accordion',
-            'searchable-course', 'video-content', 'icons-select'
+            'searchable-course', 'searchable-user', 'video-content', 'icons-select', 'addable-search-course', 'searchable-meeting-package',
         ];
 
         foreach ($files as $file) {

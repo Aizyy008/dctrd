@@ -18,9 +18,7 @@ class FeatureWebinarsControllers extends Controller
 
         removeContentLocale();
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $query = FeatureWebinar::with([
             'webinar' => function ($query) {

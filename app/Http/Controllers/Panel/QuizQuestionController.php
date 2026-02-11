@@ -51,6 +51,7 @@ class QuizQuestionController extends Controller
             'title' => 'required',
             'grade' => 'required|integer',
             'type' => 'required',
+            'negative_grade' => 'nullable|integer|min:0',
         ];
 
         $validate = Validator::make($data, $rules);
@@ -104,6 +105,7 @@ class QuizQuestionController extends Controller
                 'quiz_id' => $data['quiz_id'],
                 'creator_id' => $user->id,
                 'grade' => $data['grade'],
+                'negative_grade' => $data['negative_grade'] ?? null,
                 'type' => $data['type'],
                 'order' => $order,
                 'created_at' => time()
@@ -254,6 +256,7 @@ class QuizQuestionController extends Controller
             'title' => 'required',
             'grade' => 'required',
             'type' => 'required',
+            'negative_grade' => 'nullable|integer|min:0',
         ];
 
         $validate = Validator::make($data, $rules);
@@ -311,6 +314,7 @@ class QuizQuestionController extends Controller
                 $quizQuestion->update([
                     'quiz_id' => $data['quiz_id'],
                     'grade' => $data['grade'],
+                    'negative_grade' => $data['negative_grade'] ?? null,
                     'type' => $data['type'],
                     'updated_at' => time()
                 ]);

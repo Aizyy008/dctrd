@@ -54,6 +54,12 @@ class NotificationTemplate extends Model
         'discount_title' => '[discount_title]',
         'discount_code' => '[discount_code]',
         'discount_amount' => '[discount_amount]',
+        'session_title' => '[session_title]',
+        'plan_title' => '[plan_title]',
+        'plan_type' => '[plan_type]',
+        'event_title' => '[event_title]',
+        'ticket_title' => '[ticket_title]',
+        'ticket_code' => '[ticket_code]',
     ];
 
     static $notificationTemplateAssignSetting = [
@@ -66,14 +72,14 @@ class NotificationTemplate extends Model
         'course' => ['course_created', 'course_approve', 'course_reject', 'new_comment', 'support_message', 'support_message_replied', 'new_rating', 'new_question_in_forum', 'new_answer_in_forum'],
         'financial' => ['new_financial_document', 'payout_request', 'payout_proceed', 'offline_payment_request', 'offline_payment_approved', 'offline_payment_rejected', 'user_get_cashback', 'user_get_cashback_notification_for_admin'],
         'sale_purchase' => ['new_sales', 'new_purchase'],
-        'plans' => ['new_subscribe_plan', 'promotion_plan'],
-        'appointment' => ['new_appointment', 'new_appointment_link', 'appointment_reminder', 'meeting_finished', 'new_appointment_session'],
+        'plans' => ['new_subscribe_plan', 'promotion_plan', 'reminder_before_expiration_subscribes', 'plan_not_renewed_due_to_lack_of_wallet_balance', 'auto_renewal_plan_with_wallet_balance'],
+        'appointment' => ['new_appointment', 'new_appointment_link', 'appointment_reminder', 'meeting_finished', 'new_appointment_session', 'meeting_package_session_scheduled', 'meeting_package_session_generated_link', 'meeting_package_session_ended', 'user_purchased_meeting_package'],
         'quiz' => ['new_certificate', 'waiting_quiz', 'waiting_quiz_result', 'new_quiz'],
         'store' => ['product_new_sale', 'product_new_purchase', 'product_new_comment', 'product_tracking_code', 'product_new_rating', 'product_receive_shipment', 'product_out_of_stock'],
         'assignment' => ['student_send_message', 'instructor_send_message', 'instructor_set_grade'],
         'topic' => ['send_post_in_topic'],
         'blog' => ['publish_instructor_blog_post', 'new_comment_for_instructor_blog_post'],
-        'reminders' => ['webinar_reminder', 'meeting_reserve_reminder', 'subscribe_reminder'],
+        'reminders' => ['webinar_reminder', 'meeting_reserve_reminder', 'subscribe_reminder', 'events_start_reminder'],
         'installments' => ['reminder_installments_before_overdue', 'installment_due_reminder', 'reminder_installments_after_overdue', 'approve_installment_verification_request', 'reject_installment_verification_request', 'paid_installment_step', 'paid_installment_step_for_admin', 'paid_installment_upfront', 'installment_verification_request_sent', 'admin_installment_verification_request_sent', 'instalment_request_submitted', 'instalment_request_submitted_for_admin'],
         'gifts' => ['reminder_gift_to_receipt', "gift_sender_confirmation", 'gift_sender_notification', 'admin_gift_submission', 'admin_gift_sending_confirmation'],
         'upcoming' => ['upcoming_course_submission', 'upcoming_course_submission_for_admin', 'upcoming_course_approved', 'upcoming_course_rejected', 'upcoming_course_published', 'upcoming_course_followed', 'upcoming_course_published_for_followers'],
@@ -82,5 +88,7 @@ class NotificationTemplate extends Model
         'registration_package' => ['registration_package_activated', 'registration_package_activated_for_admin', 'registration_package_expired'],
         'misc' => ['contact_message_submission', 'contact_message_submission_for_admin', 'waitlist_submission', 'waitlist_submission_for_admin', 'user_get_new_point', 'new_course_notice'],
         'forms' => ['submit_form_by_users'],
+        'attendance' => ['for_present_students', 'for_late_students', 'for_absent_students'],
+        'events' => ['new_purchase_ticket_for_students', 'new_sale_ticket_for_provider', 'cancel_event_for_students', 'online_event_sessions_for_students'],
     ];
 }

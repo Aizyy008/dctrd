@@ -29,14 +29,12 @@ class BecomeInstructorController extends Controller
         $user = auth()->user();
 
         if ($user->isUser()) {
-            $categories = Category::where('parent_id', null)
-                ->with('subCategories')
-                ->get();
+            $categories = Category::getCategories();
 
             $occupations = $user->occupations->pluck('category_id')->toArray();
 
             $lastRequest = BecomeInstructor::where('user_id', $user->id)
-                ->where('status', 'pending')
+                ->whereIn('status', ['pending', 'pending_pay_package'])
                 ->first();
 
             $isOrganizationRole = (!empty($lastRequest) and $lastRequest->role == Role::$organization);
@@ -77,7 +75,7 @@ class BecomeInstructorController extends Controller
 
         if ($user->isUser()) {
             $hasLastRequest = BecomeInstructor::where('user_id', $user->id)
-                ->whereIn('status', ['pending', 'accept'])
+                ->whereIn('status', ['pending', 'accept', 'pending_pay_package'])
                 ->first();
 
             $data = $request->all();
@@ -85,7 +83,7 @@ class BecomeInstructorController extends Controller
             $rules = [
                 'role' => 'required',
                 'occupations' => 'required',
-                'certificate' => 'nullable|string',
+                'certificate' => 'nullable',
                 'bank_id' => 'required',
                 'identity_scan' => 'required',
                 'description' => 'nullable|string',
@@ -130,18 +128,34 @@ class BecomeInstructorController extends Controller
                 }
             }
 
+            $certificatePath = $user->certificate;
+            $identityScanPath = $user->identity_scan;
+
+            if (!empty($request->file('certificate'))) {
+                $certificatePath = $this->uploadFile($request->file('certificate'), 'setting', 'certificate', $user->id);
+            }
+
+            if (!empty($request->file('identity_scan'))) {
+                $identityScanPath = $this->uploadFile($request->file('identity_scan'), 'setting', 'identity_scan', $user->id);
+            }
+
+
+            $forceBuyPackages = (!empty(getRegistrationPackagesGeneralSettings('show_packages_during_registration')) and !empty(getRegistrationPackagesGeneralSettings('force_user_to_select_a_package')));
+
+
             $lastRequest = BecomeInstructor::query()->updateOrCreate([
                 'user_id' => $user->id,
             ], [
                 'role' => $data['role'],
-                'certificate' => $data['certificate'],
+                'certificate' => $certificatePath,
                 'description' => $data['description'],
-                'created_at' => time()
+                'status' => $forceBuyPackages ? 'pending_pay_package' : 'pending',
+                'created_at' => time(),
             ]);
 
             $user->update([
-                'identity_scan' => $data['identity_scan'],
-                'certificate' => $data['certificate'],
+                'identity_scan' => $identityScanPath,
+                'certificate' => $certificatePath,
             ]);
 
             UserSelectedBank::query()->where('user_id', $user->id)->delete();
@@ -187,12 +201,13 @@ class BecomeInstructorController extends Controller
 
             }
 
-            if ((!empty(getRegistrationPackagesGeneralSettings('show_packages_during_registration')) and getRegistrationPackagesGeneralSettings('show_packages_during_registration'))) {
+            // Extra Form
+            $this->storeBecomeInstructorFormFields($data, $lastRequest, $user);
+
+
+            if (!empty(getRegistrationPackagesGeneralSettings('show_packages_during_registration')) and getRegistrationPackagesGeneralSettings('show_packages_during_registration')) {
                 return redirect(route('becomeInstructorPackages'));
             }
-
-            // Extra Form
-            $this->storeBecomeInstructorFormFields($data, $lastRequest);
 
             $toastData = [
                 'title' => trans('public.request_success'),

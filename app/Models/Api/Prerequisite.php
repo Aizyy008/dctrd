@@ -7,7 +7,7 @@ use App\Models\Prerequisite as Model;
 
 class Prerequisite extends Model
 {
-    public function prerequisiteWebinar()
+    public function course()
     {
         return $this->belongsTo('App\Models\Api\Webinar', 'prerequisite_id', 'id')
         ->where('status','active')->where('private',false) ;

@@ -268,7 +268,7 @@ class InstallmentsController extends Controller
                 ]);
 
                 /* Attachments */
-                $this->handleAttachments($attachments, $order);
+                $this->handleAttachments($attachments, $order, $user);
 
                 /* Store Installment Data */
                 $this->handleSelectedInstallment($user, $order, $installment);
@@ -388,7 +388,7 @@ class InstallmentsController extends Controller
         return $order;
     }
 
-    private function handleAttachments($attachments, $order)
+    private function handleAttachments($attachments, $order, $user)
     {
         InstallmentOrderAttachment::query()->where('installment_order_id', $order->id)->delete();
 
@@ -397,11 +397,17 @@ class InstallmentsController extends Controller
 
             foreach ($attachments as $attachment) {
                 if (!empty($attachment['title']) and !empty($attachment['file'])) {
-                    $attachmentsInsert[] = [
-                        'installment_order_id' => $order->id,
-                        'title' => $attachment['title'],
-                        'file' => $attachment['file'],
-                    ];
+
+                    $destination = "installments/{$order->installment_id}/orders/{$order->id}";
+                    $filePath = $this->uploadFile($attachment['file'], $destination, null, $user->id);
+
+                    if (!empty($filePath)) {
+                        $attachmentsInsert[] = [
+                            'installment_order_id' => $order->id,
+                            'title' => $attachment['title'],
+                            'file' => $filePath,
+                        ];
+                    }
                 }
             }
 

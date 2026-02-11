@@ -43,6 +43,7 @@ class SearchController extends Controller
     {
         $webinarsQuery = Webinar::query()->where('status', 'active')
             ->where('private', false)
+            ->where('only_for_students', false)
             ->where(function (Builder $query) use ($search) {
                 $query->whereTranslationLike('title', "%$search%");
                 $query->orWhereTranslationLike('description', "%$search%");
@@ -61,6 +62,8 @@ class SearchController extends Controller
             ->get();
 
         $bundlesQuery = Bundle::query()->where('status', 'active')
+            ->where('private', false)
+            ->where('only_for_students', false)
             ->where(function (Builder $query) use ($search) {
                 $query->whereTranslationLike('title', "%$search%");
                 $query->orWhereTranslationLike('description', "%$search%");

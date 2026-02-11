@@ -46,6 +46,11 @@ class Accounting extends Model
         return $this->belongsTo('App\Models\Bundle', 'bundle_id', 'id');
     }
 
+    public function eventTicket()
+    {
+        return $this->belongsTo('App\Models\EventTicket', 'event_ticket_id', 'id');
+    }
+
     public function user()
     {
         return $this->belongsTo('App\User', 'user_id', 'id');
@@ -96,6 +101,17 @@ class Accounting extends Model
         return $this->belongsTo(Gift::class, 'gift_id', 'id');
     }
 
+    public function meetingPackage()
+    {
+        return $this->belongsTo(MeetingPackage::class, 'meeting_package_id', 'id');
+    }
+
+
+
+    /*==========
+     | Helpers
+     * ========*/
+
     public static function createAccounting($orderItem, $type = null)
     {
         self::createAccountingBuyer($orderItem, $type);
@@ -122,7 +138,9 @@ class Accounting extends Model
                 'amount' => $orderItem->total_amount,
                 'webinar_id' => !empty($orderItem->webinar_id) ? $orderItem->webinar_id : null,
                 'bundle_id' => !empty($orderItem->bundle_id) ? $orderItem->bundle_id : null,
+                'event_ticket_id' => !empty($orderItem->event_ticket_id) ? $orderItem->event_ticket_id : null,
                 'meeting_time_id' => $orderItem->reserveMeeting ? $orderItem->reserveMeeting->meeting_time_id : null,
+                'meeting_package_id' => $orderItem->meeting_package_id ?? null,
                 'subscribe_id' => $orderItem->subscribe_id ?? null,
                 'promotion_id' => $orderItem->promotion_id ?? null,
                 'registration_package_id' => $orderItem->registration_package_id ?? null,
@@ -156,7 +174,9 @@ class Accounting extends Model
                 'amount' => $orderItem->total_amount,
                 'webinar_id' => !empty($orderItem->webinar_id) ? $orderItem->webinar_id : null,
                 'bundle_id' => !empty($orderItem->bundle_id) ? $orderItem->bundle_id : null,
+                'event_ticket_id' => !empty($orderItem->event_ticket_id) ? $orderItem->event_ticket_id : null,
                 'meeting_time_id' => $orderItem->reserveMeeting ? $orderItem->reserveMeeting->meeting_time_id : null,
+                'meeting_package_id' => $orderItem->meeting_package_id ?? null,
                 'subscribe_id' => $orderItem->subscribe_id ?? null,
                 'promotion_id' => $orderItem->promotion_id ?? null,
                 'registration_package_id' => $orderItem->registration_package_id ?? null,
@@ -191,6 +211,10 @@ class Accounting extends Model
             $notifyOptions['[c.title]'] = $orderItem->promotion->title . ' ' . trans('panel.promotion');
         } else if (!empty($orderItem->registration_package_id)) {
             $notifyOptions['[c.title]'] = $orderItem->registrationPackage->title . ' ' . trans('update.registration_package');
+        } else if (!empty($orderItem->event_ticket_id)) {
+            $notifyOptions['[c.title]'] = $orderItem->eventTicket->title . ' ' . trans('update.event_ticket');
+        } else if (!empty($orderItem->meeting_package_id)) {
+            $notifyOptions['[c.title]'] = $orderItem->meetingPackage->title . ' ' . trans('update.meeting_package');
         }
 
         if (!empty($orderItem->gift_id) and !empty($orderItem->gift)) {
@@ -209,7 +233,9 @@ class Accounting extends Model
             'amount' => $orderItem->tax_price,
             'webinar_id' => $orderItem->webinar_id,
             'bundle_id' => $orderItem->bundle_id,
+            'event_ticket_id' => $orderItem->event_ticket_id,
             'meeting_time_id' => $orderItem->reserveMeeting ? $orderItem->reserveMeeting->meeting_time_id : null,
+            'meeting_package_id' => $orderItem->meeting_package_id ?? null,
             'subscribe_id' => $orderItem->subscribe_id ?? null,
             'promotion_id' => $orderItem->promotion_id ?? null,
             'registration_package_id' => $orderItem->registration_package_id ?? null,
@@ -239,7 +265,9 @@ class Accounting extends Model
                 'amount' => $orderItem->total_amount - $orderItem->tax_price - $orderItem->commission_price,
                 'webinar_id' => $orderItem->webinar_id,
                 'bundle_id' => $orderItem->bundle_id,
+                'event_ticket_id' => $orderItem->event_ticket_id,
                 'meeting_time_id' => $orderItem->reserveMeeting ? $orderItem->reserveMeeting->meeting_time_id : null,
+                'meeting_package_id' => $orderItem->meeting_package_id ?? null,
                 'subscribe_id' => $orderItem->subscribe_id ?? null,
                 'promotion_id' => $orderItem->promotion_id ?? null,
                 'product_id' => $orderItem->product_id ?? null,
@@ -374,8 +402,10 @@ class Accounting extends Model
             'amount' => $commissionPrice,
             'webinar_id' => $orderItem->webinar_id ?? null,
             'bundle_id' => $orderItem->bundle_id ?? null,
+            'event_ticket_id' => $orderItem->event_ticket_id ?? null,
             'product_id' => $orderItem->product_id ?? null,
             'meeting_time_id' => $orderItem->reserveMeeting ? $orderItem->reserveMeeting->meeting_time_id : null,
+            'meeting_package_id' => $orderItem->meeting_package_id ?? null,
             'subscribe_id' => $orderItem->subscribe_id ?? null,
             'promotion_id' => $orderItem->promotion_id ?? null,
             'type_account' => Accounting::$income,
@@ -394,8 +424,10 @@ class Accounting extends Model
                 'amount' => $affiliateCommissionPrice,
                 'webinar_id' => $orderItem->webinar_id ?? null,
                 'bundle_id' => $orderItem->bundle_id ?? null,
+                'event_ticket_id' => $orderItem->event_ticket_id ?? null,
                 'product_id' => $orderItem->product_id ?? null,
                 'meeting_time_id' => $orderItem->reserveMeeting ? $orderItem->reserveMeeting->meeting_time_id : null,
+                'meeting_package_id' => $orderItem->meeting_package_id,
                 'subscribe_id' => null,
                 'promotion_id' => null,
                 'type_account' => Accounting::$income,
@@ -470,7 +502,9 @@ class Accounting extends Model
             'amount' => $sale->total_amount,
             'webinar_id' => $sale->webinar_id,
             'bundle_id' => $sale->bundle_id,
+            'event_ticket_id' => $sale->event_ticket_id,
             'meeting_time_id' => $sale->meeting_time_id,
+            'meeting_package_id' => $sale->meeting_package_id ?? null,
             'subscribe_id' => $sale->subscribe_id ?? null,
             'promotion_id' => $sale->promotion_id ?? null,
             'product_id' => !empty($sale->productOrder) ? $sale->productOrder->product_id : null,
@@ -491,7 +525,9 @@ class Accounting extends Model
                 'amount' => $sale->tax,
                 'webinar_id' => $sale->webinar_id,
                 'bundle_id' => $sale->bundle_id,
+                'event_ticket_id' => $sale->event_ticket_id,
                 'meeting_time_id' => $sale->meeting_time_id,
+                'meeting_package_id' => $sale->meeting_package_id ?? null,
                 'subscribe_id' => $sale->subscribe_id ?? null,
                 'promotion_id' => $sale->promotion_id ?? null,
                 'product_id' => !empty($sale->productOrder) ? $sale->productOrder->product_id : null,
@@ -514,7 +550,9 @@ class Accounting extends Model
                 'amount' => $sale->commission,
                 'webinar_id' => $sale->webinar_id,
                 'bundle_id' => $sale->bundle_id,
+                'event_ticket_id' => $sale->event_ticket_id,
                 'meeting_time_id' => $sale->meeting_time_id,
+                'meeting_package_id' => $sale->meeting_package_id,
                 'subscribe_id' => $sale->subscribe_id ?? null,
                 'promotion_id' => $sale->promotion_id ?? null,
                 'product_id' => !empty($sale->productOrder) ? $sale->productOrder->product_id : null,
@@ -545,7 +583,9 @@ class Accounting extends Model
             'amount' => $amount,
             'webinar_id' => $sale->webinar_id,
             'bundle_id' => $sale->bundle_id,
+            'event_ticket_id' => $sale->event_ticket_id,
             'meeting_time_id' => $sale->meeting_time_id,
+            'meeting_package_id' => $sale->meeting_package_id ?? null,
             'subscribe_id' => $sale->subscribe_id ?? null,
             'promotion_id' => $sale->promotion_id ?? null,
             'product_id' => !empty($sale->productOrder) ? $sale->productOrder->product_id : null,

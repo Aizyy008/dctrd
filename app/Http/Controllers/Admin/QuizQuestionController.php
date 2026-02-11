@@ -24,6 +24,8 @@ class QuizQuestionController extends Controller
             'type' => 'required',
             'image' => 'nullable|max:255',
             'video' => 'nullable|max:255',
+            // optional negative mark for multiple-choice questions
+            'negative_grade' => 'nullable|integer|min:0',
         ];
 
         $validate = Validator::make($data, $rules);
@@ -77,6 +79,7 @@ class QuizQuestionController extends Controller
                 'quiz_id' => $data['quiz_id'],
                 'creator_id' => $creator->id,
                 'grade' => $data['grade'],
+                'negative_grade' => $data['negative_grade'] ?? null,
                 'type' => $data['type'],
                 'image' => $data['image'] ?? null,
                 'video' => $data['video'] ?? null,
@@ -213,6 +216,7 @@ class QuizQuestionController extends Controller
             'type' => 'required',
             'image' => 'nullable|max:255',
             'video' => 'nullable|max:255',
+            'negative_grade' => 'nullable|integer|min:0',
         ];
 
         $validate = Validator::make($data, $rules);
@@ -268,6 +272,7 @@ class QuizQuestionController extends Controller
                 $quizQuestion->update([
                     'quiz_id' => $data['quiz_id'],
                     'grade' => $data['grade'],
+                    'negative_grade' => $data['negative_grade'] ?? null,
                     'type' => $data['type'],
                     'image' => $data['image'] ?? null,
                     'video' => $data['video'] ?? null,

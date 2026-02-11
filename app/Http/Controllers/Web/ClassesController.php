@@ -4,13 +4,10 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bundle;
-use App\Models\Category;
-use App\Models\FeatureWebinar;
 use App\Models\SpecialOffer;
 use App\Models\Ticket;
 use App\Models\Webinar;
 use App\Models\WebinarFilterOption;
-use App\Models\WebinarReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,16 +19,19 @@ class ClassesController extends Controller
 
     public function index(Request $request)
     {
-        $webinarsQuery = Webinar::where('webinars.status', 'active')
-            ->where('private', false);
+        $webinarsQuery = Webinar::where('webinars.status', 'active');
 
         $type = $request->get('type');
+
         if (!empty($type) and is_array($type) and in_array('bundle', $type)) {
             $webinarsQuery = Bundle::where('bundles.status', 'active');
+
             $this->tableName = 'bundles';
             $this->columnId = 'bundle_id';
         }
 
+        $webinarsQuery->where('private', false); // Ignore Private (Courses||Bundles)
+        $webinarsQuery->where('only_for_students', false); // Ignore Available Only for Students
 
         $filterMaxPrice = $webinarsQuery->max('price') ?? 10000;
         $coursesRatingsCount = $this->getCoursesCountByRatings(deepClone($webinarsQuery));

@@ -53,7 +53,7 @@ class SubscribesController extends Controller
         ]);
 
         $user = apiAuth();
-        $activeSubscribe = Subscribe::getActiveSubscribe($user->id);
+        /*$activeSubscribe = Subscribe::getActiveSubscribe($user->id);
 
         if ($activeSubscribe) {
 
@@ -62,7 +62,7 @@ class SubscribesController extends Controller
                 trans('public.request_failed')
 
             );
-        }
+        }*/
 
         return apiResponse2(1, 'generated', trans('api.link.generated'),
             [
@@ -270,7 +270,7 @@ class SubscribesController extends Controller
         $checkCourseForSale = $item->checkWebinarForSale($user, ($item_name == 'webinar'));
 
         if ($checkCourseForSale != 'ok') {
-            return $checkCourseForSale;
+            return back()->with(['toast' => $checkCourseForSale]);
         }
 
         $sale = Sale::create([

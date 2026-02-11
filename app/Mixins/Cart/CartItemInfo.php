@@ -14,6 +14,14 @@ class CartItemInfo
             $bundle = $cart->bundle;
 
             return $this->getBundleInfo($cart, $bundle);
+        } elseif (!empty($cart->event_ticket_id)) {
+            $eventTicket = $cart->eventTicket;
+
+            return $this->getEventTicketInfo($cart, $eventTicket);
+        } elseif (!empty($cart->meeting_package_id)) {
+            $meetingPackage = $cart->meetingPackage;
+
+            return $this->getMeetingPackageInfo($cart, $meetingPackage);
         } elseif (!empty($cart->productOrder) and !empty($cart->productOrder->product)) {
             $product = $cart->productOrder->product;
 
@@ -63,6 +71,27 @@ class CartItemInfo
         return $info;
     }
 
+    private function getEventTicketInfo($cart, $eventTicket)
+    {
+        $info = [];
+
+        $quantity = $cart->quantity ?? 1;
+
+        $info['imgPath'] = $eventTicket->event->thumbnail;
+        $info['itemUrl'] = $eventTicket->event->getUrl();
+        $info['title'] = $eventTicket->event->title;
+        $info['ticketTitle'] = $eventTicket->title;
+        $info['profileUrl'] = $eventTicket->event->creator->getProfileUrl();
+        $info['teacherName'] = $eventTicket->event->creator->full_name;
+        $info['rate'] = $eventTicket->event->getRate();
+        $info['rateCount'] = $eventTicket->event->reviews()->pluck('creator_id')->count();
+        $info['price'] = $eventTicket->price * $quantity;
+        $info['discountPrice'] = $eventTicket->hasDiscount() ? ($eventTicket->getPriceWithDiscount() * $quantity) : null;
+        $info['eventItem'] = $eventTicket->event;
+
+        return $info;
+    }
+
     private function getProductInfo($cart, $product)
     {
         $info = [];
@@ -97,6 +126,28 @@ class CartItemInfo
         $info['rate'] = $rates['rate'];
         $info['rateCount'] = $rates['count'];
         $info['price'] = $cart->reserveMeeting->paid_amount;
+
+        return $info;
+    }
+
+    private function getMeetingPackageInfo($cart, $meetingPackage)
+    {
+        $creator = $meetingPackage->creator;
+        $rates = $creator->rates(true);
+        $prices = $meetingPackage->getPrices();
+
+        $info = [];
+
+        $info['imgPath'] = !empty($meetingPackage->icon) ? $meetingPackage->icon : getMeetingPackagesSettings("default_icon");
+        $info['itemUrl'] = null;
+        $info['title'] = $meetingPackage->title;
+        $info['profileUrl'] = $creator->getProfileUrl();
+        $info['teacherName'] = $creator->full_name;
+        $info['rate'] = $rates['rate'];
+        $info['rateCount'] = $rates['count'];
+        $info['price'] = $prices['price'];
+        $info['real_price'] = $prices['real_price'];
+        $info['meetingPackage'] = $meetingPackage;
 
         return $info;
     }

@@ -43,11 +43,25 @@ class MyCertificatesController extends Controller
             'pageTitle' => trans('update.my_achievements'),
             'breadcrumbs' => $breadcrumbs,
             'pendingCertificates' => $pendingCertificates,
+            'userHaveCertificatesItems' => $this->checkUserHaveCertificatesItems($user),
             ...$topStats,
             ...$pageListData,
         ];
 
         return view('design_1.panel.certificates.my_achievements.index', $data);
+    }
+
+    private function checkUserHaveCertificatesItems($user)
+    {
+        $query = $this->getQueryBySource($user, 'quiz');
+        $certificatesItems = $query->get()->count();
+
+        if ($certificatesItems < 1) {
+            $query2 = $this->getQueryBySource($user, 'completion');
+            $certificatesItems = $query2->get()->count();
+        }
+
+        return ($certificatesItems > 0);
     }
 
     private function getQueryBySource($user, $source): Builder

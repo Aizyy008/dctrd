@@ -107,7 +107,7 @@ class Channel extends BasePaymentChannel implements IChannel
             /*$data = [
                 'iframUrl' => 'https://www.paytr.com/odeme/guvenli/' . $token
             ];
-            return view('web.default.cart.channels.paytr', $data);*/
+            return view('design_1.web.cart.payment.channels.paytr', $data);*/
         }
 
         $toastData = [

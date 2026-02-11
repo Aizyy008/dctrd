@@ -3,6 +3,8 @@
 namespace App\Mixins\RegistrationPackage;
 
 use App\Models\GroupRegistrationPackage;
+use App\Models\Event;
+use App\Models\MeetingPackage;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Webinar;
@@ -16,6 +18,8 @@ class UserPackage
     public $courses_count;
     public $meeting_count;
     public $product_count;
+    public $events_count;
+    public $meeting_packages_count;
     public $title;
     public $activation_date;
     public $days_remained;
@@ -51,8 +55,10 @@ class UserPackage
             $package->courses_count = (!empty($data) and isset($data->courses_count)) ? $data->courses_count : null;
             $package->meeting_count = (!empty($data) and isset($data->meeting_count)) ? $data->meeting_count : null;
             $package->product_count = (!empty($data) and isset($data->product_count)) ? $data->product_count : null;
+            $package->events_count = (!empty($data) and isset($data->events_count)) ? $data->events_count : null;
+            $package->meeting_packages_count = (!empty($data) and isset($data->meeting_packages_count)) ? $data->meeting_packages_count : null;
             $package->ai_content_access = !!(!empty($data) and !empty($data->ai_content_access) and $data->ai_content_access);
-            $package->icon = (!empty($data) and !empty($data->icon)) ?  $data->icon : '';
+            $package->icon = (!empty($data) and !empty($data->icon)) ? $data->icon : '';
 
             if ($type == 'package') {
                 $package->package_id = $data->id;
@@ -181,7 +187,7 @@ class UserPackage
     }
 
     /**
-     * @param $type => instructors_count, students_count, courses_capacity, courses_count, meeting_count, product_count
+     * @param $type => instructors_count, students_count, courses_capacity, courses_count, meeting_count, product_count, events_count, meeting_packages_count
      * */
     public function checkPackageLimit($type, $count = null)
     {
@@ -218,6 +224,14 @@ class UserPackage
 
                 case 'product_count':
                     $usedCount = Product::where('creator_id', $user->id)->count();
+                    break;
+
+                case 'events_count':
+                    $usedCount = Event::query()->where('creator_id', $user->id)->count();
+                    break;
+
+                case 'meeting_packages_count':
+                    $usedCount = MeetingPackage::query()->where('creator_id', $user->id)->count();
                     break;
             }
 

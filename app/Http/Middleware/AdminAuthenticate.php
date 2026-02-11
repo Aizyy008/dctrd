@@ -70,6 +70,7 @@ class AdminAuthenticate
             $sidebarBeeps['bundleComments'] = $sidebarController->getBundleCommentsBeep();
             $sidebarBeeps['blogComments'] = $sidebarController->getBlogCommentsBeep();
             $sidebarBeeps['productComments'] = $sidebarController->getProductCommentsBeep();
+            $sidebarBeeps['eventsComments'] = $sidebarController->getEventsCommentsBeep();
             $sidebarBeeps['payoutRequest'] = $sidebarController->getPayoutRequestBeep();
             $sidebarBeeps['offlinePayments'] = $sidebarController->getOfflinePaymentsBeep();
 

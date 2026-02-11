@@ -17,6 +17,8 @@ class UserCommission extends Model
         'virtual_products',
         'physical_products',
         'meetings',
+        'events',
+        'meeting_packages',
     ];
 
     public function calculatePrice($price)

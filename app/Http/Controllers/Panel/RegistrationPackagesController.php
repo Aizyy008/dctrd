@@ -8,9 +8,12 @@ use App\Mixins\Installment\InstallmentPlans;
 use App\Mixins\RegistrationPackage\UserPackage;
 use App\Models\Accounting;
 use App\Models\BecomeInstructor;
+use App\Models\Event;
+use App\Models\MeetingPackage;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentChannel;
+use App\Models\OfflineBank;
 use App\Models\Product;
 use App\Models\RegistrationPackage;
 use App\Models\Sale;
@@ -89,12 +92,18 @@ class RegistrationPackagesController extends Controller
         $myMeetingCount = !empty($user->meeting) ? $user->meeting->meetingTimes()->count() : 0;
         $myProductCount = Product::where('creator_id', $user->id)->count();
 
+        $myEventsCount = Event::query()->where('creator_id', $user->id)->count();
+
+        $myMeetingPackagesCount = MeetingPackage::query()->where('creator_id', $user->id)->count();
+
         return [
             'myInstructorsCount' => $myInstructorsCount,
             'myStudentsCount' => $myStudentsCount,
             'myCoursesCount' => $myCoursesCount,
             'myMeetingCount' => $myMeetingCount,
             'myProductCount' => $myProductCount,
+            'myEventsCount' => $myEventsCount,
+            'myMeetingPackagesCount' => $myMeetingPackagesCount,
         ];
     }
 
@@ -159,17 +168,27 @@ class RegistrationPackagesController extends Controller
             }
         }
 
+        $calculatePrices = [
+            'total' => $order->total_amount,
+            'sub_total' => $order->amount,
+            'total_discount' => 0,
+            'tax' => $tax,
+            'tax_price' => $taxPrice,
+        ];
+
         $data = [
             'pageTitle' => trans('public.checkout_page_title'),
             'paymentChannels' => $paymentChannels,
             'total' => $order->total_amount,
             'order' => $order,
+            'calculatePrices' => $calculatePrices,
             'count' => 1,
             'userCharge' => $user->getAccountingCharge(),
-            'razorpay' => $razorpay
+            'razorpay' => $razorpay,
+            'offlineBanks' => OfflineBank::query()->orderBy('created_at', 'desc')->with(['specifications'])->get(),
         ];
 
-        return view(getTemplate() . '.cart.payment', $data);
+        return view('design_1.web.cart.payment.index', $data);
     }
 
     private function handleFreePackage($package, $orderItem)
@@ -179,9 +198,10 @@ class RegistrationPackagesController extends Controller
         Accounting::createAccountingForRegistrationPackage($orderItem, 'credit');
 
         if (!empty($orderItem->become_instructor_id)) {
-            BecomeInstructor::where('id', $orderItem->become_instructor_id)
+            BecomeInstructor::query()->where('id', $orderItem->become_instructor_id)
                 ->update([
-                    'package_id' => $orderItem->registration_package_id
+                    'package_id' => $orderItem->registration_package_id,
+                    'status' => 'pending',
                 ]);
         }
 

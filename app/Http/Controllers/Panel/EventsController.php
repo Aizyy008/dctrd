@@ -2,623 +2,664 @@
 
 namespace App\Http\Controllers\Panel;
 
+use App\Enums\MorphTypesEnum;
+use App\Enums\UploadSource;
+use App\Http\Controllers\Admin\traits\SpecificLocationsTrait;
 use App\Http\Controllers\Controller;
 use App\Mixins\RegistrationPackage\UserPackage;
-use App\Models\Bundle;
-use App\Models\InstallmentOrder;
-use App\Models\InstallmentOrderPayment;
-use App\Models\Quiz;
-use App\Models\ReserveMeeting;
-use App\Models\Session;
-use App\Models\Subscribe;
-use App\Models\Webinar;
-use App\Models\WebinarAssignment;
+use App\Models\Category;
+use App\Models\Event;
+use App\Models\EventFilterOption;
+use App\Models\Tag;
+use App\Models\Translation\EventTranslation;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Spatie\CalendarLinks\Link;
+use Illuminate\Support\Facades\Validator;
 
 class EventsController extends Controller
 {
-    public $user;
-    public $userBoughtWebinarsIds;
+    use SpecificLocationsTrait;
 
     public function index(Request $request)
     {
+        $this->authorize("panel_events_lists");
+
         $user = auth()->user();
-        $this->user = $user;
-        $this->userBoughtWebinarsIds = $user->getPurchasedCoursesIds();
 
+        $query = Event::query()->where('creator_id', $user->id);
 
-        $dayTimestamp = $request->get('date', time());
+        $copyQuery = deepClone($query);
+        $getListData = $this->getListsData($request, $query);
 
-        $dayEvents = $this->handleEventsByDate($dayTimestamp);
-        $getUpcomingEvents = $this->getUpcomingEvents();
-        $upcomingEvents = $getUpcomingEvents['upcomingEvents'];
+        if ($request->ajax()) {
+            return $getListData;
+        }
 
-        $eventsWithTimestamp = $this->getAllEventsReturnWithTimestamp();
+        $topStats = $this->handleTopStats($copyQuery);
+
 
         $data = [
-            'pageTitle' => trans('update.events_calendar'),
-            'dayEvents' => $dayEvents,
-            'dayTimestamp' => $dayTimestamp,
-            'upcomingEvents' => $upcomingEvents,
-            'eventsWithTimestamp' => $eventsWithTimestamp,
+            'pageTitle' => trans('update.my_events'),
         ];
+        $data = array_merge($data, $topStats);
+        $data = array_merge($data, $getListData);
 
-        return view('design_1.panel.events.index', $data);
+        return view('design_1.panel.events.my_events.index', $data);
     }
 
-    public function getEventsByDay(Request $request)
+    private function handleTopStats(Builder $query): array
     {
-        $this->validate($request, [
-            'timestamp' => 'required',
-        ]);
+        $time = time();
 
-        $user = auth()->user();
-        $this->user = $user;
-        $this->userBoughtWebinarsIds = $user->getPurchasedCoursesIds();
+        $totalEventsCount = deepClone($query)->count();
 
-        $dayTimestamp = $request->get('timestamp');
-        $dayEvents = $this->handleEventsByDate($dayTimestamp);
+        $totalEndedEvents = deepClone($query)
+            ->where(function (Builder $query) use ($time) {
+                $query->whereNotNull("end_date");
+                $query->where('end_date', "<", $time);
+            })
+            ->count();
 
-        $html = (string)view()->make("design_1.panel.events.day_events", [
-            'dayEvents' => $dayEvents,
-            'dayTimestamp' => $dayTimestamp,
-        ]);
+        $totalScheduledEvents = deepClone($query)
+            ->where('start_date', ">", $time)
+            ->count();
 
-        return response()->json([
-            'code' => 200,
-            'html' => $html,
-        ]);
+        $totalDraftEvents = deepClone($query)->where('status', 'draft')->count();
+
+        return [
+            'totalEventsCount' => $totalEventsCount,
+            'totalEndedEvents' => $totalEndedEvents,
+            'totalScheduledEvents' => $totalScheduledEvents,
+            'totalDraftEvents' => $totalDraftEvents,
+        ];
     }
 
-    public function getAllEventsReturnWithTimestamp()
+    private function getListsData(Request $request, Builder $query)
     {
-        $result = [];
-        $events = $this->getAllEvents();
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
 
-        if (!empty($events) and count($events)) {
-            foreach ($events as $eventName => $eventItems) {
-                if (!empty($eventItems) and is_array($eventItems)) {
-                    foreach ($eventItems as $eventTimestamp => $eventItem) {
-                        if (!empty($eventItem) and is_array($eventItem)) {
-                            $startOfDayTimestamp = startOfDayTimestamp($eventTimestamp);
-                            $endOfDayTimestamp = endOfDayTimestamp($eventTimestamp);
+        $total = $query->count();
 
-                            if ($startOfDayTimestamp) {
-                                $result[$eventTimestamp] = [
-                                    'title' => $eventName,
-                                    'start_day' => $startOfDayTimestamp,
-                                    'end_day' => $endOfDayTimestamp,
-                                    ...$eventItem
-                                ];
-                            }
-                        }
-                    }
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $events = $query
+            ->with([
+                'reviews' => function ($query) {
+                    $query->where('status', 'active');
+                },
+            ])
+            ->withCount([
+                'tickets' => function ($query) {
+                    $query->where('enable', true);
                 }
-            }
-        }
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return $result;
-    }
+        /*foreach ($events as $event) {
 
-    public function getUpcomingEvents($count = 5)
-    {
-        $result = [];
-        $events = $this->getAllEvents();
+        }*/
 
-        if (!empty($events) and count($events)) {
-            foreach ($events as $eventName => $eventItems) {
-                if (!empty($eventItems) and is_array($eventItems)) {
-                    foreach ($eventItems as $eventTimestamp => $eventItem) {
-                        if (!empty($eventItem) and is_array($eventItem)) {
-                            $result[] = [
-                                'title' => $eventName,
-                                ...$eventItem
-                            ];
-                        }
-                    }
-                }
-            }
-        }
-
-        $upcomingEvents = [];
-
-        if (count($result) > 0) {
-            uasort($result, function ($a, $b) {
-                return $a['event_at'] <=> $b['event_at'];
-            });
-
-            $upcomingEvents = array_slice($result, 0, $count, true); // take 5 item
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $events, $total, $count);
         }
 
         return [
-            'upcomingEvents' => $upcomingEvents,
-            'total' => (!empty($events['total'])) ? $events['total'] : 0,
+            'events' => $events,
+            'pagination' => $this->makePagination($request, $events, $total, $count, true),
         ];
     }
 
-    private function handleEventsByDate($dateTimestamp)
+    private function getAjaxResponse(Request $request, $events, $total, $count)
     {
-        $carbonDate = Carbon::createFromTimestamp($dateTimestamp);
-        $carbonDate->setTimezone(getTimezone());
-        $startAt = $carbonDate->startOfDay()->timestamp;
-        $endAt = $carbonDate->endOfDay()->timestamp;
+        $html = "";
 
-        return $this->getAllEvents($startAt, $endAt);
+        foreach ($events as $eventRow) {
+            $html .= (string)view()->make("design_1.panel.events.my_events.event_card.index", ['event' => $eventRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $events, $total, $count, true)
+        ]);
     }
 
-    private function getAllEvents($startAt = null, $endAt = null)
+    private function getCreateWizardStepCount()
     {
-        $total = 0;
-        $events = [];
+        $steps = 6;
 
-        // Course Expiration
-        $events['courses_expirations'] = $this->getCourseExpirationEvent($startAt, $endAt);
-        $total += count($events['courses_expirations']);
+        if (!empty(getGeneralOptionsSettings('direct_publication_of_events'))) {
+            $steps -= 1;
+        }
 
-        // Quiz Expiration
-        $events['quiz_expirations'] = $this->getQuizExpirationEvent($startAt, $endAt);
-        $total += count($events['quiz_expirations']);
-
-        // Live Session
-        $events['live_sessions'] = $this->getLiveSessionEvent($startAt, $endAt);
-        $total += count($events['live_sessions']);
-
-        // Assignment Expiration
-        $events['assignment_expirations'] = $this->getAssignmentExpirationEvent($startAt, $endAt);
-        $total += count($events['assignment_expirations']);
-
-        // Bundle Expiration
-        $events['bundle_expirations'] = $this->getBundleExpirationEvent($startAt, $endAt);
-        $total += count($events['bundle_expirations']);
-
-        // Subscription Expiration
-        $events['subscription_expirations'] = $this->getSubscriptionExpirationEvent($startAt, $endAt);
-        $total += count($events['subscription_expirations']);
-
-        // Registration Package Expiration
-        $events['registration_package_expirations'] = $this->getRegistrationPackageExpirationEvent($startAt, $endAt);
-        $total += count($events['registration_package_expirations']);
-
-        // Installment
-        $events['installments'] = $this->getInstallmentExpirationEvent($startAt, $endAt);
-        $total += count($events['installments']);
-
-        // Meeting
-        $events['meetings'] = $this->getMeetingExpirationEvent($startAt, $endAt);
-        $total += count($events['meetings']);
-
-        // Live Class Start
-        $events['live_class_start'] = $this->getLiveClassStartEvent($startAt, $endAt);
-        $total += count($events['live_class_start']);
-
-        $events['total'] = $total;
-        return $events;
+        return $steps;
     }
 
-    private function getCourseExpirationEvent($startAt = null, $endAt = null)
+    public function create()
     {
-        $courses = [];
+        $this->authorize("panel_events_create");
 
-        if (!empty($this->userBoughtWebinarsIds) and count($this->userBoughtWebinarsIds)) {
-            $webinars = Webinar::query()->whereIn('id', $this->userBoughtWebinarsIds)
-                ->whereNotNull('access_days')
-                ->get();
+        $user = auth()->user();
 
-            foreach ($webinars as $webinar) {
-                $expiredItem = false;
-                $sale = $webinar->getSaleItem($this->user, true);
+        $userPackage = new UserPackage($user);
+        $userEventsCountLimited = $userPackage->checkPackageLimit('events_count');
+
+        if ($userEventsCountLimited) {
+            session()->put('registration_package_limited', $userEventsCountLimited);
+
+            return redirect()->back();
+        }
+
+        $isOrganization = $user->isOrganization();
+        $stepCount = $this->getCreateWizardStepCount();
+
+        $data = [
+            'pageTitle' => trans('update.new_event'),
+            'currentStep' => 1,
+            'stepCount' => $stepCount,
+            'isOrganization' => $isOrganization,
+        ];
+
+        return view('design_1.panel.events.create.index', $data);
+    }
+
+    public function store(Request $request)
+    {
+        $this->authorize("panel_events_create");
+
+        $user = auth()->user();
+
+        $userPackage = new UserPackage($user);
+        $userEventsCountLimited = $userPackage->checkPackageLimit('events_count');
+
+        if ($userEventsCountLimited) {
+            session()->put('registration_package_limited', $userEventsCountLimited);
+
+            return redirect()->back();
+        }
 
 
-                if (!empty($sale)) {
-                    $expireAt = $webinar->getExpiredAccessDays($sale->created_at, $sale->gift_id);
+        $this->validate($request, [
+            'locale' => 'required',
+            'type' => 'required|in:in_person,online',
+            'title' => 'required|max:255',
+            'subtitle' => 'required|max:255',
+            'thumbnail' => 'required',
+            'cover_image' => 'required',
+            'seo_description' => 'required|string',
+            'summary' => 'required|string',
+            'description' => 'required|string',
+        ]);
 
-                    if (!empty($startAt) and !empty($endAt)) {
-                        if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                            $expiredItem = true;
+        $data = $request->all();
+
+        $event = Event::create([
+            'type' => $data['type'],
+            'slug' => Event::makeSlug($data['title']),
+            'creator_id' => $user->id,
+            'status' => ((!empty($data['draft']) and $data['draft'] == 1) or (!empty($data['get_next']) and $data['get_next'] == 1)) ? 'draft' : 'pending',
+            'created_at' => time(),
+            'updated_at' => time(),
+        ]);
+
+        // Handle Image and Video
+        $event = $this->storeEventMedia($request, $event);
+
+        $this->handleTranslatesData($request, $event, $user);
+
+        $notifyOptions = [
+            '[u.name]' => $user->full_name,
+            '[item_title]' => $event->title,
+            '[content_type]' => trans('update.event'),
+        ];
+        sendNotification("new_item_created", $notifyOptions, 1);
+
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.event_created_successfully'),
+            'status' => 'success'
+        ];
+        return redirect("/panel/events/{$event->id}/step/2")->with(['toast' => $toastData]);
+    }
+
+    public function edit(Request $request, $eventId, $step = 1)
+    {
+        $this->authorize("panel_events_create");
+
+        $stepCount = $this->getCreateWizardStepCount();
+
+        if ($step > $stepCount) {
+            return redirect("/panel/events/{$eventId}/step/{$stepCount}");
+        }
+
+
+        $user = auth()->user();
+
+        $eventQuery = Event::query()->where('id', $eventId)->where('creator_id', $user->id);
+
+        if ($step == 3) {
+            $eventQuery->with([
+                'tickets' => function ($query) {
+                    $query->orderBy('order', 'asc');
+                },
+            ]);
+        } else if ($step == 4) {
+            $eventQuery->with([
+                'prerequisites' => function ($query) {
+                    $query->orderBy('order', 'asc');
+                },
+            ]);
+        } else if ($step == 5) {
+            $eventQuery->with([
+                'speakers' => function ($query) {
+                    $query->orderBy('order', 'asc');
+                },
+                'faqs' => function ($query) {
+                    $query->orderBy('order', 'asc');
+                },
+                'specificLocation'
+            ]);
+        }
+
+        $event = $eventQuery->first();
+
+        if (!empty($event)) {
+            $locale = $request->get('locale', app()->getLocale());
+            $isOrganization = $user->isOrganization();
+            $stepCount = $this->getCreateWizardStepCount();
+
+
+            $data = [
+                'pageTitle' => trans('public.edit') . ' | ' . $event->title,
+                'currentStep' => $step,
+                'stepCount' => $stepCount,
+                'isOrganization' => $isOrganization,
+                'locale' => mb_strtolower($locale),
+                'event' => $event,
+            ];
+
+
+            if ($step == 2) {
+                $data['eventTags'] = $event->tags->pluck('title')->toArray();
+
+                $eventCategoryFilters = !empty($event->category) ? $event->category->filters : [];
+
+                if (empty($event->category) and !empty($request->old('category_id'))) {
+                    $category = Category::where('id', $request->old('category_id'))->first();
+
+                    if (!empty($category)) {
+                        $eventCategoryFilters = $category->filters;
+                    }
+                }
+
+                $data['eventCategoryFilters'] = $eventCategoryFilters;
+            }
+
+            return view('design_1.panel.events.create.index', $data);
+        }
+
+        abort(404);
+    }
+
+    public function update(Request $request, $eventId)
+    {
+        $this->authorize("panel_events_create");
+
+        $user = auth()->user();
+
+        $event = Event::query()->where('id', $eventId)
+            ->where('creator_id', $user->id)
+            ->first();
+
+        if (empty($event)) {
+            abort(404);
+        }
+
+        $data = $request->all();
+        $rules = [];
+        $currentStep = $data['current_step'];
+        $getStep = $data['get_step'];
+        $getNextStep = (!empty($data['get_next']) and $data['get_next'] == 1);
+        $isDraft = (!empty($data['draft']) and $data['draft'] == 1);
+        $stepCount = $this->getCreateWizardStepCount();
+
+        if ($currentStep == 1) {
+            $rules = [
+                'type' => 'required|in:in_person,online',
+                'title' => 'required|max:255',
+                'subtitle' => 'required|max:255',
+                'seo_description' => 'required|string',
+                'summary' => 'required|string',
+                'description' => 'required|string',
+            ];
+        } else if ($currentStep == 2) {
+            $rules = [
+                'category_id' => 'required|exists:categories,id',
+                'capacity' => 'nullable|numeric',
+                'duration' => 'nullable|numeric',
+                'start_date' => 'required',
+                'end_date' => 'required',
+                'sales_end_date' => 'required',
+            ];
+        }
+
+        $this->validate($request, $rules);
+
+        $directPublication = !empty(getGeneralOptionsSettings('direct_publication_of_events'));
+        $eventRulesRequired = false;
+
+        if (!$directPublication and (($currentStep == $stepCount and !$getNextStep and !$isDraft) or (!$getNextStep and !$isDraft))) {
+            $eventRulesRequired = empty($data['rules']);
+        }
+
+        $status = ($isDraft or $eventRulesRequired) ? 'draft' : 'pending';
+
+        if ($directPublication and !$getNextStep and !$isDraft) {
+            $status = 'publish';
+        }
+
+        $data['status'] = $status;
+
+        if ($currentStep == 1) {
+            // Handle Image and Video
+            $event = $this->storeEventMedia($request, $event);
+
+            // Translates
+            $this->handleTranslatesData($request, $event, $user);
+        } else if ($currentStep == 2) {
+            if (empty($data['timezone'])) {
+                $data['timezone'] = getTimezone();
+            }
+
+            $data['start_date'] = !empty($data['start_date']) ? convertTimeToUTCzone($data['start_date'], $data['timezone'])->getTimestamp() : null;
+            $data['end_date'] = !empty($data['end_date']) ? convertTimeToUTCzone($data['end_date'], $data['timezone'])->getTimestamp() : null;
+            $data['sales_end_date'] = !empty($data['sales_end_date']) ? convertTimeToUTCzone($data['sales_end_date'], $data['timezone'])->getTimestamp() : null;
+            $data['enable_countdown'] = (!empty($data['enable_countdown']) and $data['enable_countdown'] == "on");
+            $data['support'] = (!empty($data['support']) and $data['support'] == "on");
+            $data['certificate'] = (!empty($data['certificate']) and $data['certificate'] == "on");
+            $data['private'] = (!empty($data['private']) and $data['private'] == "on");
+
+
+            // Filters & Tags
+            $this->handleCategoryFiltersAndTags($request, $event);
+        } else if ($currentStep == 5) {
+
+            // Handle Specific Location
+            $locationData = ($event->type == "in_person" and !empty($data['specificLocation']) and is_array($data['specificLocation'])) ? $data['specificLocation'] : [];
+            $this->updateOrCreateSpecificLocation($event->id, MorphTypesEnum::EVENT, $locationData);
+
+            // Handle Company Logos
+            $webinarExtraDescriptionController = (new WebinarExtraDescriptionController());
+            $webinarExtraDescriptionController->storeCompanyLogos($request, 'event_id', $event->id, 'events');
+        }
+
+        unset($data['_token'],
+            $data['current_step'],
+            $data['draft'],
+            $data['get_step'],
+            $data['get_next'],
+            $data['tags'],
+            $data['filters'],
+            $data['ajax'],
+            $data['locale'],
+            $data['title'],
+            $data['subtitle'],
+            $data['seo_description'],
+            $data['summary'],
+            $data['description'],
+        );
+
+        $event->update($data);
+
+        $url = '/panel/events';
+
+        if ($getNextStep) {
+            $nextStep = (!empty($getStep) and $getStep > 0) ? $getStep : $currentStep + 1;
+
+            $url = '/panel/events/' . $event->id . '/step/' . (($nextStep <= $stepCount) ? $nextStep : $stepCount);
+        }
+
+        if ($status != "publish" and !$getNextStep and !$isDraft and !$eventRulesRequired) {
+            $notifyOptions = [
+                '[u.name]' => $user->full_name,
+                '[item_title]' => $event->title,
+                '[content_type]' => trans('update.event'),
+            ];
+            sendNotification("content_review_request", $notifyOptions, 1);
+        }
+
+        if ($eventRulesRequired) {
+            $url = "/panel/events/{$event->id}/step/{$stepCount}";
+
+            return redirect($url)->withErrors(['rules' => trans('validation.required', ['attribute' => 'rules'])]);
+        }
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.event_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect($url)->with(['toast' => $toastData]);
+    }
+
+    public function delete(Request $request, $eventId)
+    {
+        $this->authorize("panel_events_create");
+
+        if (!canDeleteContentDirectly()) {
+            if ($request->ajax()) {
+                return response()->json([], 422);
+            } else {
+                $toastData = [
+                    'title' => trans('public.request_failed'),
+                    'msg' => trans('update.it_is_not_possible_to_delete_the_content_directly'),
+                    'status' => 'error'
+                ];
+                return redirect()->back()->with(['toast' => $toastData]);
+            }
+        }
+
+        $user = auth()->user();
+
+        $event = Event::where('id', $eventId)
+            ->where('author_id', $user->id)
+            ->first();
+
+        if (!empty($event)) {
+            $event->delete();
+        }
+
+        return response()->json([
+            'code' => 200,
+        ]);
+    }
+
+    private function handleTranslatesData(Request $request, $event, $user)
+    {
+        $data = $request->all();
+
+        EventTranslation::query()->updateOrCreate([
+            'event_id' => $event->id,
+            'locale' => mb_strtolower($data['locale']),
+        ], [
+            'title' => $data['title'],
+            'subtitle' => $data['subtitle'],
+            'seo_description' => $data['seo_description'] ?? null,
+            'summary' => $data['summary'] ?? null,
+            'description' => $data['description'] ?? null,
+        ]);
+    }
+
+    private function handleCategoryFiltersAndTags(Request $request, $event)
+    {
+        // Category Filter Options
+        EventFilterOption::query()->where('event_id', $event->id)->delete();
+
+        $filters = $request->get('filters', null);
+        if (!empty($filters) and is_array($filters)) {
+            foreach ($filters as $filter) {
+                EventFilterOption::query()->create([
+                    'event_id' => $event->id,
+                    'filter_option_id' => $filter
+                ]);
+            }
+        }
+
+        // Tags
+        Tag::query()->where('event_id', $event->id)->delete();
+
+        if (!empty($request->get('tags'))) {
+            $tags = explode(',', $request->get('tags'));
+
+            foreach ($tags as $tag) {
+                Tag::query()->create([
+                    'event_id' => $event->id,
+                    'title' => $tag,
+                ]);
+            }
+        }
+    }
+
+    protected function storeEventMedia(Request $request, $event)
+    {
+        $thumbnail = $event->thumbnail ?? null;
+        $imageCover = $event->cover_image ?? null;
+        $iconPath = $event->icon ?? null;
+        $videoDemoSource = $event->video_demo_source ?? null;
+        $videoDemo = $event->video_demo ?? null;
+
+
+        if (!empty($request->file('thumbnail'))) {
+            $thumbnail = $this->uploadFile($request->file('thumbnail'), "events/{$event->id}", 'thumbnail', $event->creator_id);
+        }
+
+        if (!empty($request->file('cover_image'))) {
+            $imageCover = $this->uploadFile($request->file('cover_image'), "events/{$event->id}", 'cover_image', $event->creator_id);
+        }
+
+        if (!empty($request->file('icon'))) {
+            $iconPath = $this->uploadFile($request->file('icon'), "events/{$event->id}", 'icon', $event->creator_id);
+        }
+
+
+        if (in_array($request->get('video_demo_source'), UploadSource::urlPathItems) and !empty($request->get('demo_video_path'))) {
+            $videoDemoSource = $request->get('video_demo_source');
+            $videoDemo = $request->get('demo_video_path');
+        } elseif ($request->get('video_demo_source') == UploadSource::UPLOAD and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::UPLOAD;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "events/{$event->id}", 'video', $event->creator_id);
+        } elseif ($request->get('video_demo_source') == UploadSource::S3 and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::S3;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "events/{$event->id}", 'video', $event->creator_id, 'minio');
+        } elseif ($request->get('video_demo_source') == UploadSource::SECURE_HOST and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::SECURE_HOST;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "events/{$event->id}", "event_{$event->id}_video_demo", $event->creator_id, 'bunny');
+        }
+
+        $event->update([
+            'thumbnail' => $thumbnail,
+            'cover_image' => $imageCover,
+            'icon' => $iconPath,
+            'video_demo_source' => $videoDemoSource,
+            'video_demo' => $videoDemo,
+        ]);
+
+        return $event;
+    }
+
+    public function getContentItemByLocale(Request $request, $id)
+    {
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'item_id' => 'required',
+            'locale' => 'required',
+            'relation' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response([
+                'code' => 422,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = auth()->user();
+
+        $event = Event::query()->where('id', $id)
+            ->where('creator_id', $user->id)
+            ->first();
+
+        if (!empty($event)) {
+
+            $itemId = $data['item_id'];
+            $locale = $data['locale'];
+            $relation = $data['relation'];
+
+            if (!empty($event->$relation)) {
+                $item = $event->$relation->where('id', $itemId)->first();
+
+                if (!empty($item)) {
+                    foreach ($item->translatedAttributes as $attribute) {
+                        try {
+                            $item->$attribute = $item->translate(mb_strtolower($locale))->$attribute;
+                        } catch (\Exception $e) {
+                            $item->$attribute = null;
                         }
-                    } elseif ($expireAt > time()) {
-                        $expiredItem = true;
                     }
 
-                    if ($expiredItem) {
-                        $courses[$expireAt] = [
-                            'subtitle' => $webinar->title,
-                            'add_to_calendar_url' => $webinar->addToCalendarLink(),
-                            'event_at' => $expireAt,
-                            'time' => null,
-                        ];;
-                    }
+                    return response()->json([
+                        'item' => $item
+                    ], 200);
                 }
             }
         }
 
-        return $courses;
+        abort(403);
     }
 
-    private function getBundleExpirationEvent($startAt = null, $endAt = null)
+    public function search(Request $request)
     {
-        $bundlesHasExpiration = [];
-        $userBoughtBundlesIds = $this->user->getPurchasedBundlesIds();
+        $user = auth()->user();
 
-        if (count($userBoughtBundlesIds)) {
-            $bundles = Bundle::query()->whereIn('id', $userBoughtBundlesIds)
-                ->whereNotNull('access_days')
-                ->get();
-
-            foreach ($bundles as $bundle) {
-                $expiredItem = false;
-                $sale = $bundle->getSaleItem($this->user);
-
-                if (!empty($sale)) {
-                    $expireAt = $bundle->getExpiredAccessDays($sale->created_at, $sale->gift_id);
-
-                    if (!empty($startAt) and !empty($endAt)) {
-                        if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                            $expiredItem = true;
-                        }
-                    } elseif ($expireAt > time()) {
-                        $expiredItem = true;
-                    }
-
-                    if ($expiredItem) {
-                        $bundlesHasExpiration[$expireAt] = [
-                            'subtitle' => $bundle->title,
-                            'add_to_calendar_url' => '',
-                            'event_at' => $expireAt,
-                            'time' => null,
-                        ];;
-                    }
-                }
-            }
+        if (!$user->isTeacher() and !$user->isOrganization()) {
+            return response('', 422);
         }
 
-        return $bundlesHasExpiration;
-    }
+        $term = $request->get('term', null);
+        $eventId = $request->get('event_id', null);
+        $option = $request->get('option', null);
 
-    private function getQuizExpirationEvent($startAt = null, $endAt = null)
-    {
-        $hasExpiration = [];
-
-        if (!empty($this->userBoughtWebinarsIds) and count($this->userBoughtWebinarsIds)) {
-            $quizzes = Quiz::whereIn('webinar_id', $this->userBoughtWebinarsIds)
-                ->where('status', 'active')
-                ->get();
-
-            foreach ($quizzes as $quiz) {
-                $expiredItem = false;
-                $expireAt = $quiz->getExpireTimestamp($this->user);
-
-                if (!empty($startAt) and !empty($endAt)) {
-                    if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                        $expiredItem = true;
+        if (!empty($term)) {
+            $query = Event::query()->select('id', 'creator_id')
+                ->whereTranslationLike('title', '%' . $term . '%')
+                ->where('id', '<>', $eventId)
+                ->with([
+                    'creator' => function ($query) {
+                        $query->select('id', 'full_name');
                     }
-                } elseif ($expireAt > time()) {
-                    $expiredItem = true;
-                }
+                ]);
+            //->where('creator_id', $user->id)
+            //->get();
 
-                if ($expiredItem) {
-                    $title = $quiz->title;
-                    if (!empty($quiz->webinar)) {
-                        $title .= " - " . $quiz->webinar->title;
-                    }
+            $events = $query->get();
 
-                    $hasExpiration[$expireAt] = [
-                        'subtitle' => $title,
-                        'add_to_calendar_url' => $this->addToCalendarLink($title, $expireAt),
-                        'event_at' => $expireAt,
-                        'time' => null,
-                    ];
-                }
-            }
-        }
+            $result = [];
 
-        return $hasExpiration;
-    }
-
-    private function getLiveSessionEvent($startAt = null, $endAt = null)
-    {
-        $hasExpiration = [];
-
-        if (!empty($this->userBoughtWebinarsIds) and count($this->userBoughtWebinarsIds)) {
-            $sessions = Session::whereIn('webinar_id', $this->userBoughtWebinarsIds)
-                ->where('status', 'active')
-                ->where('date', '>=', time())
-                ->get();
-
-            foreach ($sessions as $session) {
-                $expiredItem = false;
-                $sessionDate = $session->date;
-
-                if (!empty($startAt) and !empty($endAt)) {
-                    if ($sessionDate >= $startAt and $sessionDate <= $endAt) {
-                        $expiredItem = true;
-                    }
-                } elseif ($sessionDate > time()) {
-                    $expiredItem = true;
-                }
-
-                if ($expiredItem) {
-                    $title = $session->title;
-                    if (!empty($session->webinar)) {
-                        $title .= " - " . $session->webinar->title;
-                    }
-
-                    $hasExpiration[$sessionDate] = [
-                        'subtitle' => $title,
-                        'add_to_calendar_url' => $this->addToCalendarLink($title, $sessionDate),
-                        'event_at' => $sessionDate,
-                        'time' => dateTimeFormat($sessionDate, 'H:i'),
-                    ];
-                }
-            }
-        }
-
-        return $hasExpiration;
-    }
-
-    private function getAssignmentExpirationEvent($startAt = null, $endAt = null)
-    {
-        $hasExpiration = [];
-
-        if (!empty($this->userBoughtWebinarsIds) and count($this->userBoughtWebinarsIds)) {
-            $assignments = WebinarAssignment::whereIn('webinar_id', $this->userBoughtWebinarsIds)
-                ->where('status', 'active')
-                ->get();
-
-            foreach ($assignments as $assignment) {
-                $expiredItem = false;
-                $expireAt = $assignment->getDeadlineTimestamp($this->user);
-
-                if (!empty($expireAt)) {
-                    if (!empty($startAt) and !empty($endAt)) {
-                        if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                            $expiredItem = true;
-                        }
-                    } elseif ($expireAt > time()) {
-                        $expiredItem = true;
-                    }
-                }
-
-                if ($expiredItem) {
-                    $title = $assignment->title;
-                    if (!empty($assignment->webinar)) {
-                        $title .= " - " . $assignment->webinar->title;
-                    }
-
-                    $hasExpiration[$expireAt] = [
-                        'subtitle' => $title,
-                        'add_to_calendar_url' => $this->addToCalendarLink($title, $expireAt),
-                        'event_at' => $expireAt,
-                        'time' => null,
-                    ];
-                }
-            }
-        }
-
-        return $hasExpiration;
-    }
-
-    private function getSubscriptionExpirationEvent($startAt = null, $endAt = null)
-    {
-        $hasExpiration = [];
-
-        $activeSubscribe = Subscribe::getActiveSubscribe($this->user->id);
-
-        if (!empty($activeSubscribe) and !empty($activeSubscribe->expire_at) and $activeSubscribe->expire_at > time()) {
-            $expiredItem = false;
-            $expireAt = $activeSubscribe->expire_at;
-
-            if (!empty($startAt) and !empty($endAt)) {
-                if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                    $expiredItem = true;
-                }
-            } elseif ($expireAt > time()) {
-                $expiredItem = true;
-            }
-
-            if ($expiredItem) {
-                $title = $activeSubscribe->title;
-
-                $hasExpiration[$expireAt] = [
-                    'subtitle' => $title,
-                    'add_to_calendar_url' => $this->addToCalendarLink($title, $expireAt),
-                    'event_at' => $expireAt,
-                    'time' => null,
+            foreach ($events as $event) {
+                $result[] = [
+                    'id' => $event->id,
+                    'title' => $event->title . ' - ' . $event->creator->full_name,
                 ];
             }
+
+            return response()->json($result, 200);
         }
 
-        return $hasExpiration;
-    }
-
-    private function getRegistrationPackageExpirationEvent($startAt = null, $endAt = null)
-    {
-        $hasExpiration = [];
-
-        $userPackage = new UserPackage($this->user);
-        $activePackage = $userPackage->getPackage();
-
-        if (!empty($activePackage) and !empty($activePackage->expire_at) and $activePackage->expire_at > time()) {
-            $expiredItem = false;
-            $expireAt = $activePackage->expire_at;
-
-            if (!empty($startAt) and !empty($endAt)) {
-                if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                    $expiredItem = true;
-                }
-            } elseif ($expireAt > time()) {
-                $expiredItem = true;
-            }
-
-            if ($expiredItem) {
-                $title = $activePackage->title;
-
-                $hasExpiration[$expireAt] = [
-                    'subtitle' => $title,
-                    'add_to_calendar_url' => $this->addToCalendarLink($title, $expireAt),
-                    'event_at' => $expireAt,
-                    'time' => null,
-                ];
-            }
-        }
-
-        return $hasExpiration;
-    }
-
-    private function getInstallmentExpirationEvent($startAt = null, $endAt = null)
-    {
-        $installmentOrders = InstallmentOrder::query()
-            ->where('user_id', $this->user->id)
-            ->where('status', '!=', 'paying')
-            ->with([
-                'selectedInstallment' => function ($query) {
-                    $query->with([
-                        'steps' => function ($query) {
-                            $query->orderBy('deadline', 'asc');
-                        }
-                    ]);
-                    $query->withCount([
-                        'steps'
-                    ]);
-                }
-            ])
-            ->get();
-
-        $hasExpiration = [];
-
-        foreach ($installmentOrders as $installmentOrder) {
-
-            foreach ($installmentOrder->selectedInstallment->steps as $step) {
-                $expiredItem = false;
-
-                $payment = InstallmentOrderPayment::query()
-                    ->where('installment_order_id', $installmentOrder->id)
-                    ->where('selected_installment_step_id', $step->id)
-                    ->where('status', 'paid')
-                    ->first();
-
-                if (empty($payment)) {
-                    $expireAt = ($step->deadline * 86400) + $installmentOrder->created_at;
-
-                    if (!empty($startAt) and !empty($endAt)) {
-                        if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                            $expiredItem = true;
-                        }
-                    } elseif ($expireAt > time()) {
-                        $expiredItem = true;
-                    }
-
-                    if ($expiredItem) {
-                        $title = $step->installmentStep->title;
-
-                        if (!empty($step->selectedInstallment->order) and !empty($step->selectedInstallment->order->webinar)) {
-                            $title .= " - " . $step->selectedInstallment->order->webinar->title;
-                        }
-
-
-                        $hasExpiration[$expireAt] = [
-                            'subtitle' => $title,
-                            'add_to_calendar_url' => $this->addToCalendarLink($title, $expireAt),
-                            'event_at' => $expireAt,
-                            'time' => null,
-                        ];
-                    }
-                }
-            }
-
-        }
-
-        return $hasExpiration;
-    }
-
-    private function getMeetingExpirationEvent($startAt = null, $endAt = null)
-    {
-        $hasExpiration = [];
-
-        $reserveMeetings = ReserveMeeting::query()->where('user_id', $this->user->id)
-            ->whereNotNull('reserved_at')
-            ->whereHas('sale', function ($query) {
-                //$query->whereNull('refund_at');
-            })
-            ->where('date', '>', time())
-            ->get();
-
-        foreach ($reserveMeetings as $reserveMeeting) {
-            $expiredItem = false;
-            $expireAt = $reserveMeeting->start_at;
-
-            if (!empty($startAt) and !empty($endAt)) {
-                if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                    $expiredItem = true;
-                }
-            } elseif ($expireAt > time()) {
-                $expiredItem = true;
-            }
-
-            if ($expiredItem) {
-                $title = $reserveMeeting->meeting->creator->full_name;
-
-                $hasExpiration[$expireAt] = [
-                    'subtitle' => $title,
-                    'add_to_calendar_url' => $this->addToCalendarLink("Meeting - $title", $expireAt),
-                    'event_at' => $expireAt,
-                    'time' => dateTimeFormat($reserveMeeting->start_at, 'H:i') . ' - ' . dateTimeFormat($reserveMeeting->end_at, 'H:i'),
-                ];
-            }
-        }
-
-        return $hasExpiration;
-    }
-
-    private function getLiveClassStartEvent($startAt = null, $endAt = null)
-    {
-        $hasExpiration = [];
-
-        if (!empty($this->userBoughtWebinarsIds) and count($this->userBoughtWebinarsIds)) {
-            $webinars = Webinar::query()->whereIn('id', $this->userBoughtWebinarsIds)
-                ->whereNotNull('access_days')
-                ->where('type', Webinar::$webinar)
-                ->where('start_date', '>', time())
-                ->get();
-
-            foreach ($webinars as $webinar) {
-                $expiredItem = false;
-                $expireAt = $webinar->start_date;
-
-                if (!empty($startAt) and !empty($endAt)) {
-                    if ($expireAt >= $startAt and $expireAt <= $endAt) {
-                        $expiredItem = true;
-                    }
-                } elseif ($expireAt > time()) {
-                    $expiredItem = true;
-                }
-
-                if ($expiredItem) {
-                    $title = $webinar->title;
-
-                    $hasExpiration[$expireAt] = [
-                        'subtitle' => $title,
-                        'add_to_calendar_url' => $this->addToCalendarLink($title, $expireAt),
-                        'event_at' => $expireAt,
-                        'time' => dateTimeFormat($webinar->start_date, 'H:i'),
-                    ];
-                }
-            }
-        }
-
-        return $hasExpiration;
-    }
-
-    private function addToCalendarLink($title, $timestamp)
-    {
-
-        $date = \DateTime::createFromFormat('j M Y H:i', dateTimeFormat($timestamp, 'j M Y H:i', false));
-
-        $link = Link::create($title, $date, $date); //->description('Cookies & cocktails!')
-
-        return $link->google();
+        return response('', 422);
     }
 
 }

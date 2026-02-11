@@ -15,8 +15,7 @@ trait LearningPageMixinsTrait
             $user = auth()->user();
         }
 
-        $query = Webinar::where('slug', $slug)
-            ->where('status', 'active');
+        $query = Webinar::where('slug', $slug);
 
         if (!empty($relation)) {
             $query->with([

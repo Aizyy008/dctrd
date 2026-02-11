@@ -31,7 +31,7 @@ class SettingsController extends Controller
         $this->authorize('admin_settings');
 
         $data = [
-            'pageTitle' => trans('admin/main.settings_title'),
+            'pageTitle' => trans("admin/main.settings"),
         ];
 
         return view('admin.settings.index', $data);
@@ -52,7 +52,7 @@ class SettingsController extends Controller
         }
 
         $data = [
-            'pageTitle' => trans('admin/main.settings_title'),
+            'pageTitle' => trans("admin/main.{$page}_settings"),
             'settings' => $settings
         ];
 
@@ -115,7 +115,7 @@ class SettingsController extends Controller
         }
 
         $data = [
-            'pageTitle' => trans('admin/main.settings_title'),
+            'pageTitle' => trans("{$name}_settings"),
             'values' => $values,
             'name' => $name
         ];

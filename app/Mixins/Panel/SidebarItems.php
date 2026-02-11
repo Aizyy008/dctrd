@@ -34,7 +34,7 @@ class SidebarItems
         $items['events'] = [
             'icon' => self::getIcon('events'),
             'text' => trans('update.events_calendar'),
-            'url' => '/panel/events',
+            'url' => '/panel/events-calender',
             'items' => []
         ];
 
@@ -137,6 +137,14 @@ class SidebarItems
             if (!empty(getFeaturesSettings('course_notes_status')) and $user->can('panel_webinars_personal_course_notes')) {
                 $items['webinars']['items'][] = ['text' => trans('update.course_notes'), 'url' => '/panel/courses/personal-notes'];
             }
+
+            if (!empty(getAttendanceSettings('status')) and $user->can('panel_attendances_lists')) {
+                if ($user->isOrganization() or $user->isTeacher()) {
+                    $items['webinars']['items'][] = ['text' => trans('update.attendances'), 'url' => '/panel/courses/attendances'];
+                } else {
+                    $items['webinars']['items'][] = ['text' => trans('update.attendances'), 'url' => '/panel/courses/my-attendances'];
+                }
+            }
         }
 
         if (!empty(getFeaturesSettings('upcoming_courses_status')) and $user->can('panel_upcoming_courses')) {
@@ -180,6 +188,39 @@ class SidebarItems
             }
         }
 
+        if ($user->can('panel_events') and !empty(getEventsSettings("status"))) {
+            $items['events'] = [
+                'icon' => self::getIcon('events'),
+                'text' => trans('update.events'),
+                'url' => '/panel/events',
+                'items' => []
+            ];
+
+            if (!$user->isUser() and $user->can('panel_events_create')) {
+                $items['events']['items'][] = ['text' => trans('public.new'), 'url' => '/panel/events/new'];
+            }
+
+            if (!$user->isUser() and $user->can('panel_events_lists')) {
+                $items['events']['items'][] = ['text' => trans('update.my_events'), 'url' => '/panel/events'];
+            }
+
+            if (!empty($user->organ_id) and $user->can('panel_events_organization_lists')) {
+                $items['events']['items'][] = ['text' => trans('update.organization_events'), 'url' => '/panel/events/my-organization'];
+            }
+
+            if ($user->can('panel_events_my_purchases')) {
+                $items['events']['items'][] = ['text' => trans('panel.my_purchases'), 'url' => '/panel/events/my-purchases'];
+            }
+
+            if (!$user->isUser() and $user->can('panel_events_comments')) {
+                $items['events']['items'][] = ['text' => trans('panel.comments'), 'url' => '/panel/events/comments'];
+            }
+
+            if ($user->can('panel_events_my_comments')) {
+                $items['events']['items'][] = ['text' => trans('panel.my_comments'), 'url' => '/panel/events/my-comments'];
+            }
+        }
+
         if ($user->can('panel_meetings')) {
 
             $items['meetings'] = [
@@ -201,6 +242,14 @@ class SidebarItems
                 if ($user->can('panel_meetings_settings')) {
                     $items['meetings']['items'][] = ['text' => trans('panel.settings'), 'url' => '/panel/meetings/settings'];
                 }
+
+                if (!empty(getMeetingPackagesSettings("status"))) {
+                    $items['meetings']['items'][] = ['text' => trans('update.sold_meeting_packages'), 'url' => '/panel/meetings/sold-packages'];
+                }
+            }
+
+            if (!empty(getMeetingPackagesSettings("status"))) {
+                $items['meetings']['items'][] = ['text' => trans('update.purchased_packages'), 'url' => '/panel/meetings/purchased-packages'];
             }
         }
 

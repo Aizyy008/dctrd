@@ -32,7 +32,6 @@ function getStatisticsSettings($key = null)
 }
 
 
-
 /**
  * @param null $page => Setting::$pagesSeoMetas
  * @return array [title, description]
@@ -69,6 +68,33 @@ function getGeneralSettings($key = null)
 function getFeaturesSettings($key = null)
 {
     return App\Models\Setting::getFeaturesSettings($key);
+}
+
+/**
+ * @return bool
+ */
+function isFreeModeEnabled(): bool
+{
+    $freeMode = getFeaturesSettings('free_mode');
+    return !empty($freeMode) && (bool)$freeMode;
+}
+
+/**
+ * Determine if price should be shown while Free Mode is enabled
+ */
+function isFreeModeShowPriceEnabled(): bool
+{
+    $showPrice = getFeaturesSettings('free_mode_show_price');
+    return !empty($showPrice) && (bool)$showPrice;
+}
+
+/**
+ * Determine if cart icon should be shown while Free Mode is enabled
+ */
+function isFreeModeShowCartEnabled(): bool
+{
+    $showCart = getFeaturesSettings('free_mode_show_cart');
+    return !empty($showCart) && (bool)$showCart;
 }
 
 
@@ -245,7 +271,25 @@ function get403ErrorPageSettings($key = null)
  */
 function getNavbarLinks()
 {
+    // TODO:: The system locale is applied on the view side and when the data is created in the model this way, it is localeless. Therefore, this method is not used.
     $links = App\Models\Setting::getNavbarLinksSettings();
+
+    if (!empty($links)) {
+        usort($links, function ($item1, $item2) {
+            return $item1['order'] <=> $item2['order'];
+        });
+    }
+
+    return $links;
+}
+
+function handleNavbarLinks(\App\Models\Setting $setting)
+{
+    $links = [];
+
+    if (!empty($setting->value) and isset($setting->value)) {
+        $links = json_decode($setting->value, true);
+    }
 
     if (!empty($links)) {
         usort($links, function ($item1, $item2) {
@@ -425,4 +469,19 @@ function getUserDashboardDataSettings($key = null)
 function getMobileAppGeneralSettings($key = null)
 {
     return App\Models\Setting::getMobileAppGeneralSettings($key);
+}
+
+function getAttendanceSettings($key = null)
+{
+    return App\Models\Setting::getAttendanceSettings($key);
+}
+
+function getEventsSettings($key = null)
+{
+    return App\Models\Setting::getEventsSettings($key);
+}
+
+function getMeetingPackagesSettings($key = null)
+{
+    return App\Models\Setting::getMeetingPackagesSettings($key);
 }

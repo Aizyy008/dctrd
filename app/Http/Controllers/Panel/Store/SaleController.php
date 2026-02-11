@@ -196,7 +196,7 @@ class SaleController extends Controller
                 'buyer' => $productOrder->buyer,
             ];
 
-            return view('web.default.panel.store.invoice', $data);
+            return view('design_1.panel.store.invoice.index', $data);
         }
 
         abort(404);

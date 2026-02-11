@@ -12,6 +12,8 @@ use App\Models\DeleteAccountRequest;
 use App\Models\ForumTopic;
 use App\Models\ForumTopicLike;
 use App\Models\ForumTopicPost;
+use App\Models\Gift;
+use App\Models\InstallmentOrder;
 use App\Models\Meeting;
 use App\Models\Noticeboard;
 use App\Models\Notification;
@@ -25,6 +27,7 @@ use App\Models\Role;
 use App\Models\Follow;
 use App\Models\Sale;
 use App\Models\Section;
+use App\Models\SessionAttendance;
 use App\Models\TimeSpentOnCourse;
 use App\Models\UserCommission;
 use App\Models\Webinar;
@@ -284,13 +287,13 @@ class User extends Authenticatable
 
     public function getUserGroup()
     {
-        if (empty($this->user_group)) {
-            if (!empty($this->userGroup) and !empty($this->userGroup->group) and $this->userGroup->group->status == 'active') {
-                $this->user_group = $this->userGroup->group;
-            }
+        $group = null;
+
+        if (!empty($this->userGroup) and !empty($this->userGroup->group) and $this->userGroup->group->status == 'active') {
+            $group = $this->userGroup->group;
         }
 
-        return $this->user_group;
+        return $group;
     }
 
 
@@ -352,6 +355,11 @@ class User extends Authenticatable
     public function products()
     {
         return $this->hasMany('App\Models\Product', 'creator_id', 'id');
+    }
+
+    public function events()
+    {
+        return $this->hasMany('App\Models\Event', 'creator_id', 'id');
     }
 
     public function productOrdersAsBuyer()
@@ -507,6 +515,10 @@ class User extends Authenticatable
         return $this->hasMany(TimeSpentOnCourse::class, 'user_id', 'id');
     }
 
+    public function sessionAttendance()
+    {
+        return $this->hasMany(SessionAttendance::class, 'student_id', 'id');
+    }
 
     public function rates($withCount = false)
     {
@@ -908,6 +920,51 @@ class User extends Authenticatable
             }
         }
 
+
+        // get users by installments
+        $installmentOrders = InstallmentOrder::query()
+            ->where('user_id', $this->id)
+            ->where('status', 'open')
+            ->whereNull('refund_at')
+            ->get();
+
+        foreach ($installmentOrders as $installmentOrder) {
+            if (!empty($installmentOrder)) {
+                $hasBought = true;
+
+                if ($installmentOrder->checkOrderHasOverdue()) {
+                    $overdueIntervalDays = getInstallmentsSettings('overdue_interval_days');
+
+                    if (empty($overdueIntervalDays) or $installmentOrder->overdueDaysPast() > $overdueIntervalDays) {
+                        $hasBought = false;
+                    }
+                }
+
+                if ($hasBought) {
+                    $webinarIds[] = $installmentOrder->webinar_id;
+                }
+            }
+        }
+
+        // get users by gifts
+        $gifts = Gift::query()
+            ->where('status', 'active')
+            ->where('email', $this->email)
+            ->where(function ($query) {
+                $query->whereNull('date');
+                $query->orWhere('date', '<', time());
+            })
+            ->whereHas('sale')
+            ->get();
+
+        foreach ($gifts as $gift) {
+            if (!empty($gift->webinar_id)) {
+                $webinarIds[] = $gift->webinar_id;
+            } else if (!empty($gift->bundle_id)) {
+                $bundleIds[] = $gift->bundle_id;
+            }
+        }
+
         if (!empty($bundleIds)) {
             $bundleWebinarIds = BundleWebinar::query()->whereIn('bundle_id', $bundleIds)
                 ->pluck('webinar_id')
@@ -915,6 +972,7 @@ class User extends Authenticatable
 
             $webinarIds = array_merge($webinarIds, $bundleWebinarIds);
         }
+
 
         return array_unique($webinarIds);
     }

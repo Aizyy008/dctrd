@@ -39,6 +39,13 @@ class DashboardController extends Controller
         // Upcoming Events
         $data = array_merge($data, $this->handleDashboardUpcomingEvents($user));
 
+        // Gifts Modal
+        $data['giftModal'] = $this->showGiftModal($user);
+
+
+        $generalSettings = getGeneralSettings();
+        $rtlLanguages = !empty($generalSettings['rtl_languages']) ? $generalSettings['rtl_languages'] : [];
+        $data['isRtl'] = ((in_array(mb_strtoupper(app()->getLocale()), $rtlLanguages)) or (!empty($generalSettings['rtl_layout']) and $generalSettings['rtl_layout'] == 1));
 
         return view('design_1.panel.dashboard.index', $data);
     }
@@ -164,7 +171,7 @@ class DashboardController extends Controller
 
     private function handleDashboardUpcomingEvents($user)
     {
-        $eventsController = (new EventsController());
+        $eventsController = (new EventsCalendarController());
         $eventsController->user = $user;
         $eventsController->userBoughtWebinarsIds = $user->getPurchasedCoursesIds();
 
@@ -178,82 +185,6 @@ class DashboardController extends Controller
             'totalEvents' => $totalEvents,
             'eventsWithTimestamp' => $eventsWithTimestamp,
         ];
-    }
-
-    public function dashboard()
-    {
-        $user = auth()->user();
-
-        $nextBadge = $user->getBadges(true, true);
-
-        $data = [
-            'pageTitle' => trans('panel.dashboard'),
-            'nextBadge' => $nextBadge
-        ];
-
-        if (!$user->isUser()) {
-            $meetingIds = Meeting::where('creator_id', $user->id)->pluck('id')->toArray();
-            $pendingAppointments = ReserveMeeting::whereIn('meeting_id', $meetingIds)
-                ->whereHas('sale')
-                ->where('status', ReserveMeeting::$pending)
-                ->count();
-
-            $userWebinarsIds = $user->webinars->pluck('id')->toArray();
-            $supports = Support::whereIn('webinar_id', $userWebinarsIds)->where('status', 'open')->get();
-
-            $comments = Comment::whereIn('webinar_id', $userWebinarsIds)
-                ->where('status', 'active')
-                ->whereNull('viewed_at')
-                ->get();
-
-            $time = time();
-            $firstDayMonth = strtotime(date('Y-m-01', $time));// First day of the month.
-            $lastDayMonth = strtotime(date('Y-m-t', $time));// Last day of the month.
-
-            $monthlySales = Sale::where('seller_id', $user->id)
-                ->whereNull('refund_at')
-                ->whereBetween('created_at', [$firstDayMonth, $lastDayMonth])
-                ->get();
-
-            $data['pendingAppointments'] = $pendingAppointments;
-            $data['supportsCount'] = count($supports);
-            $data['commentsCount'] = count($comments);
-            $data['monthlySalesCount'] = count($monthlySales) ? $monthlySales->sum('total_amount') : 0;
-            $data['monthlyChart'] = $this->getMonthlySalesOrPurchase($user);
-        } else {
-            $webinarsIds = $user->getPurchasedCoursesIds();
-
-            $webinars = Webinar::whereIn('id', $webinarsIds)
-                ->where('status', 'active')
-                ->get();
-
-            $reserveMeetings = ReserveMeeting::where('user_id', $user->id)
-                ->whereHas('sale', function ($query) {
-                    $query->whereNull('refund_at');
-                })
-                ->where('status', ReserveMeeting::$open)
-                ->get();
-
-            $supports = Support::where('user_id', $user->id)
-                ->whereNotNull('webinar_id')
-                ->where('status', 'open')
-                ->get();
-
-            $comments = Comment::where('user_id', $user->id)
-                ->whereNotNull('webinar_id')
-                ->where('status', 'active')
-                ->get();
-
-            $data['webinarsCount'] = count($webinars);
-            $data['supportsCount'] = count($supports);
-            $data['commentsCount'] = count($comments);
-            $data['reserveMeetingsCount'] = count($reserveMeetings);
-            $data['monthlyChart'] = $this->getMonthlySalesOrPurchase($user);
-        }
-
-        $data['giftModal'] = $this->showGiftModal($user);
-
-        return view(getTemplate() . '.panel.dashboard.index', $data);
     }
 
     private function showGiftModal($user)
@@ -286,40 +217,4 @@ class DashboardController extends Controller
         return null;
     }
 
-    private function getMonthlySalesOrPurchase($user)
-    {
-        $months = [];
-        $data = [];
-
-        // all 12 months
-        for ($month = 1; $month <= 12; $month++) {
-            $date = Carbon::create(date('Y'), $month);
-
-            $start_date = $date->timestamp;
-            $end_date = $date->copy()->endOfMonth()->timestamp;
-
-            $months[] = trans('panel.month_' . $month);
-
-            if (!$user->isUser()) {
-                $monthlySales = Sale::where('seller_id', $user->id)
-                    ->whereNull('refund_at')
-                    ->whereBetween('created_at', [$start_date, $end_date])
-                    ->sum('total_amount');
-
-                $data[] = round($monthlySales, 2);
-            } else {
-                $monthlyPurchase = Sale::where('buyer_id', $user->id)
-                    ->whereNull('refund_at')
-                    ->whereBetween('created_at', [$start_date, $end_date])
-                    ->count();
-
-                $data[] = $monthlyPurchase;
-            }
-        }
-
-        return [
-            'months' => $months,
-            'data' => $data
-        ];
-    }
 }

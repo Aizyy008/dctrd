@@ -33,7 +33,7 @@ class BundleController extends Controller
         $checkCourseForSale = $bundle->checkWebinarForSale($user);
 
         if ($checkCourseForSale != 'ok') {
-            return $checkCourseForSale;
+            return back()->with(['toast' => $checkCourseForSale]);
         }
 
         Sale::create([
@@ -66,7 +66,7 @@ class BundleController extends Controller
         $checkCourseForSale = $bundle->checkWebinarForSale($user);
 
         if ($checkCourseForSale != 'ok') {
-            return $checkCourseForSale;
+            return back()->with(['toast' => $checkCourseForSale]);
         }
 
         if (!empty($bundle->price) and $bundle->price > 0) {

@@ -116,6 +116,10 @@ class CashbackAccounting
                                 $itemId = $orderItem->bundle_id;
                                 $itemName = 'bundle_id';
                                 $description = 'Cashback For Bundle';
+                            }elseif (!empty($orderItem->event_ticket_id)) {
+                                $itemId = $orderItem->event_ticket_id;
+                                $itemName = 'event_ticket_id';
+                                $description = 'Cashback For Event Ticket';
                             }
 
                             $this->setAccounting($orderItem->user_id, $amount, $description, $orderItem->id, $itemId, $itemName);

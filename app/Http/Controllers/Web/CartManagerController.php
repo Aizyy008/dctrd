@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Bundle;
 use App\Models\Cart;
 use App\Models\CartDiscount;
+use App\Models\EventTicket;
+use App\Models\MeetingPackage;
 use App\Models\Product;
 use App\Models\ProductOrder;
 use App\Models\ReserveMeeting;
@@ -111,6 +113,29 @@ class CartManagerController extends Controller
 
                                 $carts->add($item);
                             }
+                        } elseif (!empty($cookieCart['item_name']) and $cookieCart['item_name'] == 'event_ticket_id') {
+                            $eventTicket = EventTicket::where('id', $cookieCart['item_id'])->first();
+
+                            if (!empty($eventTicket)) {
+                                $item = new Cart();
+                                $item->uid = $id;
+                                $item->event_ticket_id = $eventTicket->id;
+                                $item->quantity = $cookieCart['quantity'] ?? 1;
+                                $item->eventTicket = $eventTicket;
+
+                                $carts->add($item);
+                            }
+                        } elseif (!empty($cookieCart['item_name']) and $cookieCart['item_name'] == 'meeting_package_id') {
+                            $meetingPackage = MeetingPackage::query()->where('id', $cookieCart['item_id'])->first();
+
+                            if (!empty($meetingPackage)) {
+                                $item = new Cart();
+                                $item->uid = $id;
+                                $item->meeting_package_id = $meetingPackage->id;
+                                $item->meetingPackage = $meetingPackage;
+
+                                $carts->add($item);
+                            }
                         }
                     }
                 }
@@ -140,6 +165,10 @@ class CartManagerController extends Controller
                                     $this->storeUserProductCart($request, $user, $cart);
                                 } elseif ($cart['item_name'] == 'bundle_id') {
                                     $this->storeUserBundleCart($user, $cart);
+                                } elseif ($cart['item_name'] == 'event_ticket_id') {
+                                    $this->storeUserEventTicketCart($user, $cart);
+                                }elseif ($cart['item_name'] == 'meeting_package_id') {
+                                    $this->storeUserMeetingPackageCart($user, $cart);
                                 }
                             }
                         }
@@ -184,12 +213,11 @@ class CartManagerController extends Controller
             return 'ok';
         }
 
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.course_not_found'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     public function storeUserBundleCart($user, $data)
@@ -222,12 +250,76 @@ class CartManagerController extends Controller
             return 'ok';
         }
 
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.course_not_found'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
+    }
+
+    public function storeUserEventTicketCart($user, $data)
+    {
+        $eventTicket = EventTicket::query()->where('id', $data['item_id'])
+            ->whereHas('event', function ($query) {
+                $query->where('status', 'publish');
+            })
+            ->first();
+
+        if (!empty($eventTicket) and !empty($user)) {
+            $quantity = $data['quantity'] ?? 1;
+
+            $checkForSale = checkEventTicketForSale($eventTicket, $user, $quantity);
+
+            if ($checkForSale != 'ok') {
+                return $checkForSale;
+            }
+
+            Cart::updateOrCreate([
+                'creator_id' => $user->id,
+                'event_ticket_id' => $eventTicket->id,
+            ], [
+                'quantity' => $quantity,
+                'created_at' => time()
+            ]);
+
+            return 'ok';
+        }
+
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.event_ticket_not_found'),
+            'status' => 'error'
+        ];
+    }
+
+    public function storeUserMeetingPackageCart($user, $data)
+    {
+        $meetingPackage = MeetingPackage::query()->where('id', $data['item_id'])
+            ->where('enable', true)
+            ->first();
+
+        if (!empty($meetingPackage) and !empty($user)) {
+            $checkForSale = checkMeetingPackageForSale($meetingPackage, $user);
+
+            if ($checkForSale != 'ok') {
+                return $checkForSale;
+            }
+
+            Cart::updateOrCreate([
+                'creator_id' => $user->id,
+                'meeting_package_id' => $meetingPackage->id,
+            ], [
+                'created_at' => time()
+            ]);
+
+            return 'ok';
+        }
+
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.meeting_package_not_found'),
+            'status' => 'error'
+        ];
     }
 
     public function storeUserProductCart(Request $request, $user, $data)
@@ -273,12 +365,11 @@ class CartManagerController extends Controller
             return 'ok';
         }
 
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.course_not_found'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     public function storeCookieCart($data)
@@ -324,10 +415,18 @@ class CartManagerController extends Controller
                 $result = $this->storeUserProductCart($request, $user, $data);
             } elseif ($item_name == 'bundle_id') {
                 $result = $this->storeUserBundleCart($user, $data);
+            } elseif ($item_name == 'event_ticket_id') {
+                $result = $this->storeUserEventTicketCart($user, $data);
+            } elseif ($item_name == 'meeting_package_id') {
+                $result = $this->storeUserMeetingPackageCart($user, $data);
             }
 
             if ($result != 'ok') {
-                return $result;
+                if ($request->ajax()) {
+                    return response()->json(['toast_alert' => $result], 422);
+                }
+
+                return back()->with(['toast' => $result]);
             }
         } else { // store in cookie
             $this->storeCookieCart($data);
@@ -398,7 +497,7 @@ class CartManagerController extends Controller
             $price = 0;
             $priceOffed = 0;
 
-            if(!empty($cartItemInfo['discountPrice'])) {
+            if (!empty($cartItemInfo['discountPrice'])) {
                 $price = handlePrice(($cartItemInfo['discountPrice'] * $cartItemInfo['quantity']), true, true, false, null, true, $cartTaxType);
                 $priceOffed = handlePrice(($cartItemInfo['price'] * $cartItemInfo['quantity']), true, true, false, null, true, $cartTaxType);
             } else {

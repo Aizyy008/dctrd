@@ -9,6 +9,7 @@ use App\Models\Blog;
 use App\Models\Category;
 use App\Models\Discount;
 use App\Models\ForumTopic;
+use App\Models\MeetingPackage;
 use App\Models\Newsletter;
 use App\Models\Product;
 use App\Models\ReserveMeeting;
@@ -165,6 +166,12 @@ class UserProfileController extends Controller
             $data = array_merge($data, $this->getOrganizationInstructors($request, $username, $user));
         }
 
+        if (!empty(getMeetingPackagesSettings("status")) and !empty($meeting) and $meeting->enable_meeting_packages) {
+            $data['userMeetingPackages'] = MeetingPackage::query()->where('creator_id', $user->id)
+                ->where('enable', true)
+                ->get();
+        }
+
         return view('design_1.web.users.profile.index', $data);
     }
 
@@ -301,7 +308,8 @@ class UserProfileController extends Controller
 
         return response()->json([
             'code' => 200,
-            'follow' => $followStatus
+            'follow' => $followStatus,
+            'followers' => $user->followers()->count(),
         ], 200);
     }
 

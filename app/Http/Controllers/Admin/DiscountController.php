@@ -8,6 +8,8 @@ use App\Models\DiscountBundle;
 use App\Models\DiscountCategory;
 use App\Models\DiscountCourse;
 use App\Models\DiscountGroup;
+use App\Models\DiscountEvent;
+use App\Models\DiscountMeetingPackage;
 use App\Models\DiscountUser;
 use App\Models\Group;
 use App\Models\Role;
@@ -215,7 +217,12 @@ class DiscountController extends Controller
 
         $this->handleRelationItems($discount, $data);
 
-        return redirect(getAdminPanelUrl() . '/financial/discounts');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.discount_created_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/discounts/{$discount->id}/edit"))->with(['toast' => $toastData]);
     }
 
     private function handleRelationItems($discount, $data)
@@ -223,6 +230,8 @@ class DiscountController extends Controller
         $user_id = $data['user_id'] ?? [];
         $coursesIds = $data['webinar_ids'] ?? [];
         $bundlesIds = $data['bundle_ids'] ?? [];
+        $eventsIds = $data['event_ids'] ?? [];
+        $meetingPackageIds = $data['meeting_package_ids'] ?? [];
         $categoriesIds = $data['category_ids'] ?? [];
         $groupsIds = $data['group_ids'] ?? [];
 
@@ -249,6 +258,26 @@ class DiscountController extends Controller
                 DiscountBundle::create([
                     'discount_id' => $discount->id,
                     'bundle_id' => $bundlesId,
+                    'created_at' => time(),
+                ]);
+            }
+        }
+
+        if (!empty($eventsIds) and count($eventsIds)) {
+            foreach ($eventsIds as $eventId) {
+                DiscountEvent::create([
+                    'discount_id' => $discount->id,
+                    'event_id' => $eventId,
+                    'created_at' => time(),
+                ]);
+            }
+        }
+
+        if (!empty($meetingPackageIds) and count($meetingPackageIds)) {
+            foreach ($meetingPackageIds as $meetingPackageId) {
+                DiscountMeetingPackage::create([
+                    'discount_id' => $discount->id,
+                    'meeting_package_id' => $meetingPackageId,
                     'created_at' => time(),
                 ]);
             }
@@ -351,13 +380,22 @@ class DiscountController extends Controller
 
         DiscountBundle::where('discount_id', $discount->id)->delete();
 
+        DiscountEvent::where('discount_id', $discount->id)->delete();
+
+        DiscountMeetingPackage::where('discount_id', $discount->id)->delete();
+
         DiscountCategory::where('discount_id', $discount->id)->delete();
 
         DiscountGroup::where('discount_id', $discount->id)->delete();
 
         $this->handleRelationItems($discount, $data);
 
-        return redirect(getAdminPanelUrl() . '/financial/discounts');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.discount_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/discounts/{$discount->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function destroy(Request $request, $id)
@@ -366,6 +404,11 @@ class DiscountController extends Controller
 
         Discount::find($id)->delete();
 
-        return redirect(getAdminPanelUrl() . '/financial/discounts');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.discount_deleted_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/discount"))->with(['toast' => $toastData]);
     }
 }

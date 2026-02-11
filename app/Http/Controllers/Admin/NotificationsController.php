@@ -328,7 +328,11 @@ class NotificationsController extends Controller
             }
         }
 
-        return back();
+        return response()->json([
+            'code' => 200,
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.all_your_notifications_have_been_marked_as_read')
+        ]);
     }
 
     public function markAsRead($id)
@@ -349,6 +353,10 @@ class NotificationsController extends Controller
             );
         }
 
-        return response()->json([], 200);
+        return response()->json([
+            'code' => 200,
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.your_notification_have_been_marked_as_read')
+        ]);
     }
 }

@@ -150,7 +150,7 @@ class ForumController extends Controller
         storeContentLocale($locale, $forum->getTable(), $forum->id);
 
         $data = [
-            'pageTitle' => trans('admin/main.edit'),
+            'pageTitle' => trans('admin/main.edit') . ' ' . $forum->title,
             'forum' => $forum,
             'subForums' => $subForums,
             'userGroups' => $userGroups,

@@ -183,6 +183,7 @@ class BundlesController extends Controller
             'teacher_id' => $user->isTeacher() ? $user->id : (!empty($data['teacher_id']) ? $data['teacher_id'] : $user->id),
             'creator_id' => $user->id,
             'slug' => Bundle::makeSlug($data['title']),
+            'private' => (!empty($data['private']) and $data['private'] == 'on'),
             'status' => ((!empty($data['draft']) and $data['draft'] == 1) or (!empty($data['get_next']) and $data['get_next'] == 1)) ? Bundle::$isDraft : Bundle::$pending,
             'created_at' => time(),
         ]);
@@ -395,6 +396,8 @@ class BundlesController extends Controller
         $data['updated_at'] = time();
 
         if ($currentStep == 1) {
+            $data['private'] = (!empty($data['private']) and $data['private'] == 'on');
+
             BundleTranslation::updateOrCreate([
                 'bundle_id' => $bundle->id,
                 'locale' => mb_strtolower($data['locale']),

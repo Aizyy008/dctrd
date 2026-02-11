@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\UserProfileController;
 use App\Models\Blog;
 use App\Models\Bundle;
 use App\Models\Meeting;
+use App\Models\MeetingPackage;
 use App\Models\MeetingTime;
 use App\Models\Product;
 use App\Models\ReserveMeeting;
@@ -29,6 +30,7 @@ class FrontComponentsDataMixins
     {
         return Webinar::query()->where('status', 'active')
             ->where('private', false)
+            ->where('only_for_students', false)
             ->orderBy('updated_at', 'desc')
             ->with([
                 'teacher' => function ($qu) {
@@ -55,6 +57,7 @@ class FrontComponentsDataMixins
         return Webinar::query()->whereIn('id', $bestSaleCoursesIds)
             ->where('status', 'active')
             ->where('private', false)
+            ->where('only_for_students', false)
             ->orderBy('updated_at', 'desc')
             ->with([
                 'teacher' => function ($qu) {
@@ -79,6 +82,7 @@ class FrontComponentsDataMixins
             ->select('webinars.*', DB::raw('avg(rates) as avg_rates'))
             ->where('webinars.private', false)
             ->where('webinars.status', 'active')
+            ->where('webinars.only_for_students', false)
             ->whereNotNull('webinar_reviews.rates')
             ->groupBy("webinars.id")
             ->orderBy('avg_rates', 'desc')
@@ -117,6 +121,7 @@ class FrontComponentsDataMixins
         return Webinar::query()->whereIn('id', array_unique($webinarIdsHasDiscount))
             ->where('status', 'active')
             ->where('private', false)
+            ->where('only_for_students', false)
             ->with([
                 'teacher' => function ($qu) {
                     $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
@@ -136,6 +141,7 @@ class FrontComponentsDataMixins
     {
         return Webinar::query()->where('status', Webinar::$active)
             ->where('private', false)
+            ->where('only_for_students', false)
             ->where(function ($query) {
                 $query->whereNull('price')
                     ->orWhere('price', '0');
@@ -297,6 +303,7 @@ class FrontComponentsDataMixins
     public function getBlogData($count = 5)
     {
         return Blog::query()->where('status', 'publish')
+            ->whereHas('author')
             ->with([
                 'category',
                 'author' => function ($query) {
@@ -330,5 +337,23 @@ class FrontComponentsDataMixins
         }
 
         return $courses;
+    }
+
+    public function getMeetingPackagesByIds($ids = []): Collection
+    {
+        $meetingPackages = collect();
+
+        if (!empty($ids)) {
+            $meetingPackages = MeetingPackage::query()->whereIn('id', $ids)
+                ->where('enable', true)
+                ->with([
+                    'creator' => function ($query) {
+                        $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio', 'about', 'verified', 'cover_img', 'profile_secondary_image');
+                    },
+                ])
+                ->get();
+        }
+
+        return $meetingPackages;
     }
 }

@@ -107,13 +107,17 @@ class Quiz extends Model implements TranslatableContract
         $result = false;
 
         if (!empty($user)) {
-            $webinar = null;
-            if (!empty($this->webinar_id)) {
-                $webinar = Webinar::query()->find($this->webinar_id);
-            }
+            $result = ($this->creator_id == $user->id);
 
-            if ($this->creator_id == $user->id or (!empty($webinar) and $webinar->canAccess($user))) {
-                $result = true;
+            if (!$result) {
+                $webinar = null;
+                if (!empty($this->webinar_id)) {
+                    $webinar = Webinar::query()->find($this->webinar_id);
+                }
+
+                if (!empty($webinar) and $webinar->canAccess($user)) {
+                    $result = true;
+                }
             }
         }
 

@@ -75,7 +75,7 @@ class QuizResultsController extends Controller
                 'formActionUrl' => getAdminPanelUrl("/quizzes/{$quizId}/results/{$resultId}/update"),
             ];
 
-            return view('web.default.panel.quizzes.quiz_result', $data);
+            return view('design_1.panel.quizzes.holding.result.index', $data);
         }
 
         abort(404);

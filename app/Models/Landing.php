@@ -34,6 +34,11 @@ class Landing extends Model implements TranslatableContract
         return $this->hasMany(LandingComponent::class, 'landing_id', 'id');
     }
 
+    public function color()
+    {
+        return $this->belongsTo(ThemeColorFont::class, 'color_id', 'id');
+    }
+
 
     // #############
     // Helpers

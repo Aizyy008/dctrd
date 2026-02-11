@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\Bundle;
 use App\Models\ContentDeleteRequest;
+use App\Models\Event;
 use App\Models\Product;
 use App\Models\Webinar;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class ContentDeleteRequestController extends Controller
         $data = $request->all();
         $validator = Validator::make($data, [
             'item_id' => 'required',
-            'item_type' => 'required|in:course,bundle,product,post',
+            'item_type' => 'required|in:course,bundle,product,post,event',
             'description' => 'required|string|min:3',
         ]);
 
@@ -42,7 +43,7 @@ class ContentDeleteRequestController extends Controller
             $sales = null;
             $customersCount = null;
 
-            if ($itemType == "course" or $itemType == "bundle") {
+            if ($itemType == "course" or $itemType == "bundle" or $itemType == "event") {
                 $sales = $itemRow->sales()->whereNull('refund_at')->sum('total_amount');
                 $customersCount = $itemRow->sales()->whereNull('refund_at')->count();
             } elseif ($itemType == "product") {
@@ -96,6 +97,10 @@ class ContentDeleteRequestController extends Controller
             $itemRow = Blog::where('id', $itemId)
                 ->where('author_id', $user->id)
                 ->first();
+        } elseif ($itemType == "event") {
+            $itemRow = Event::where('id', $itemId)
+                ->where('creator_id', $user->id)
+                ->first();
         }
 
         return $itemRow;
@@ -113,6 +118,8 @@ class ContentDeleteRequestController extends Controller
             $type = "App\Models\Product";
         } elseif ($itemType == "post") {
             $type = "App\Models\Blog";
+        } elseif ($itemType == "event") {
+            $type = "App\Models\Event";
         }
 
         return $type;

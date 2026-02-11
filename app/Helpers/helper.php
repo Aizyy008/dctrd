@@ -59,7 +59,7 @@ function formatSizeUnits($bytes)
  * @param $timestamp
  * @param string $format
  *
- * // Use this format everywhere : j:day , M:month, Y:year, H:hour, i:minute => {j M Y} or {j M Y H:i}
+ * // Use this format everywhere : j:day , M:month, F:full month, Y:year, H:hour, i:minute => {j M Y} or {j M Y H:i}
  * */
 function dateTimeFormat($timestamp, $format = 'H:i', $useAdminSetting = true, $applyTimezone = true, $timezone = null)
 {
@@ -415,7 +415,7 @@ function localeToCountryCode($code, $revers = false)
         "AF" => 'ZA',
         "SQ" => 'AL',
         "AM" => 'ET',
-        "AR" => 'IQ',
+        "AR" => 'SA',
         "HY" => 'AM',
         "AY" => 'BO',
         "AZ" => 'AZ',
@@ -723,17 +723,133 @@ function currenciesLists($sing = null)
 
 function currency($user = null)
 {
+    // Authenticated users: use stored user currency (unchanged behavior)
     if (empty($user)) {
         $user = auth()->user();
     }
 
     if (!empty($user) and !empty($user->currency)) {
         return $user->currency;
-    } else if (empty($user)) {
-        $checkCookie = Cookie::get('user_currency');
+    }
 
+    // Guests: cookie wins if present
+    if (empty($user)) {
+        $checkCookie = Cookie::get('user_currency');
         if (!empty($checkCookie)) {
             return $checkCookie;
+        }
+
+        // Auto-detect for guests when enabled
+        $multiCurrencyEnabled = !empty(getFinancialCurrencySettings('multi_currency'));
+        $visitorsDefaultCurrencyMode = getFinancialCurrencySettings('visitors_default_currency') ?? 'default';
+
+        if ($multiCurrencyEnabled && $visitorsDefaultCurrencyMode === 'detect_ip') {
+            try {
+                // Detect user country via GeoIP
+                $location = \Torann\GeoIP\Facades\GeoIP::getLocation(request()->ip());
+                $countryIso = !empty($location) && !empty($location->iso_code) ? strtoupper($location->iso_code) : null;
+
+                if (!empty($countryIso)) {
+                    // Map of country ISO to preferred currency
+                    $countryToCurrency = [
+                        // MIDDLE EAST
+                        'AE' => 'AED', 'SA' => 'SAR', 'QA' => 'QAR', 'KW' => 'KWD', 'OM' => 'OMR', 'BH' => 'BHD', 'IQ' => 'IQD', 'IR' => 'IRR', 'JO' => 'JOD', 'LB' => 'LBP', 'YE' => 'YER',
+
+                        // EUROZONE (EUR)
+                        'AT' => 'EUR', 'BE' => 'EUR', 'CY' => 'EUR', 'EE' => 'EUR', 'FI' => 'EUR', 'FR' => 'EUR', 'DE' => 'EUR', 'GR' => 'EUR', 'IE' => 'EUR', 'IT' => 'EUR', 'LV' => 'EUR', 'LT' => 'EUR', 'LU' => 'EUR', 'MT' => 'EUR', 'NL' => 'EUR', 'PT' => 'EUR', 'SK' => 'EUR', 'SI' => 'EUR', 'ES' => 'EUR',
+                        // EUROPE (non-euro)
+                        'GB' => 'GBP', 'PL' => 'PLN', 'CZ' => 'CZK', 'RO' => 'RON', 'HU' => 'HUF', 'SE' => 'SEK', 'NO' => 'NOK', 'DK' => 'DKK', 'CH' => 'CHF', 'RU' => 'RUB', 'UA' => 'UAH', 'TR' => 'TRY', 'BG' => 'BGN', 'HR' => 'HRK', 'IS' => 'ISK',
+
+                        // AMERICAS
+                        'US' => 'USD', 'CA' => 'CAD', 'MX' => 'MXN', 'AR' => 'ARS', 'BR' => 'BRL', 'CL' => 'CLP', 'CO' => 'COP', 'PE' => 'PEN', 'BS' => 'BSD', 'BB' => 'BBD', 'BZ' => 'BZD', 'BM' => 'BMD', 'BO' => 'BOB', 'CR' => 'CRC', 'CU' => 'CUP', 'DO' => 'DOP', 'GT' => 'GTQ',
+                        'PR' => 'USD', 'GU' => 'USD', 'AS' => 'USD', 'VI' => 'USD',
+
+                        // AFRICA
+                        'EG' => 'EGP', 'MA' => 'MAD', 'DZ' => 'DZD', 'ZA' => 'ZAR', 'NG' => 'NGN', 'KE' => 'KES', 'TZ' => 'TZS', 'UG' => 'UGX', 'GH' => 'GHS', 'ET' => 'ETB', 'TN' => 'TND', 'LY' => 'LYD', 'SD' => 'SDG', 'BI' => 'BIF', 'CD' => 'CDF', 'NA' => 'NAD',
+                        // WEST AFRICAN CFA (XOF)
+                        'BJ' => 'XOF', 'BF' => 'XOF', 'CI' => 'XOF', 'GW' => 'XOF', 'ML' => 'XOF', 'NE' => 'XOF', 'SN' => 'XOF', 'TG' => 'XOF',
+                        // CENTRAL AFRICAN CFA (XAF)
+                        'CM' => 'XAF', 'CF' => 'XAF', 'TD' => 'XAF', 'CG' => 'XAF', 'GA' => 'XAF', 'GQ' => 'XAF',
+
+                        // ASIA
+                        'IN' => 'INR', 'PK' => 'PKR', 'BD' => 'BDT', 'LK' => 'LKR', 'NP' => 'NPR', 'AF' => 'AFN', 'IR' => 'IRR', 'IQ' => 'IQD', 'IL' => 'ILS', 'LB' => 'LBP', 'TR' => 'TRY', 'JO' => 'JOD', 'QA' => 'QAR', 'KW' => 'KWD', 'OM' => 'OMR',
+                        'CN' => 'CNY', 'JP' => 'JPY', 'KR' => 'KRW', 'MY' => 'MYR', 'SG' => 'SGD', 'TH' => 'THB', 'VN' => 'VND', 'ID' => 'IDR', 'PH' => 'PHP', 'HK' => 'HKD', 'TW' => 'TWD',
+                        'AZ' => 'AZN', 'AM' => 'AMD', 'GE' => 'GEL', 'KZ' => 'KZT', 'KG' => 'KGS', 'UZ' => 'UZS', 'TJ' => 'TJS', 'TM' => 'TMT',
+
+                        // OCEANIA
+                        'AU' => 'AUD', 'NZ' => 'NZD', 'FJ' => 'FJD',
+
+                        // MENA & NORTH AFRICA edge
+                        'PS' => 'ILS', 'SY' => 'SYP', 'YE' => 'YER', 'AE' => 'AED', 'SA' => 'SAR', 'BH' => 'BHD', 'OM' => 'OMR', 'QA' => 'QAR', 'KW' => 'KWD',
+
+                        // SPECIAL/LEGACY OR PROJECT-SPECIFIC CODES FROM LISTS
+                        'AL' => 'Lek', // Albania (project uses "Lek" key)
+                        'AW' => 'AWG',
+                        'AZ' => 'AZN',
+                        'BB' => 'BBD',
+                        'BD' => 'BDT',
+                        'BY' => 'BYN',
+                        'BA' => 'BAM',
+                        'BW' => 'BWP',
+                        'KH' => 'KHR',
+                        'KY' => 'KYD',
+                        'HR' => 'HRK', // legacy per project list
+                        'CZ' => 'CZK',
+                        'DK' => 'DKK',
+                        'DO' => 'DOP',
+                        'DM' => 'XCD', 'GD' => 'XCD', 'AG' => 'XCD', 'KN' => 'XCD', 'LC' => 'XCD', 'VC' => 'XCD', 'AI' => 'XCD', 'MS' => 'XCD',
+                        'HK' => 'HKD',
+                        'HU' => 'HUF',
+                        'ID' => 'IDR',
+                        'IL' => 'ILS',
+                        'LB' => 'LBP',
+                        'MY' => 'MYR',
+                        'MV' => 'MVR',
+                        'NG' => 'NGN',
+                        'NO' => 'NOK',
+                        'OM' => 'OMR',
+                        'PK' => 'PKR',
+                        'PH' => 'PHP',
+                        'PL' => 'PLN',
+                        'RO' => 'RON',
+                        'SG' => 'SGD',
+                        'CH' => 'CHF',
+                        'TH' => 'THB',
+                        'UA' => 'UAH',
+                        'GB' => 'GBP',
+                        'TW' => 'TWD',
+                        'VN' => 'VND',
+                        'UZ' => 'UZS',
+                        'TZ' => 'TZS',
+                        'ET' => 'ETB',
+                        'KW' => 'KWD',
+                        'BI' => 'BIF',
+                        'CD' => 'CDF',
+                        'NA' => 'NAD',
+                        'UG' => 'UGX',
+                        'KE' => 'KES',
+                        'GE' => 'GEL',
+                        'QA' => 'QAR',
+                        'MZ' => 'MZM', // project list uses MZM
+                    ];
+
+                    $guessedCurrency = $countryToCurrency[$countryIso] ?? null;
+
+                    if (!empty($guessedCurrency)) {
+                        // Ensure guessed currency is available among active currencies
+                        $multiCurrency = new MultiCurrency();
+                        $activeCurrencies = $multiCurrency->getCurrencies();
+                        $activeCodes = $activeCurrencies->pluck('currency')->toArray();
+                        $activeCodes[] = (getFinancialCurrencySettings('currency') ?? 'USD'); // include default
+
+                        if (in_array($guessedCurrency, array_unique($activeCodes))) {
+                            return $guessedCurrency;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fallback to default if detection fails
+            }
         }
     }
 
@@ -1568,7 +1684,7 @@ function getDefaultLocale()
 
     /// I did not use the helper method because the Setting model uses translation and may get stuck in the loop.
 
-    $setting = cache()->remember('settings.getDefaultLocale', 24 * 60 * 60, function () use ($name) {
+    $setting = cache()->remember('settings.getDefaultLocales', 24 * 60 * 60, function () use ($name) {
         $setting = \Illuminate\Support\Facades\DB::table('settings')
             ->where('page', $name)
             ->where('name', $name)
@@ -1810,30 +1926,27 @@ function random_str($length, $includeNumeric = true, $includeChar = true)
 function checkCourseForSale($course, $user)
 {
     if (!$course->canSale()) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.course_not_capacity'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     if ($course->checkUserHasBought($user)) {
-        $toastData = [
+        return [
             'title' => trans('cart.fail_purchase'),
             'msg' => trans('site.you_bought_webinar'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     if ($course->creator_id == $user->id or $course->teacher_id == $user->id) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.cant_purchase_your_course'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     $isRequiredPrerequisite = false;
@@ -1841,7 +1954,7 @@ function checkCourseForSale($course, $user)
         $prerequisites = $course->prerequisites;
         if (count($prerequisites)) {
             foreach ($prerequisites as $prerequisite) {
-                $prerequisiteWebinar = $prerequisite->prerequisiteWebinar;
+                $prerequisiteWebinar = $prerequisite->course;
 
                 if ($prerequisite->required and !empty($prerequisiteWebinar) and !$prerequisiteWebinar->checkUserHasBought()) {
                     $isRequiredPrerequisite = true;
@@ -1851,12 +1964,103 @@ function checkCourseForSale($course, $user)
     }
 
     if ($isRequiredPrerequisite) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('cart.this_course_has_required_prerequisite'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
+    }
+
+    return 'ok';
+}
+
+function checkMeetingPackageForSale($meetingPackage, $user)
+{
+    if ($meetingPackage->creator_id == $user->id) {
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.cant_purchase_your_meeting_package'),
+            'status' => 'error'
+        ];
+    }
+
+    return 'ok';
+}
+
+function checkEventTicketForSale(\App\Models\EventTicket $eventTicket, $user, $quantity = 1)
+{
+    $event = $eventTicket->event;
+
+    if ($event->creator_id == $user->id) {
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.cant_purchase_your_event_tickets'),
+            'status' => 'error'
+        ];
+    }
+
+    if ($eventTicket->checkUserHasBought($user)) {
+        return [
+            'title' => trans('cart.fail_purchase'),
+            'msg' => trans('update.you_have_already_purchased_this_event_ticket'),
+            'status' => 'error'
+        ];
+    }
+
+    if (!empty($event->sales_end_date) and $event->sales_end_date <= time()) {
+        return [
+            'title' => trans('cart.fail_purchase'),
+            'msg' => trans('update.event_sales_date_has_ended'),
+            'status' => 'error'
+        ];
+    }
+
+    // Capacity
+    /*$ticketsIds = $event->tickets()->pluck('id')->toArray();
+    $cartQuantity = \App\Models\Cart::query()->whereIn('event_ticket_id', $ticketsIds)->sum('quantity');*/
+
+    $eventTicketAvailability = $eventTicket->getAvailableCapacity();
+    if (!is_null($eventTicketAvailability) and $eventTicketAvailability < $quantity) {
+        return [
+            'title' => trans('cart.fail_purchase'),
+            'msg' => trans('update.event_ticket_purchase_capacity_not_available', ['count' => $eventTicketAvailability]),
+            'status' => 'error'
+        ];
+    }
+
+    if (!is_null($event->purchase_limit_count)) {
+        $salesCount = $event->getAllSales($user, true);
+
+        if (($salesCount + $quantity) > $event->purchase_limit_count) {
+            return [
+                'title' => trans('cart.fail_purchase'),
+                'msg' => trans('update.event_ticket_purchase_limit_count_error', ['count' => $eventTicketAvailability]),
+                'status' => 'error'
+            ];
+        }
+    }
+
+    $isRequiredPrerequisite = false;
+    if (!empty($event->prerequisites)) {
+        $prerequisites = $event->prerequisites;
+
+        if (count($prerequisites)) {
+            foreach ($prerequisites as $prerequisite) {
+                $prerequisiteWebinar = $prerequisite->course;
+
+                if ($prerequisite->required and !empty($prerequisiteWebinar) and !$prerequisiteWebinar->checkUserHasBought($user)) {
+                    $isRequiredPrerequisite = true;
+                }
+            }
+        }
+    }
+
+    if ($isRequiredPrerequisite) {
+        return [
+            'title' => trans('public.request_failed'),
+            'msg' => trans('update.this_event_has_required_prerequisite'),
+            'status' => 'error'
+        ];
     }
 
     return 'ok';
@@ -1865,40 +2069,27 @@ function checkCourseForSale($course, $user)
 function checkProductForSale(Request $request, $product, $user)
 {
     if (!$product->ordering) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('update.product_not_enable_ordering'),
             'status' => 'error'
         ];
-        return back()->with(['toast' => $toastData]);
     }
 
     if ($product->getAvailability() < 1) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('update.product_not_availability'),
             'status' => 'error'
         ];
-
-        if ($request->ajax()) {
-            return response()->json($toastData, 422);
-        } else {
-            return back()->with(['toast' => $toastData]);
-        }
     }
 
     if ($product->creator_id == $user->id) {
-        $toastData = [
+        return [
             'title' => trans('public.request_failed'),
             'msg' => trans('update.cant_purchase_your_product'),
             'status' => 'error'
         ];
-
-        if ($request->ajax()) {
-            return response()->json($toastData, 422);
-        } else {
-            return back()->with(['toast' => $toastData]);
-        }
     }
 
     return 'ok';
@@ -2016,6 +2207,20 @@ function getUserCurrencyItem($user = null, $userCurrency = null)
     }
 
     return $multiCurrency->getDefaultCurrency();
+}
+
+function getCurrencyItemByCurrency($currency) // $currency = USD
+{
+    $multiCurrency = new \App\Mixins\Financial\MultiCurrency();
+    $currencies = $multiCurrency->getCurrencies();
+
+    foreach ($currencies as $currencyItem) {
+        if ($currencyItem->currency == $currency) {
+            return $currencyItem;
+        }
+    }
+
+    return null;
 }
 
 function curformat($amount)
@@ -2446,4 +2651,15 @@ function getDefaultAvatarPath()
     }
 
     return $avatarUrl;
+}
+
+function getAvailableUploadFileSources()
+{
+    $sources = getFeaturesSettings('available_sources');
+
+    if (empty($sources) or !is_array($sources)) {
+        $sources = [];
+    }
+
+    return $sources;
 }

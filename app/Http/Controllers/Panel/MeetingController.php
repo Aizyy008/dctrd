@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Mixins\RegistrationPackage\UserPackage;
 use App\Models\Meeting;
+use App\Models\MeetingPackage;
 use App\Models\MeetingTime;
 use \Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -33,8 +34,8 @@ class MeetingController extends Controller
 
         $meetingTimes = [];
         foreach ($meeting->meetingTimes->groupBy('day_label') as $day => $meetingTime) {
-
             $times = 0;
+
             foreach ($meetingTime as $time) {
 
                 $meetingTimes[$day]["times"][] = $time;
@@ -42,15 +43,33 @@ class MeetingController extends Controller
                 $explodetime = explode('-', $time->time);
                 $times += strtotime($explodetime[1]) - strtotime($explodetime[0]);
             }
-            $meetingTimes[$day]["hours_available"] = round($times / 3600, 2);
 
+            $meetingTimes[$day]["hours_available"] = round($times / 3600, 2);
         }
+
+        $locale = $request->get('locale', getDefaultLocale());
+        $meetingPackagesFeatureStatus = !empty(getMeetingPackagesSettings("status"));
 
         $data = [
             'pageTitle' => trans('meeting.meeting_setting_page_title'),
             'meeting' => $meeting,
             'meetingTimes' => $meetingTimes,
+            'meetingPackagesFeatureStatus' => $meetingPackagesFeatureStatus,
+            'locale' => mb_strtolower($locale),
         ];
+
+        if ($meetingPackagesFeatureStatus) {
+            $meetingPackagesController = (new MeetingPackagesController());
+            $meetingPackagesData = $meetingPackagesController->index($request);
+
+            $data = array_merge($data, $meetingPackagesData);
+
+            // Edit Page
+            $meetingPackageId = $request->get('package');
+            if (!empty($meetingPackageId)) {
+                $data = array_merge($data, $meetingPackagesController->edit($meetingPackageId));
+            }
+        }
 
         return view("design_1.panel.meeting.settings.index", $data);
     }
@@ -101,6 +120,7 @@ class MeetingController extends Controller
                 'amount' => convertPriceToDefaultCurrency($data['amount']),
                 'discount' => $data['discount'],
                 'disabled' => empty($data['enable']) ? 1 : 0,
+                'enable_meeting_packages' => (!empty($data['enable_meeting_packages']) and $data['enable_meeting_packages'] == 'on'),
                 'in_person' => $inPerson,
                 'in_person_amount' => $inPerson ? convertPriceToDefaultCurrency($data['in_person_amount']) : null,
                 'group_meeting' => $groupMeeting,

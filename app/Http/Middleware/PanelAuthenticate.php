@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\AiContentTemplate;
+use App\Models\Setting;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 
@@ -29,11 +30,17 @@ class PanelAuthenticate
             $aiContentTemplates = AiContentTemplate::query()->where('enable', true)->get();
             view()->share('aiContentTemplates', $aiContentTemplates);
 
-            view()->share('navbarPages', getNavbarLinks());
+            view()->share('panelNavbarLinks', $this->getNavbarLinks());
+
 
             return $next($request);
         }
 
         return redirect('/login');
+    }
+
+    private function getNavbarLinks()
+    {
+        return Setting::where('name', Setting::$navbarLinkName)->first();
     }
 }

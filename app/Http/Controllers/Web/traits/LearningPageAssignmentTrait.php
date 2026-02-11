@@ -21,7 +21,7 @@ trait LearningPageAssignmentTrait
             $checkSequenceContent = !empty($assignment) ? $assignment->checkSequenceContent() : null;
             $sequenceContentHasError = (!empty($checkSequenceContent) and (!empty($checkSequenceContent['all_passed_items_error']) or !empty($checkSequenceContent['access_after_day_error'])));
 
-            if ($this->checkCourseAccess($assignment->webinar_id) and !$sequenceContentHasError) {
+            if ($this->checkCourseAccess($assignment->webinar) and !$sequenceContentHasError) {
                 $attach = WebinarAssignmentAttachment::where('id', $id)
                     ->where('assignment_id', $assignmentId)
                     ->first();

@@ -32,6 +32,9 @@ class ReviewsController extends Controller
                 'bundle' => function ($query) {
                     $query->select('id', 'slug');
                 },
+                'event' => function ($query) {
+                    $query->select('id', 'slug');
+                },
                 'creator' => function ($query) {
                     $query->select('id', 'full_name');
                 },
@@ -55,7 +58,7 @@ class ReviewsController extends Controller
             $data['webinars'] = Webinar::select('id')->whereIn('id', $webinar_ids)->get();
         }
 
-        return view('admin.reviews.lists', $data);
+        return view('admin.reviews.lists.index', $data);
     }
 
     private function filters($query, $request)

@@ -157,14 +157,14 @@ class Webinar extends Model
             'subscribe' => $this->subscribe ? true : false,
             'description' => $this->description,
             'prerequisites' => $this->prerequisites()
-                ->whereHas('prerequisiteWebinar')
+                ->whereHas('course')
                 ->orderBy('order', 'asc')
                 ->get()
                 ->map(function ($prerequisite) {
-                    if ($prerequisite->prerequisiteWebinar) {
+                    if ($prerequisite->course) {
                         return [
                             'required' => $prerequisite->required,
-                            'webinar' => $prerequisite->prerequisiteWebinar->brief ?? null,
+                            'webinar' => $prerequisite->course->brief ?? null,
                         ];
                     }
                 }),
@@ -856,7 +856,7 @@ class Webinar extends Model
         $prerequisites = $this->prerequisites;
         if (count($prerequisites)) {
             foreach ($prerequisites as $prerequisite) {
-                $prerequisiteWebinar = $prerequisite->prerequisiteWebinar;
+                $prerequisiteWebinar = $prerequisite->course;
 
                 if ($prerequisite->required and !empty($prerequisiteWebinar) and !$prerequisiteWebinar->checkUserHasBought($user)) {
                     $isRequiredPrerequisite = true;

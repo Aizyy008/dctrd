@@ -120,7 +120,7 @@ trait CourseShowTrait
                 $checkCourseForSale = checkCourseForSale($course, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
                 Sale::create([

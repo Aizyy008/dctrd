@@ -165,6 +165,7 @@ class LandingBuilderController extends Controller
 
         return [
             'url' => $data['url'],
+            'color_id' => $data['color_id'] ?? null,
             'enable' => (!empty($data['enable']) and $data['enable'] == 'on'),
             'created_at' => !empty($landingItem) ? $landingItem->created_at : time(),
         ];

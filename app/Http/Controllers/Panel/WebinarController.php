@@ -123,7 +123,7 @@ class WebinarController extends Controller
             'creator_id' => $user->id,
             'slug' => Webinar::makeSlug($data['title']),
             'type' => $data['type'],
-            'private' => (!empty($data['private']) and $data['private'] == 'on') ? true : false,
+            'private' => (!empty($data['private']) and $data['private'] == 'on'),
             'status' => ((!empty($data['draft']) and $data['draft'] == 1) or (!empty($data['get_next']) and $data['get_next'] == 1)) ? Webinar::$isDraft : Webinar::$pending,
             'created_at' => time(),
         ]);
@@ -252,7 +252,7 @@ class WebinarController extends Controller
         } elseif ($step == 5) {
             $query->with([
                 'prerequisites' => function ($query) {
-                    $query->with(['prerequisiteWebinar' => function ($qu) {
+                    $query->with(['course' => function ($qu) {
                         $qu->with(['teacher' => function ($q) {
                             $q->select('id', 'full_name');
                         }]);
@@ -655,6 +655,33 @@ class WebinarController extends Controller
         return $webinar;
     }
 
+    public function deleteIcon($courseId)
+    {
+        $this->authorize("panel_webinars_delete");
+
+        $user = auth()->user();
+        $webinar = Webinar::where('id', $courseId)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id);
+                $query->orWhere('teacher_id', $user->id);
+            })
+            ->first();
+
+        if (!$webinar) {
+            abort(404);
+        }
+
+        $webinar->update([
+            'icon' => null,
+        ]);
+
+        return response()->json([
+            'code' => 200,
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.course_icon_removed_successful'),
+        ], 200);
+    }
+
 
     public function duplicate($id)
     {
@@ -812,6 +839,7 @@ class WebinarController extends Controller
 
         if (!empty($term)) {
             $query = Webinar::query()->select('id', 'teacher_id')
+                ->where('only_for_students', false)
                 ->whereTranslationLike('title', '%' . $term . '%')
                 ->where('id', '<>', $webinarId)
                 ->with(['teacher' => function ($query) {
@@ -927,7 +955,7 @@ class WebinarController extends Controller
                     'webinar' => $webinar
                 ];
 
-                return view(getTemplate() . '.panel.webinar.invoice', $data);
+                return view('design_1.panel.webinars.invoice.index', $data);
             }
         }
 
@@ -1066,7 +1094,6 @@ class WebinarController extends Controller
                 case 'webinar_chapter_items':
                     foreach ($itemIds as $order => $id) {
                         WebinarChapterItem::where('id', $id)
-                            ->where('user_id', $user->id)
                             ->update(['order' => ($order + 1)]);
                     }
                 case 'bundle_webinars':

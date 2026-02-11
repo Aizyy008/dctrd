@@ -209,9 +209,7 @@ class WebinarsController extends Controller
             abort(404);
         }
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $teachers = null;
         $isOrganization = $user->isOrganization();
@@ -591,9 +589,7 @@ class WebinarsController extends Controller
                 'tags',
             ]);
 
-            $categories = Category::where('parent_id', null)
-                ->with('subCategories')
-                ->get();
+            $categories = Category::getCategories();
 
             $data['categories'] = $categories;
         } elseif ($step == 3) {
@@ -624,7 +620,7 @@ class WebinarsController extends Controller
         } elseif ($step == 5) {
             $query->with([
                 'prerequisites' => function ($query) {
-                    $query->with(['prerequisiteWebinar' => function ($qu) {
+                    $query->with(['course' => function ($qu) {
                         $qu->select('id', 'title', 'teacher_id')
                             ->with(['teacher' => function ($q) {
                                 $q->select('id', 'full_name');

@@ -68,6 +68,9 @@ trait LandingComponentsTrait
             'specific_links',
             'specific_links_2',
             'specific_buttons',
+            'image_video_content',
+            'course_tabs_content',
+            'featured_packages',
         ];
 
         // Merge keys from both arrays to ensure all keys are included

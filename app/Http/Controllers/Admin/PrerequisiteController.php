@@ -44,7 +44,7 @@ class PrerequisiteController extends Controller
                 ->first();
 
             if (!empty($Prerequisite)) {
-                $Prerequisite->webinar_title = $Prerequisite->prerequisiteWebinar->title;
+                $Prerequisite->webinar_title = $Prerequisite->course->title;
 
                 return response()->json([
                     'prerequisite' => $Prerequisite

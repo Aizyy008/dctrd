@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Bundle;
 use App\Models\Faq;
+use App\Models\Event;
 use App\Models\Translation\FaqTranslation;
 use App\Models\UpcomingCourse;
 use App\Models\Webinar;
@@ -13,12 +14,29 @@ use Validator;
 
 class FAQController extends Controller
 {
+    private function getItemColumnName($data)
+    {
+        $columnName = "webinar_id";
+
+        if (!empty(!empty($data['bundle_id']))) {
+            $columnName = "bundle_id";
+        } else if (!empty(!empty($data['upcoming_course_id']))) {
+            $columnName = "upcoming_course_id";
+        } else if (!empty(!empty($data['event_id']))) {
+            $columnName = "event_id";
+        }
+
+        return $columnName;
+    }
+
     public function store(Request $request)
     {
         $user = auth()->user();
         $data = $request->get('ajax')['new'];
+        $columnName = $this->getItemColumnName($data);
 
         $validator = Validator::make($data, [
+            "{$columnName}" => 'required',
             'title' => 'required|max:255',
             'answer' => 'required',
         ]);
@@ -33,8 +51,7 @@ class FAQController extends Controller
         $canStore = $this->checkItem($user, $data);
 
         if ($canStore) {
-            $columnName = !empty($data['webinar_id']) ? 'webinar_id' : (!empty($data['bundle_id']) ? 'bundle_id' : 'upcoming_course_id');
-            $columnValue = !empty($data['webinar_id']) ? $data['webinar_id'] : (!empty($data['bundle_id']) ? $data['bundle_id'] : $data['upcoming_course_id']);
+            $columnValue = $data[$columnName];
 
             $order = Faq::query()
                     ->where(function ($query) use ($user, $columnName, $columnValue) {
@@ -45,9 +62,7 @@ class FAQController extends Controller
 
             $faq = Faq::create([
                 'creator_id' => $user->id,
-                'webinar_id' => !empty($data['webinar_id']) ? $data['webinar_id'] : null,
-                'bundle_id' => !empty($data['bundle_id']) ? $data['bundle_id'] : null,
-                'upcoming_course_id' => !empty($data['upcoming_course_id']) ? $data['upcoming_course_id'] : null,
+                "{$columnName}" => $columnValue,
                 'order' => $order,
                 'created_at' => time()
             ]);
@@ -94,6 +109,12 @@ class FAQController extends Controller
             if (!empty($upcomingCourse) and $upcomingCourse->canAccess($user)) {
                 $canStore = true;
             }
+        } elseif (!empty($data['event_id'])) {
+            $event = Event::find($data['event_id']);
+
+            if (!empty($event) and $event->creator_id == $user->id) {
+                $canStore = true;
+            }
         }
 
         return $canStore;
@@ -103,8 +124,10 @@ class FAQController extends Controller
     {
         $user = auth()->user();
         $data = $request->get('ajax')[$id];
+        $columnName = $this->getItemColumnName($data);
 
         $validator = Validator::make($data, [
+            "{$columnName}" => 'required',
             'title' => 'required|max:255',
             'answer' => 'required',
         ]);
@@ -119,8 +142,7 @@ class FAQController extends Controller
         $canStore = $this->checkItem($user, $data);
 
         if ($canStore) {
-            $columnName = !empty($data['webinar_id']) ? 'webinar_id' : (!empty($data['bundle_id']) ? 'bundle_id' : 'upcoming_course_id');
-            $columnValue = !empty($data['webinar_id']) ? $data['webinar_id'] : (!empty($data['bundle_id']) ? $data['bundle_id'] : $data['upcoming_course_id']);
+            $columnValue = $data[$columnName];
 
             $faq = Faq::where('id', $id)
                 ->where(function ($query) use ($user, $columnName, $columnValue) {
@@ -160,16 +182,16 @@ class FAQController extends Controller
             ->first();
 
         if (!empty($faq)) {
-            $item = null;
-            if (!empty($faq->webinar_id)) {
-                $item = Webinar::query()->find($faq->webinar_id);
-            } else if (!empty($faq->bundle_id)) {
-                $item = Bundle::query()->find($faq->bundle_id);
-            } else if (!empty($faq->upcoming_course_id)) {
-                $item = UpcomingCourse::find($faq->upcoming_course_id);
-            }
+            $data = [
+                'webinar_id' => $faq->webinar_id,
+                'bundle_id' => $faq->bundle_id,
+                'upcoming_course_id' => $faq->upcoming_course_id,
+                'event_id' => $faq->event_id,
+            ];
 
-            if ($faq->creator_id == $user->id or (!empty($item) and $item->canAccess($user))) {
+            $canAccess = $this->checkItem($user, $data);
+
+            if ($faq->creator_id == $user->id or $canAccess) {
                 $faq->delete();
             }
         }

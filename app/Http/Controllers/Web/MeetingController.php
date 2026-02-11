@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Meeting;
+use App\Models\MeetingPackage;
 use App\Models\MeetingTime;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -43,7 +44,6 @@ class MeetingController extends Controller
                 $times = convertDayToNumber($meeting->meetingTimes->groupby('day_label')->toArray());
             }
 
-
             $data = [
                 'pageTitle' => trans('public.book_a_meeting'),
                 'instructor' => $instructor,
@@ -53,6 +53,13 @@ class MeetingController extends Controller
             ];
 
             $data = array_merge($data, $this->getSelectedDateTimes($request, $meeting));
+
+            if (!empty(getMeetingPackagesSettings("status")) and $meeting->enable_meeting_packages) {
+                $data['userMeetingPackages'] = MeetingPackage::query()->where('creator_id', $instructor->id)
+                    ->where('enable', true)
+                    ->get();
+            }
+
 
             return view('design_1.web.users.meeting.index', $data);
         }
@@ -161,12 +168,20 @@ class MeetingController extends Controller
             return redirect('/login');
         }
 
+        $meeting = Meeting::query()->select('*', DB::raw('LEAST(online_group_amount, in_person_group_amount) as min_group_amount'))
+            ->where('creator_id', $instructor->id)
+            ->with([
+                'meetingTimes'
+            ])
+            ->first();
+
+
         $data = $request->all();
         $validator = Validator::make($data, [
             'meeting_type' => 'required|in:in_person,online',
             'time' => 'required|exists:meeting_times,id',
             'day' => 'required',
-            'student_count' => 'required|numeric',
+            'student_count' => $meeting->group_meeting ? 'required|numeric' : 'nullable',
         ]);
 
         if ($validator->fails()) {
@@ -186,14 +201,6 @@ class MeetingController extends Controller
                     ]
                 ], 422);
             }
-
-
-            $meeting = Meeting::query()->select('*', DB::raw('LEAST(online_group_amount, in_person_group_amount) as min_group_amount'))
-                ->where('creator_id', $instructor->id)
-                ->with([
-                    'meetingTimes'
-                ])
-                ->first();
 
             if (!empty($meeting) and !$meeting->disabled) {
 

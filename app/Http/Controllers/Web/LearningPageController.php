@@ -63,7 +63,7 @@ class LearningPageController extends Controller
                 ->first();
         }
 
-        $data["userIsCourseTeacher"] = ($course->creator_id == $user->id or $course->teacher_id == $user->id or $user->isAdmin());
+        $data["userIsCourseTeacher"] = $this->checkUserIsInstructor($user, $course);
 
         $data['userLearningLastView'] = CourseLearningLastView::query()
             ->where('user_id', $user->id)

@@ -61,9 +61,7 @@ class InstallmentsController extends Controller
 
         $userGroups = Group::query()->where('status', 'active')->get();
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
         $subscriptionPackages = Subscribe::all();
         $registrationPackages = RegistrationPackage::all();
 
@@ -276,9 +274,7 @@ class InstallmentsController extends Controller
 
         $userGroups = Group::query()->where('status', 'active')->get();
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
         $subscriptionPackages = Subscribe::all();
         $registrationPackages = RegistrationPackage::all();
 

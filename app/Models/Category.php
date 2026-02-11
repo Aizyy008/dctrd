@@ -106,9 +106,11 @@ class Category extends Model implements TranslatableContract
             return self::whereNull('parent_id')
                 ->with([
                     'subCategories' => function ($query) {
+                        $query->where('enable', true);
                         $query->orderBy('order', 'asc');
                     },
                 ])
+                ->where('enable', true)
                 ->orderBy('order', 'asc')
                 ->get();
         });

@@ -12,4 +12,5 @@ class MorphTypesEnum
     const FORUM = "App\Models\Forum";
     const FORUM_TOPIC = "App\Models\ForumTopic";
     const PRODUCT = "App\Models\Product";
+    const EVENT = "App\Models\Event";
 }

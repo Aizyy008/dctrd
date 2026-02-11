@@ -54,7 +54,7 @@ class Channel extends BasePaymentChannel implements IChannel
             ]
         ];
 
-        return view('web.default.cart.channels.voguepay', $data);
+        return view('design_1.web.cart.payment.channels.voguepay', $data);
     }
 
     private function makeCallbackUrl($status)

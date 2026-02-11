@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Subscribe;
+use App\Models\SubscribeSpecificationItem;
 use App\Models\Translation\SubscribeTranslation;
 use Illuminate\Http\Request;
 
@@ -35,11 +37,14 @@ class SubscribesController extends Controller
 
         removeContentLocale();
 
+        $categories = Category::getCategories();
+
         $data = [
             'pageTitle' => trans('admin/pages/financial.new_subscribe'),
+            'categories' => $categories
         ];
 
-        return view('admin.financial.subscribes.new', $data);
+        return view('admin.financial.subscribes.create.index', $data);
     }
 
     public function store(Request $request)
@@ -55,30 +60,18 @@ class SubscribesController extends Controller
             'icon' => 'required|string',
         ]);
 
-        $data = $request->all();
+        $storeData = $this->makeStoreData($request);
+        $subscribe = Subscribe::create($storeData);
 
-        $subscribe = Subscribe::create([
-            'usable_count' => $data['usable_count'],
-            'days' => $data['days'],
-            'price' => $data['price'],
-            'icon' => $data['icon'],
-            'is_popular' => (!empty($data['is_popular']) and $data['is_popular'] == '1'),
-            'infinite_use' => (!empty($data['infinite_use']) and $data['infinite_use'] == '1'),
-            'created_at' => time(),
-        ]);
+        /* Extra Data */
+        $this->handleStoreExtraData($request, $subscribe);
 
-        if (!empty($subscribe)) {
-            SubscribeTranslation::updateOrCreate([
-                'subscribe_id' => $subscribe->id,
-                'locale' => mb_strtolower($data['locale']),
-            ], [
-                'title' => $data['title'],
-                'subtitle' => !empty($data['subtitle']) ? $data['subtitle'] : null,
-                'description' => !empty($data['description']) ? $data['description'] : null,
-            ]);
-        }
-
-        return redirect(getAdminPanelUrl() . '/financial/subscribes');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.subscribe_created_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/subscribes/{$subscribe->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function edit(Request $request, $id)
@@ -90,12 +83,15 @@ class SubscribesController extends Controller
         $locale = $request->get('locale', app()->getLocale());
         storeContentLocale($locale, $subscribe->getTable(), $subscribe->id);
 
+        $categories = Category::getCategories();
+
         $data = [
-            'pageTitle' => trans('admin/pages/financial.new_subscribe'),
-            'subscribe' => $subscribe
+            'pageTitle' => trans('admin/pages/financial.edit_subscribe'),
+            'subscribe' => $subscribe,
+            'categories' => $categories
         ];
 
-        return view('admin.financial.subscribes.new', $data);
+        return view('admin.financial.subscribes.create.index', $data);
     }
 
     public function update(Request $request, $id)
@@ -111,18 +107,60 @@ class SubscribesController extends Controller
             'icon' => 'required|string',
         ]);
 
-        $data = $request->all();
         $subscribe = Subscribe::findOrFail($id);
 
-        $subscribe->update([
+        $storeData = $this->makeStoreData($request, $subscribe);
+        $subscribe->update($storeData);
+
+        /* Extra Data */
+        $this->handleStoreExtraData($request, $subscribe);
+
+        removeContentLocale();
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.subscribe_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/subscribes/{$subscribe->id}/edit"))->with(['toast' => $toastData]);
+    }
+
+    public function delete($id)
+    {
+        $this->authorize('admin_subscribe_delete');
+
+        $subscribe = Subscribe::findOrFail($id);
+
+        $subscribe->delete();
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.subscribe_deleted_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/financial/subscribes"))->with(['toast' => $toastData]);
+    }
+
+    private function makeStoreData(Request $request, $subscribe = null): array
+    {
+        $data = $request->all();
+
+        return [
+            'target_type' => $data['target_type'] ?? 'all',
+            'target' => $data['target'] ?? null,
             'usable_count' => $data['usable_count'],
             'days' => $data['days'],
             'price' => $data['price'],
             'icon' => $data['icon'],
             'is_popular' => (!empty($data['is_popular']) and $data['is_popular'] == '1'),
             'infinite_use' => (!empty($data['infinite_use']) and $data['infinite_use'] == '1'),
-            'created_at' => time(),
-        ]);
+            'created_at' => !empty($subscribe) ? $subscribe->created_at : time(),
+        ];
+    }
+
+    private function handleStoreExtraData(Request $request, $subscribe)
+    {
+        $data = $request->all();
 
         SubscribeTranslation::updateOrCreate([
             'subscribe_id' => $subscribe->id,
@@ -133,25 +171,51 @@ class SubscribesController extends Controller
             'description' => !empty($data['description']) ? $data['description'] : null,
         ]);
 
-        removeContentLocale();
 
-        $toastData = [
-            'title' => trans('public.request_success'),
-            'msg' => trans('update.plan_updated_successful'),
-            'status' => 'success'
+        // Handle Target Products
+        SubscribeSpecificationItem::query()->where('subscribe_id', $subscribe->id)->delete();
+
+        $specificationItems = [
+            'category_ids' => 'category_id',
+            'instructor_ids' => 'instructor_id',
+            'courses_ids' => 'course_id',
+            'bundle_ids' => 'bundle_id',
         ];
 
-        return redirect(getAdminPanelUrl("/financial/subscribes/{$subscribe->id}/edit"))->with(['toast' => $toastData]);
+        foreach ($specificationItems as $key => $column) {
+            if (!empty($data[$key]) and $this->checkStoreSpecificationItems($key, $subscribe->target, $subscribe->target_type)) {
+                $insert = [];
+
+                foreach ($data[$key] as $item) {
+                    $insert[] = [
+                        'subscribe_id' => $subscribe->id,
+                        $column => $item,
+                    ];
+                }
+
+                if (!empty($insert)) {
+                    SubscribeSpecificationItem::query()->insert($insert);
+                }
+            }
+        }
     }
 
-    public function delete($id)
+    private function checkStoreSpecificationItems($item, $target, $type)
     {
-        $this->authorize('admin_subscribe_delete');
+        $store = false;
 
-        $promotion = Subscribe::findOrFail($id);
+        $items = [
+            'category_ids' => 'specific_categories',
+            'instructor_ids' => 'specific_instructors',
+            'courses_ids' => 'specific_courses',
+            'bundle_ids' => 'specific_bundles',
+        ];
 
-        $promotion->delete();
+        if ($items[$item] == $target) {
+            $store = true;
+        }
 
-        return redirect(getAdminPanelUrl() . '/financial/subscribes');
+        return $store;
     }
+
 }

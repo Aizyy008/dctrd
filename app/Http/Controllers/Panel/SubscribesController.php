@@ -8,6 +8,7 @@ use App\Mixins\Installment\InstallmentPlans;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentChannel;
+use App\Models\OfflineBank;
 use App\Models\Sale;
 use App\Models\Setting;
 use App\Models\Subscribe;
@@ -58,6 +59,8 @@ class SubscribesController extends Controller
         }
 
         $user = auth()->user();
+
+        /*
         $activeSubscribe = Subscribe::getActiveSubscribe($user->id);
 
         if ($activeSubscribe) {
@@ -67,7 +70,7 @@ class SubscribesController extends Controller
                 'status' => 'error'
             ];
             return back()->with(['toast' => $toastData]);
-        }
+        }*/
 
         $financialSettings = getFinancialSettings();
         $tax = $financialSettings['tax'] ?? 0;
@@ -127,7 +130,8 @@ class SubscribesController extends Controller
                 'calculatePrices' => $calculatePrices,
                 'count' => 1,
                 'userCharge' => $user->getAccountingCharge(),
-                'razorpay' => $razorpay
+                'razorpay' => $razorpay,
+                'offlineBanks' => OfflineBank::query()->orderBy('created_at', 'desc')->with(['specifications'])->get(),
             ];
 
             return view('design_1.web.cart.payment.index', $data);

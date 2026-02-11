@@ -92,7 +92,7 @@ class Channel extends BasePaymentChannel implements IChannel
             'successUrl' => $this->makeCallbackUrl($order, 'success'),
         ];
 
-        return view('web.default.cart.channels.izipay', $data);
+        return view('design_1.web.cart.payment.channels.izipay', $data);
     }
 
     private function makeCallbackUrl($order, $status)

@@ -320,7 +320,7 @@ class ProductController extends Controller
                     'el' => '.js-page-bottom-seo-content',
                     'html' => (string)view()->make('design_1.web.products.lists.includes.bottom_seo_content', ['seoContent' => $pageBottomSeoContent])
                 ];
-            } else  {
+            } else {
                 $specificContent = [
                     'el' => '.js-page-bottom-seo-content',
                     'html' => null
@@ -359,7 +359,7 @@ class ProductController extends Controller
             ->where('slug', $slug)
             ->with([
                 'creator' => function ($qu) {
-                    $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings', 'bio', 'about');
+                    $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings', 'bio', 'about', 'cover_img', 'profile_secondary_image');
                     $qu->withCount([
                         'products'
                     ]);
@@ -435,6 +435,7 @@ class ProductController extends Controller
 
         $product->creator->someRandomProducts = Product::query()->where('creator_id', $product->creator_id)
             ->where('id', '!=', $product->id)
+            ->where('status', 'active')
             ->inRandomOrder()
             ->limit(3)
             ->with([
@@ -522,7 +523,11 @@ class ProductController extends Controller
                 $checkCourseForSale = checkProductForSale($request, $product, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    if ($request->ajax()) {
+                        return response()->json(['toast_alert' => $checkCourseForSale], 422);
+                    } else {
+                        return back()->with(['toast' => $checkCourseForSale]);
+                    }
                 }
 
                 $productOrder = ProductOrder::create([
@@ -582,7 +587,7 @@ class ProductController extends Controller
             $specifications = $data['specifications'] ?? null;
             $quantity = $data['quantity'] ?? 1;
 
-            $product = Product::where('id', $productId)
+            $product = Product::query()->where('id', $productId)
                 ->where('status', 'active')
                 ->first();
 
@@ -590,7 +595,11 @@ class ProductController extends Controller
                 $checkCourseForSale = checkProductForSale($request, $product, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    if ($request->ajax()) {
+                        return response()->json(['toast_alert' => $checkCourseForSale], 422);
+                    } else {
+                        return back()->with(['toast' => $checkCourseForSale]);
+                    }
                 }
 
                 $activeDiscount = $product->getActiveDiscount();
@@ -616,11 +625,24 @@ class ProductController extends Controller
                     'created_at' => time()
                 ]);
 
-                return redirect('/cart');
+                /*$redirectTo = "";
+
+                if ($product->isVirtual()) {
+
+                } else {
+
+                }*/
+
+                return response()->json([
+                    'code' => 200,
+                    'title' => trans('cart.cart_add_success_title'),
+                    'msg' => trans('cart.cart_add_success_msg'),
+                    'redirect_to' => "/cart",
+                ]);
             }
         }
 
-        abort(404);
+        return response()->json([], 422);
     }
 
     public function showFiles($slug)

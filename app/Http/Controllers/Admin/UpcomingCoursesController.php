@@ -45,9 +45,7 @@ class UpcomingCoursesController extends Controller
             ])
             ->paginate(10);
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('update.upcoming_courses'),
@@ -125,7 +123,7 @@ class UpcomingCoursesController extends Controller
         removeContentLocale();
 
         $teachers = User::where('role_name', Role::$teacher)->get();
-        $categories = Category::where('parent_id', null)->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('update.new_upcoming_course'),
@@ -199,7 +197,7 @@ class UpcomingCoursesController extends Controller
 
         if (!empty($upcomingCourse)) {
             $teachers = User::where('role_name', Role::$teacher)->get();
-            $categories = Category::where('parent_id', null)->get();
+            $categories = Category::getCategories();
 
             $locale = $request->get('locale', app()->getLocale());
             storeContentLocale($locale, $upcomingCourse->getTable(), $upcomingCourse->id);

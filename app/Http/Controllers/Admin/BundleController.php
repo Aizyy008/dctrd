@@ -46,9 +46,7 @@ class BundleController extends Controller
             ->whereNull('sales.refund_at')
             ->first();
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $query = $this->handleFilters($query, $request)
             ->with([
@@ -234,7 +232,7 @@ class BundleController extends Controller
 
         removeContentLocale();
 
-        $categories = Category::where('parent_id', null)->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('update.new_bundle'),
@@ -274,8 +272,10 @@ class BundleController extends Controller
             'image_cover' => $data['image_cover'],
             'video_demo' => $data['video_demo'],
             'video_demo_source' => $data['video_demo'] ? $data['video_demo_source'] : null,
-            'subscribe' => !empty($data['subscribe']) ? true : false,
-            'certificate' => !empty($data['certificate']) ? true : false,
+            'private' => (!empty($data['private']) and $data['private'] == 'on'),
+            'subscribe' => (!empty($data['subscribe']) and $data['subscribe'] == "on"),
+            'certificate' => (!empty($data['certificate']) and $data['certificate'] == "on"),
+            'only_for_students' => (!empty($data['only_for_students']) and $data['only_for_students'] == "on"),
             'points' => $data['points'] ?? null,
             'price' => $data['price'],
             'access_days' => $data['access_days'] ?? null,
@@ -350,9 +350,7 @@ class BundleController extends Controller
         $locale = $request->get('locale', app()->getLocale());
         storeContentLocale($locale, $bundle->getTable(), $bundle->id);
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $tags = $bundle->tags->pluck('title')->toArray();
 
@@ -414,8 +412,11 @@ class BundleController extends Controller
 
         $data['status'] = $publish ? Bundle::$active : ($reject ? Bundle::$inactive : ($isDraft ? Bundle::$isDraft : Bundle::$pending));
         $data['updated_at'] = time();
-        $data['subscribe'] = !empty($data['subscribe']) ? true : false;
-        $data['certificate'] = !empty($data['certificate']) ? true : false;
+
+        $data['private'] = (!empty($data['private']) and $data['private'] == 'on');
+        $data['subscribe'] = (!empty($data['subscribe']) and $data['subscribe'] == "on");
+        $data['certificate'] = (!empty($data['certificate']) and $data['certificate'] == "on");
+        $data['only_for_students'] = (!empty($data['only_for_students']) and $data['only_for_students'] == "on");
 
         if ($data['category_id'] != $bundle->category_id) {
             BundleFilterOption::where('bundle_id', $bundle->id)->delete();
@@ -468,8 +469,10 @@ class BundleController extends Controller
             'image_cover' => $data['image_cover'],
             'video_demo' => $data['video_demo'],
             'video_demo_source' => $data['video_demo'] ? $data['video_demo_source'] : null,
+            'private' => $data['private'],
             'subscribe' => $data['subscribe'],
             'certificate' => $data['certificate'],
+            'only_for_students' => $data['only_for_students'],
             'points' => $data['points'] ?? null,
             'price' => $data['price'],
             'access_days' => $data['access_days'] ?? null,

@@ -98,13 +98,28 @@ class SaleController extends Controller
 
             $sale->item_title = $item ? $item->title : trans('update.deleted_item');
             $sale->item_id = $item ? $item->id : '';
-            $sale->item_seller = ($item and $item->creator) ? $item->creator->full_name : trans('update.deleted_item');
+            $sale->item_seller = ($item and $item->creator) ? $item->creator->full_name : trans('update.deleted_user');
             $sale->seller_id = ($item and $item->creator) ? $item->creator->id : '';
             $sale->sale_type = ($item and $item->creator) ? $item->creator->id : '';
+        } else if (!empty($sale->event_ticket_id)) {
+            $item = $sale->eventTicket;
+            $event = $item->event;
+
+            $sale->item_title = $item ? $item->title : trans('update.deleted_item');
+            $sale->item_id = $item ? $item->id : '';
+            $sale->item_seller = ($event and $event->creator) ? $event->creator->full_name : trans('update.deleted_user');
+            $sale->seller_id = ($event and $event->creator) ? $event->creator->id : '';
+        } else if (!empty($sale->meeting_package_id)) {
+            $item = $sale->meetingPackage;
+
+            $sale->item_title = $item ? $item->title : trans('update.deleted_item');
+            $sale->item_id = $item ? $item->id : '';
+            $sale->item_seller = ($item and $item->creator) ? $item->creator->full_name : trans('update.deleted_user');
+            $sale->seller_id = ($item and $item->creator) ? $item->creator->id : '';
         } elseif (!empty($sale->meeting_id)) {
             $sale->item_title = trans('panel.meeting');
             $sale->item_id = $sale->meeting_id;
-            $sale->item_seller = ($sale->meeting and $sale->meeting->creator) ? $sale->meeting->creator->full_name : trans('update.deleted_item');
+            $sale->item_seller = ($sale->meeting and $sale->meeting->creator) ? $sale->meeting->creator->full_name : trans('update.deleted_user');
             $sale->seller_id = ($sale->meeting and $sale->meeting->creator) ? $sale->meeting->creator->id : '';
         } elseif (!empty($sale->subscribe_id)) {
             $sale->item_title = !empty($sale->subscribe) ? $sale->subscribe->title : trans('update.deleted_subscribe');
@@ -127,7 +142,7 @@ class SaleController extends Controller
 
             $sale->item_title = $gift->getItemTitle();
             $sale->item_id = $item->id;
-            $sale->item_seller = $item->creator->full_name;
+            $sale->item_seller = !empty($item->creator) ? $item->creator->full_name : trans('update.deleted_user');
             $sale->seller_id = $item->creator_id;
         } elseif (!empty($sale->installment_payment_id) and !empty($sale->installmentOrderPayment)) {
             $installmentOrderPayment = $sale->installmentOrderPayment;
@@ -136,8 +151,8 @@ class SaleController extends Controller
 
             $sale->item_title = !empty($installmentItem) ? $installmentItem->title : '--';
             $sale->item_id = !empty($installmentItem) ? $installmentItem->id : '--';
-            $sale->item_seller = !empty($installmentItem) ? $installmentItem->creator->full_name : '--';
-            $sale->seller_id = !empty($installmentItem) ? $installmentItem->creator->id : '--';
+            $sale->item_seller = (!empty($installmentItem) and !empty($installmentItem->creator)) ? $installmentItem->creator->full_name : trans('update.deleted_user');
+            $sale->seller_id = (!empty($installmentItem) and !empty($installmentItem->creator)) ? $installmentItem->creator->id : '--';
         } else {
             $sale->item_title = '---';
             $sale->item_id = '---';

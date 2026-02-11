@@ -84,6 +84,21 @@ class OrderItem extends Model
         return $this->belongsTo(Gift::class, 'gift_id', 'id');
     }
 
+    public function eventTicket()
+    {
+        return $this->belongsTo(EventTicket::class, 'event_ticket_id', 'id');
+    }
+
+    public function meetingPackage()
+    {
+        return $this->belongsTo(MeetingPackage::class, 'meeting_package_id', 'id');
+    }
+
+
+    /*==========
+     | Helpers
+     * ========*/
+
 
     public static function getSeller($orderItem)
     {
@@ -97,9 +112,34 @@ class OrderItem extends Model
             $seller = $orderItem->product->creator_id;
         } elseif (!empty($orderItem->bundle_id)) {
             $seller = $orderItem->bundle->creator_id;
+        } elseif (!empty($orderItem->event_ticket_id)) {
+            $seller = $orderItem->eventTicket->event->creator_id;
+        } elseif (!empty($orderItem->meeting_package_id)) {
+            $seller = $orderItem->meetingPackage->creator_id;
         }
 
         return $seller;
+    }
+
+    public function getItemTypeName()
+    {
+        $typeName = "course";
+
+        if (!empty($orderItem->reserve_meeting_id)) {
+            $typeName = "meeting";
+        } elseif (!empty($orderItem->product_id)) {
+            $typeName = "product";
+        } elseif (!empty($orderItem->bundle_id)) {
+            $typeName = "bundle";
+        } elseif (!empty($orderItem->promotion_id)) {
+            $typeName = "promotion";
+        } elseif (!empty($orderItem->event_ticket_id)) {
+            $typeName = "event_ticket";
+        } elseif (!empty($orderItem->meeting_package_id)) {
+            $typeName = "meeting_package";
+        }
+
+        return $typeName;
     }
 
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Panel\Traits;
 use App\Enums\MorphTypesEnum;
 use App\Models\Bundle;
 use App\Models\Certificate;
+use App\Models\MeetingPackageSold;
 use App\Models\Product;
 use App\Models\Quiz;
 use App\Models\QuizzesResult;
@@ -410,6 +411,29 @@ trait DashboardTrait
         $totalMeetings = deepClone($reserveMeetingsQuery)->count();
         $reserveMeetings = $reserveMeetingsQuery->limit(3)->get();
 
+        /* Meeting Package Scheduled Sessions */
+        $meetingPackageScheduledSessions = null;
+        $meetingPackagesSoldIds = MeetingPackageSold::query()
+            ->where('user_id', $user->id)
+            ->pluck('id')
+            ->toArray();
+
+        if (!empty($meetingPackagesSoldIds)) {
+            $scheduledSessionsQuery = Session::query()
+                ->whereIn('meeting_package_sold_id', $meetingPackagesSoldIds)
+                ->where('status', '!=', 'finished')
+                ->whereNotNull('date')
+                ->where('date', '>', time());
+
+            $totalScheduledSessions = deepClone($scheduledSessionsQuery)->count();
+
+            if ($totalScheduledSessions > 0) {
+                $totalMeetings += $totalScheduledSessions;
+
+                $meetingPackageScheduledSessions = deepClone($scheduledSessionsQuery)->limit(3)->get();
+            }
+        }
+
         $instructors = null;
 
         if ($totalMeetings < 1) {
@@ -427,6 +451,7 @@ trait DashboardTrait
             'totalMeetings' => $totalMeetings,
             'reserveMeetings' => $reserveMeetings,
             'instructors' => $instructors,
+            'meetingPackageScheduledSessions' => $meetingPackageScheduledSessions,
         ];
     }
 
@@ -762,6 +787,28 @@ trait DashboardTrait
         $totalMeetings = deepClone($query)->count();
         $reserveMeetings = $query->limit(3)->get();
 
+        /* Meeting Package Scheduled Sessions */
+        $scheduledSessionsQuery = Session::query()
+            ->where('creator_id', $user->id)
+            ->whereNotNull('meeting_package_sold_id')
+            ->where('status', '!=', 'finished')
+            ->whereNotNull('date')
+            ->where('date', '>', time())
+            ->with([
+                'meetingPackageSold' => function ($query) {
+                    $query->with([
+                        'user' => function ($query) {
+                            $query->select('id', 'username', 'full_name', 'avatar', 'avatar_settings');
+                        }
+                    ]);
+                }
+            ]);
+
+        $totalScheduledSessions = deepClone($scheduledSessionsQuery)->count();
+
+        $totalMeetings += $totalScheduledSessions;
+        $meetingPackageScheduledSessions = deepClone($scheduledSessionsQuery)->limit(3)->get();
+
         $instructors = null;
 
         if ($totalMeetings < 1) {
@@ -779,6 +826,7 @@ trait DashboardTrait
             'totalMeetings' => $totalMeetings,
             'reserveMeetings' => $reserveMeetings,
             'instructors' => $instructors,
+            'meetingPackageScheduledSessions' => $meetingPackageScheduledSessions,
         ];
     }
 

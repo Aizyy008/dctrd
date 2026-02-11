@@ -66,7 +66,7 @@ class Channel extends BasePaymentChannel implements IChannel
         // Create Buyer Instance
         $buyer = LaravelBitpay::Buyer();
         $buyer->setName($user->full_name);
-        $buyer->setEmail($user->email ?? $generalSettings['site_email']);
+        $buyer->setEmail($user->email ?? ($generalSettings['site_email'] ?? ''));
         $buyer->setAddress1('no Address');
         $buyer->setNotify(true);
 

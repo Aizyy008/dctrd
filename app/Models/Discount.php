@@ -11,7 +11,7 @@ class Discount extends Model
     protected $guarded = ['id'];
     static $discountUserTypes = ['all_users', 'special_users'];
 
-    static $discountSource = ['all', 'course', 'bundle', 'category', 'meeting', 'product'];
+    static $discountSource = ['all', 'course', 'bundle', 'category', 'meeting', 'product', 'event', 'meeting_package'];
     static $panelDiscountSource = ['all', 'course', 'bundle', 'meeting', 'product'];
     static $discountSourceAll = 'all';
     static $discountSourceCourse = 'course';
@@ -19,6 +19,8 @@ class Discount extends Model
     static $discountSourceMeeting = 'meeting';
     static $discountSourceProduct = 'product';
     static $discountSourceBundle = 'bundle';
+    static $discountSourceEvent = 'event';
+    static $discountSourceMeetingPackage = 'meeting_package';
 
     static $discountTypes = ['percentage', 'fixed_amount'];
     static $discountTypePercentage = 'percentage';
@@ -42,6 +44,16 @@ class Discount extends Model
     public function discountBundles()
     {
         return $this->hasMany('App\Models\DiscountBundle', 'discount_id', 'id');
+    }
+
+    public function discountEvents()
+    {
+        return $this->hasMany('App\Models\DiscountEvent', 'discount_id', 'id');
+    }
+
+    public function discountMeetingPackages()
+    {
+        return $this->hasMany('App\Models\DiscountMeetingPackage', 'discount_id', 'id');
     }
 
     public function discountCategories()
@@ -102,7 +114,7 @@ class Discount extends Model
         if (empty($user)) {
             $user = auth()->user();
         }
-        
+
         $carts = Cart::where('creator_id', $user->id)->get();
 
 
@@ -117,6 +129,18 @@ class Discount extends Model
 
             if (empty($bundleCount) or count($bundleCount) < 1) {
                 return trans('update.discount_code_is_for_bundles_error');
+            }
+        }  elseif ($this->source == self::$discountSourceEvent) {
+            $eventTicketCount = array_filter($carts->pluck('event_ticket_id')->toArray());
+
+            if (empty($eventTicketCount) or count($eventTicketCount) < 1) {
+                return trans('update.discount_code_is_for_events_error');
+            }
+        } elseif ($this->source == self::$discountSourceMeetingPackage) {
+            $meetingPackagesCount = array_filter($carts->pluck('meeting_package_id')->toArray());
+
+            if (empty($meetingPackagesCount) or count($meetingPackagesCount) < 1) {
+                return trans('update.discount_code_is_for_meeting_package_error');
             }
         } elseif ($this->source == self::$discountSourceProduct) {
             $productCount = array_filter($carts->pluck('product_order_id')->toArray());
@@ -161,6 +185,40 @@ class Discount extends Model
 
             if (!$hasSpecialBundles) {
                 return trans('update.your_coupon_is_valid_for_another_bundle');
+            }
+        }
+
+        if ($this->source == self::$discountSourceEvent and count($this->discountEvents)) {
+            $discountEventsIds = $this->discountEvents()->pluck('event_id')->toArray();
+            $hasSpecialEvents = false;
+
+            foreach ($carts as $cart) {
+                $eventTicket = $cart->eventTicket;
+
+                if (!empty($eventTicket) and in_array($eventTicket->event_id, $discountEventsIds)) {
+                    $hasSpecialEvents = true;
+                }
+            }
+
+            if (!$hasSpecialEvents) {
+                return trans('update.your_coupon_is_valid_for_another_events');
+            }
+        }
+
+        if ($this->source == self::$discountSourceMeetingPackage and count($this->discountMeetingPackages)) {
+            $discountMeetingPackagesIds = $this->discountMeetingPackages()->pluck('meeting_package_id')->toArray();
+            $hasSpecialMeetingPackages = false;
+
+            foreach ($carts as $cart) {
+                $meetingPackage = $cart->meetingPackage;
+
+                if (!empty($meetingPackage) and in_array($meetingPackage->id, $discountMeetingPackagesIds)) {
+                    $hasSpecialMeetingPackages = true;
+                }
+            }
+
+            if (!$hasSpecialMeetingPackages) {
+                return trans('update.your_coupon_is_valid_for_another_meeting_packages');
             }
         }
 

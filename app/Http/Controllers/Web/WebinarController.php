@@ -60,7 +60,7 @@ class WebinarController extends Controller
                 },
                 'tags',
                 'prerequisites' => function ($query) {
-                    $query->with(['prerequisiteWebinar' => function ($query) {
+                    $query->with(['course' => function ($query) {
                         $query->with(['teacher' => function ($qu) {
                             $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
                         }]);
@@ -153,7 +153,7 @@ class WebinarController extends Controller
                     'pageTitle' => trans('update.access_denied'),
                     'pageRobot' => getPageRobotNoIndex(),
                 ];
-                return view('web.default.course.not_access', $data);
+                return view('design_1.web.courses.not_access.index', $data);
             }
 
             /* Installment Check */
@@ -161,6 +161,14 @@ class WebinarController extends Controller
 
             if ($installmentLimitation != "ok") {
                 return $installmentLimitation;
+            }
+
+            if ($course->only_for_students and (empty($user) or (!$user->isAdmin() and !$course->canAccess($user)))) {
+                $data = [
+                    'pageTitle' => trans('update.access_denied'),
+                    'pageRobot' => getPageRobotNoIndex(),
+                ];
+                return view('design_1.web.courses.not_access.index', $data);
             }
         }
 
@@ -496,7 +504,7 @@ class WebinarController extends Controller
                             'pageTitle' => $file->title,
                             'path' => url($filePath)
                         ];
-                        return view('web.default.course.learningPage.interactive_file', $data);
+                        return view('design_1.web.courses.free_contents.interactive_file', $data);
                     }
 
                     abort(404);
@@ -596,7 +604,7 @@ class WebinarController extends Controller
                             'iframe' => $file->file
                         ];
 
-                        return view('web.default.course.learningPage.interactive_file', $data);
+                        return view('design_1.web.courses.free_contents.interactive_file', $data);
                     } else if ($file->isVideo()) {
                         return response()->file(public_path($file->file));
                     }
@@ -637,7 +645,8 @@ class WebinarController extends Controller
                 ->first();
 
             if (!empty($textLesson)) {
-                $canAccess = $course->checkUserHasBought();
+                $userHasBought = $course->checkUserHasBought($user);
+                $canAccess = $userHasBought;
 
                 if ($textLesson->accessibility == 'paid' and !$canAccess) {
                     $toastData = [
@@ -678,9 +687,10 @@ class WebinarController extends Controller
                     'course' => $course,
                     'nextLesson' => $nextLesson,
                     'previousLesson' => $previousLesson,
+                    'userHasBought' => $userHasBought,
                 ];
 
-                return view(getTemplate() . '.course.text_lesson', $data);
+                return view('design_1.web.courses.free_contents.text_lesson', $data);
             }
         }
 
@@ -700,10 +710,10 @@ class WebinarController extends Controller
                 $checkCourseForSale = checkCourseForSale($course, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
-                if (!empty($course->price) and $course->price > 0) {
+                if (!isFreeModeEnabled() and !empty($course->price) and $course->price > 0) {
                     $toastData = [
                         'title' => trans('cart.fail_purchase'),
                         'msg' => trans('cart.course_not_free'),
@@ -849,7 +859,7 @@ class WebinarController extends Controller
                 $checkCourseForSale = checkCourseForSale($webinar, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
                 $fakeCarts = collect();

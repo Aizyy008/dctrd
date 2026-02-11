@@ -124,7 +124,6 @@ class UpcomingCoursesController extends Controller
         $data = [
             'pageTitle' => trans('update.new_upcoming_course'),
             'currentStep' => 1,
-            'stepCount' => 4,
             'userLanguages' => getUserLanguagesLists(),
             'isOrganization' => $isOrganization,
             'teachers' => $teachers,
@@ -197,7 +196,7 @@ class UpcomingCoursesController extends Controller
     public function edit(Request $request, $id, $step = 1)
     {
         $this->authorize("panel_upcoming_courses_create");
-        $stepCount = 4;
+        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? 4 : 3;
 
         if ($step > $stepCount) {
             return redirect("/panel/upcoming_courses/{$id}/step/{$stepCount}");
@@ -209,8 +208,6 @@ class UpcomingCoursesController extends Controller
         $isOrganization = $user->isOrganization();
         $locale = $request->get('locale', app()->getLocale());
 
-        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? 4 : 3;
-
         $data = [
             'currentStep' => $step,
             'stepCount' => $stepCount,
@@ -218,7 +215,6 @@ class UpcomingCoursesController extends Controller
             'userLanguages' => getUserLanguagesLists(),
             'locale' => mb_strtolower($locale),
             'defaultLocale' => getDefaultLocale(),
-            'stepCount' => $stepCount,
         ];
 
         $query = UpcomingCourse::query()->where('id', $id)
@@ -302,6 +298,7 @@ class UpcomingCoursesController extends Controller
         $getStep = $data['get_step'];
         $getNextStep = (!empty($data['get_next']) and $data['get_next'] == 1);
         $isDraft = (!empty($data['draft']) and $data['draft'] == 1);
+        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? 4 : 3;
 
         $upcomingCourse = UpcomingCourse::query()->where('id', $id)
             ->where(function ($query) use ($user) {
@@ -338,7 +335,7 @@ class UpcomingCoursesController extends Controller
         $directPublication = !empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses'));
         $upcomingCourseRulesRequired = false;
 
-        if (!$directPublication and (($currentStep == 4 and !$getNextStep and !$isDraft) or (!$getNextStep and !$isDraft))) {
+        if (!$directPublication and (($currentStep == $stepCount and !$getNextStep and !$isDraft) or (!$getNextStep and !$isDraft))) {
             $upcomingCourseRulesRequired = empty($data['rules']);
         }
 
@@ -428,7 +425,7 @@ class UpcomingCoursesController extends Controller
 
         $upcomingCourse->update($data);
 
-        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? 4 : 3;
+
         $url = '/panel/upcoming_courses';
 
         if ($getNextStep) {

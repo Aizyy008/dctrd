@@ -32,6 +32,8 @@ class BundleController extends Controller
     public function index(Request $request)
     {
         $query = Bundle::query()->where('status', Bundle::$active);
+        $query->where('private', false);
+        $query->where('only_for_students', false);
 
         $filterMaxPrice = deepClone($query)->max('price') ?? 10000;
 
@@ -368,10 +370,10 @@ class BundleController extends Controller
                 $checkCourseForSale = checkCourseForSale($bundle, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
-                if (!empty($bundle->price) and $bundle->price > 0) {
+                if (!isFreeModeEnabled() and !empty($bundle->price) and $bundle->price > 0) {
                     $toastData = [
                         'title' => trans('cart.fail_purchase'),
                         'msg' => trans('update.bundle_not_free'),
@@ -428,7 +430,7 @@ class BundleController extends Controller
                 $checkCourseForSale = checkCourseForSale($bundle, $user);
 
                 if ($checkCourseForSale != 'ok') {
-                    return $checkCourseForSale;
+                    return back()->with(['toast' => $checkCourseForSale]);
                 }
 
                 $fakeCarts = collect();

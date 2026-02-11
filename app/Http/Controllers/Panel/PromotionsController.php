@@ -7,6 +7,7 @@ use App\Models\Accounting;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentChannel;
+use App\Models\OfflineBank;
 use App\Models\Promotion;
 use App\Models\Sale;
 use App\Models\Webinar;
@@ -198,7 +199,8 @@ class PromotionsController extends Controller
                         'order' => $order,
                         'count' => 1,
                         'userCharge' => $user->getAccountingCharge(),
-                        'razorpay' => $razorpay
+                        'razorpay' => $razorpay,
+                        'offlineBanks' => OfflineBank::query()->orderBy('created_at', 'desc')->with(['specifications'])->get(),
                     ];
 
                     return view('design_1.web.cart.payment.index', $data);

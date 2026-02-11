@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Mixins\RegistrationPackage\SubscribeMixins;
 use App\Models\Accounting;
 use App\Models\Bundle;
 use App\Models\Sale;
@@ -10,45 +11,78 @@ use App\Models\Subscribe;
 use App\Models\SubscribeUse;
 use App\Models\Webinar;
 use App\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class SubscribeController extends Controller
 {
+
+    public function details(Request $request, $id)
+    {
+        $subscribe = Subscribe::query()->findOrFail($id);
+
+        $subscribeMixins = (new SubscribeMixins());
+
+        $recommendedCoursesQuery = Webinar::query()->where('status', 'active')
+            ->where('subscribe', true);
+        $recommendedCoursesQuery = $subscribeMixins->handleTargetProductLimitationOnCourseQuery($subscribe, $recommendedCoursesQuery, 'courses');
+        $recommendedCourses = $recommendedCoursesQuery->inrandomOrder()
+            ->take(8)
+            ->get();
+
+        $recommendedBundlesQuery = Bundle::query()->where('status', 'active')
+            ->where('subscribe', true);
+        $recommendedBundlesQuery = $subscribeMixins->handleTargetProductLimitationOnCourseQuery($subscribe, $recommendedBundlesQuery, 'bundles');
+        $recommendedBundles = $recommendedBundlesQuery->inrandomOrder()
+            ->take(8)
+            ->get();
+
+        $data = [
+            'pageTitle' => trans('update.subscription_package_details'),
+            'subscribe' => $subscribe,
+            'recommendedCourses' => $recommendedCourses,
+            'recommendedBundles' => $recommendedBundles,
+        ];
+
+        return view('design_1.web.subscribes.details.index', $data);
+    }
+
+
     public function apply(Request $request, $webinarSlug)
     {
-        $webinar = Webinar::where('slug', $webinarSlug)
+        $webinarQuery = Webinar::query()->where('slug', $webinarSlug)
             ->where('status', 'active')
-            ->where('subscribe', true)
-            ->first();
+            ->where('subscribe', true);
 
-        if (!empty($webinar)) {
-            return $this->handleSale($webinar, 'webinar_id');
-        }
-
-        abort(404);
+        return $this->handleSale($webinarQuery, 'webinar_id');
     }
 
     public function bundleApply($bundleSlug)
     {
-        $bundle = Bundle::where('slug', $bundleSlug)
-            ->where('subscribe', true)
-            ->first();
+        $bundleQuery = Bundle::query()->where('slug', $bundleSlug)
+            ->where('status', 'active')
+            ->where('subscribe', true);
 
-        if (!empty($bundle)) {
-            return $this->handleSale($bundle, 'bundle_id');
-        }
-
-        abort(404);
+        return $this->handleSale($bundleQuery, 'bundle_id');
     }
 
-    private function handleSale($item, $itemName = 'webinar_id')
+    private function handleSale(Builder $itemQuery, $itemName = 'webinar_id')
     {
         if (auth()->check()) {
+            if (empty($itemQuery->first())) {
+                $toastData = [
+                    'title' => trans('public.request_failed'),
+                    'msg' => trans('update.item_not_found!'),
+                    'status' => 'error'
+                ];
+                return back()->with(['toast' => $toastData]);
+            }
+
             $user = auth()->user();
 
             $subscribe = Subscribe::getActiveSubscribe($user->id);
 
-            if (!$subscribe) {
+            if (empty($subscribe)) {
                 $toastData = [
                     'title' => trans('public.request_failed'),
                     'msg' => trans('site.you_dont_have_active_subscribe'),
@@ -57,10 +91,24 @@ class SubscribeController extends Controller
                 return back()->with(['toast' => $toastData]);
             }
 
+            $targetType = ($itemName == 'webinar_id') ? 'courses' : 'bundles';
+
+            $subscribeMixins = (new SubscribeMixins());
+            $item = $subscribeMixins->handleTargetProductLimitationOnCourseQuery($subscribe, $itemQuery, $targetType)->first();
+
+            if (empty($item)) {
+                $toastData = [
+                    'title' => trans('public.request_failed'),
+                    'msg' => trans('update.you_cannot_purchase_this_item_with_your_subscription_plan'),
+                    'status' => 'error'
+                ];
+                return back()->with(['toast' => $toastData]);
+            }
+
             $checkCourseForSale = checkCourseForSale($item, $user);
 
             if ($checkCourseForSale != 'ok') {
-                return $checkCourseForSale;
+                return back()->with(['toast' => $checkCourseForSale]);
             }
 
             $sale = Sale::create([

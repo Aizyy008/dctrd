@@ -45,7 +45,7 @@ class PluginLicenseController extends Controller
         $purchaseCode = $request->input('purchase_code');
         
         // Validate the purchase code with forceCheck=true to bypass cache
-        $validationResult = $this->licenseService->validate($purchaseCode, true);
+        $validationResult = $this->licenseService->func3847291650($purchaseCode, true);
         
         // Debug logging
         Log::debug('Plugins Bundle purchase code validation result', [
@@ -91,7 +91,7 @@ class PluginLicenseController extends Controller
         
         // Check if the license type is compatible with main license
         $licenseType = $validationResult['license_type'] ?? 'Regular license';
-        $compatibilityResult = $this->licenseService->checkLicenseCompatibility($licenseType);
+        $compatibilityResult = $this->licenseService->func5629384175($licenseType);
         
         if (!$compatibilityResult['valid']) {
             return redirect()->back()

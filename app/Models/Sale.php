@@ -103,6 +103,21 @@ class Sale extends Model
         return $this->belongsTo('App\Models\InstallmentOrderPayment', 'installment_payment_id', 'id');
     }
 
+    public function eventTicket()
+    {
+        return $this->belongsTo(EventTicket::class, 'event_ticket_id', 'id');
+    }
+
+    public function meetingPackage()
+    {
+        return $this->belongsTo(MeetingPackage::class, 'meeting_package_id', 'id');
+    }
+
+
+    /*==========
+     | Helpers
+     * ========*/
+
     public static function createSales($orderItem, $payment_method)
     {
         $orderType = Order::$webinar;
@@ -120,6 +135,10 @@ class Sale extends Model
             $orderType = Order::$bundle;
         } elseif (!empty($orderItem->installment_payment_id)) {
             $orderType = Order::$installmentPayment;
+        } elseif (!empty($orderItem->event_ticket_id)) {
+            $orderType = Order::$eventTicket;
+        } elseif (!empty($orderItem->meeting_package_id)) {
+            $orderType = Order::$meetingPackage;
         }
 
         if (!empty($orderItem->gift_id)) {
@@ -134,8 +153,10 @@ class Sale extends Model
             'order_id' => $orderItem->order_id,
             'webinar_id' => (empty($orderItem->gift_id) and !empty($orderItem->webinar_id)) ? $orderItem->webinar_id : null,
             'bundle_id' => (empty($orderItem->gift_id) and !empty($orderItem->bundle_id)) ? $orderItem->bundle_id : null,
+            'event_ticket_id' => $orderItem->event_ticket_id,
             'meeting_id' => !empty($orderItem->reserve_meeting_id) ? $orderItem->reserveMeeting->meeting_id : null,
             'meeting_time_id' => !empty($orderItem->reserveMeeting) ? $orderItem->reserveMeeting->meeting_time_id : null,
+            'meeting_package_id' => $orderItem->meeting_package_id,
             'subscribe_id' => $orderItem->subscribe_id,
             'promotion_id' => $orderItem->promotion_id,
             'registration_package_id' => $orderItem->registration_package_id,
@@ -170,7 +191,7 @@ class Sale extends Model
         return $sale;
     }
 
-    private static function handleSaleNotifications($orderItem, $seller_id)
+    public static function handleSaleNotifications($orderItem, $seller_id)
     {
         $title = '';
         if (!empty($orderItem->webinar_id)) {
@@ -189,6 +210,10 @@ class Sale extends Model
             $title = $orderItem->product->title;
         } else if (!empty($orderItem->installment_payment_id)) {
             $title = ($orderItem->installmentPayment->type == 'upfront') ? trans('update.installment_upfront') : trans('update.installment');
+        } else if (!empty($orderItem->event_ticket_id)) {
+            $title = $orderItem->eventTicket->title;
+        } else if (!empty($orderItem->meeting_package_id)) {
+            $title = $orderItem->meetingPackage->title;
         }
 
         if (!empty($orderItem->gift_id) and !empty($orderItem->gift)) {
@@ -215,8 +240,8 @@ class Sale extends Model
             sendNotification('product_new_sale', $notifyOptions, $seller_id);
             sendNotification('product_new_purchase', $notifyOptions, $orderItem->user_id);
             sendNotification('new_store_order', $notifyOptions, 1);
-        } elseif (!empty($orderItem->installment_payment_id)) {
-            // TODO:: installment notification
+        } elseif (!empty($orderItem->event_ticket_id)) {
+            // Event Notifications are send here => \App\Mixins\Events\EventTicketSoldMixins
         } else {
             $notifyOptions = [
                 '[c.title]' => $title,

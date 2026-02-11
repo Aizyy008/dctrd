@@ -67,6 +67,7 @@ class CategoryController extends Controller
             'icon2_box_color' => !empty($data['icon2_box_color']) ? $data['icon2_box_color'] : null,
             'overlay_image' => !empty($data['overlay_image']) ? $data['overlay_image'] : null,
             'order' => $order,
+            'enable' => (!empty($data['enable']) and $data['enable'] == 'on'),
         ]);
 
         CategoryTranslation::updateOrCreate([
@@ -102,7 +103,7 @@ class CategoryController extends Controller
         storeContentLocale($locale, $category->getTable(), $category->id);
 
         $data = [
-            'pageTitle' => trans('admin/pages/categories.edit_page_title'),
+            'pageTitle' => trans('categories.edit_category'),
             'category' => $category,
             'subCategories' => $subCategories
         ];
@@ -131,6 +132,7 @@ class CategoryController extends Controller
             'icon2' => !empty($data['icon2']) ? $data['icon2'] : null,
             'icon2_box_color' => !empty($data['icon2_box_color']) ? $data['icon2_box_color'] : null,
             'overlay_image' => !empty($data['overlay_image']) ? $data['overlay_image'] : null,
+            'enable' => (!empty($data['enable']) and $data['enable'] == 'on'),
         ]);
 
         CategoryTranslation::updateOrCreate([
@@ -240,6 +242,7 @@ class CategoryController extends Controller
                             'icon2' => !empty($subCategory['icon2']) ? $subCategory['icon2'] : null,
                             'icon2_box_color' => !empty($subCategory['icon2_box_color']) ? $subCategory['icon2_box_color'] : null,
                             'overlay_image' => !empty($subCategory['overlay_image']) ? $subCategory['overlay_image'] : null,
+                            'enable' => (!empty($subCategory['enable']) and $subCategory['enable'] == 'on'),
                         ]);
 
                         CategoryTranslation::updateOrCreate([
@@ -262,6 +265,7 @@ class CategoryController extends Controller
                             'icon2' => !empty($subCategory['icon2']) ? $subCategory['icon2'] : null,
                             'icon2_box_color' => !empty($subCategory['icon2_box_color']) ? $subCategory['icon2_box_color'] : null,
                             'overlay_image' => !empty($subCategory['overlay_image']) ? $subCategory['overlay_image'] : null,
+                            'enable' => (!empty($subCategory['enable']) and $subCategory['enable'] == 'on'),
                         ]);
 
                         CategoryTranslation::updateOrCreate([

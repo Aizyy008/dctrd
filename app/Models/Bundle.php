@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Mixins\Certificate\MakeCertificate;
+use App\Mixins\RegistrationPackage\SubscribeMixins;
 use App\Models\Traits\CascadeDeletes;
 use App\User;
 use Cviebrock\EloquentSluggable\Sluggable;
@@ -485,7 +486,7 @@ class Bundle extends Model implements TranslatableContract
         $sale = null;
 
         if (!empty($user)) {
-            $sale =  Sale::query()->where('buyer_id', $user->id)
+            $sale = Sale::query()->where('buyer_id', $user->id)
                 ->where('bundle_id', $this->id)
                 ->where('type', 'bundle')
                 ->whereNull('refund_at')
@@ -686,4 +687,20 @@ class Bundle extends Model implements TranslatableContract
 
         return $count;
     }
+
+
+    public function canUseSubscribe()
+    {
+        $result = false;
+
+        if ($this->subscribe) {
+            $subscribeMixins = (new SubscribeMixins());
+            $subscribes = $subscribeMixins->getSubscribesByTargetProducts("bundles", $this->category_id, $this->creator_id, $this->id);
+
+            $result = (count($subscribes) > 0);
+        }
+
+        return $result;
+    }
+
 }

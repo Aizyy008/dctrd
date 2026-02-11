@@ -49,9 +49,7 @@ class UserController extends Controller
 
     public function getUserEditPageData(Request $request, $user, $step): array
     {
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $userMetas = $user->userMetas;
 
@@ -186,6 +184,7 @@ class UserController extends Controller
                     'newsletter' => $joinNewsletter,
                     'public_message' => (!empty($data['public_message']) and $data['public_message'] == 'on'),
                     'enable_profile_statistics' => (!empty($data['enable_profile_statistics']) and $data['enable_profile_statistics'] == 'on'),
+                    'auto_renew_subscription' => (!empty($data['auto_renew_subscription']) and $data['auto_renew_subscription'] == 'on'),
                 ];
 
                 $this->handleNewsletter($data['email'], $user->id, $joinNewsletter);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mixins\Geo\Geo;
+use App\Mixins\Regions\RegionsFromLocalJson;
 use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -50,11 +51,22 @@ class RegionController extends Controller
 
         $type = $request->get('type');
         $countries = null;
+        $apiCountries = [];
 
         if ($type !== Region::$country) {
             $countries = Region::select(DB::raw('*, ST_AsText(geo_center) as geo_center'))
                 ->where('type', Region::$country)
                 ->get();
+        }
+
+        // load countries list from local JSON datasets when creating a country
+        if ($type === Region::$country) {
+            try {
+                $regionsFromLocal = new RegionsFromLocalJson();
+                $apiCountries = $regionsFromLocal->getCountries();
+            } catch (\Throwable $e) {
+                $apiCountries = [];
+            }
         }
 
 
@@ -63,6 +75,7 @@ class RegionController extends Controller
             'countries' => $countries,
             'latitude' => 42.67,
             'longitude' => 12.65,
+            'apiCountries' => $apiCountries,
         ];
 
         return view('admin.regions.create', $data);
@@ -74,25 +87,85 @@ class RegionController extends Controller
 
         $this->validate($request, [
             'type' => 'required|in:' . implode(',', Region::$types),
-            'title' => 'required|string',
-            'latitude' => 'required',
-            'longitude' => 'required',
-            'country_id' => 'required_if:type,province,city,district',
-            'province_id' => 'required_if:type,city,district',
-            'city_id' => 'required_if:type,district',
         ]);
 
         $data = $request->all();
 
-        Region::create([
-            'country_id' => $data['country_id'] ?? null,
-            'province_id' => $data['province_id'] ?? null,
-            'city_id' => $data['city_id'] ?? null,
-            'type' => $data['type'],
-            'title' => $data['title'],
-            'geo_center' => DB::raw("point(" . $data['latitude'] . "," . $data['longitude'] . ")"),
-            'created_at' => time()
-        ]);
+        // Creating a country from JSON dropdown
+        if ($data['type'] == Region::$country && !empty($data['api_country_id'])) {
+            $regionsFromLocal = new RegionsFromLocalJson();
+            $countries = $regionsFromLocal->getCountries();
+
+            $apiCountry = null;
+            foreach ($countries as $c) {
+                if ((string)$c['id'] === (string)$data['api_country_id']) { $apiCountry = $c; break; }
+            }
+
+            if (!$apiCountry) {
+                return back()->withErrors(['api_country_id' => 'Invalid country selected']);
+            }
+
+            DB::transaction(function () use ($apiCountry, $regionsFromLocal) {
+                $lat = $apiCountry['latitude'] ?? null; $lng = $apiCountry['longitude'] ?? null;
+                $country = Region::create([
+                    'country_id' => null,
+                    'province_id' => null,
+                    'city_id' => null,
+                    'type' => Region::$country,
+                    'title' => $apiCountry['name'],
+                    'geo_center' => ($lat !== null && $lng !== null) ? DB::raw('point(' . $lat . ',' . $lng . ')') : null,
+                    'created_at' => time()
+                ]);
+
+                $states = $regionsFromLocal->getStates($apiCountry['id']);
+                foreach ($states as $state) {
+                    $slat = $state['latitude'] ?? null; $slng = $state['longitude'] ?? null;
+                    $province = Region::create([
+                        'country_id' => $country->id,
+                        'province_id' => null,
+                        'city_id' => null,
+                        'type' => Region::$province,
+                        'title' => $state['name'],
+                        'geo_center' => ($slat !== null && $slng !== null) ? DB::raw('point(' . $slat . ',' . $slng . ')') : null,
+                        'created_at' => time()
+                    ]);
+
+                    $cities = $regionsFromLocal->getCities($state['id']);
+                    foreach ($cities as $city) {
+                        $clat = $city['latitude'] ?? null; $clng = $city['longitude'] ?? null;
+                        Region::create([
+                            'country_id' => $country->id,
+                            'province_id' => $province->id,
+                            'city_id' => null,
+                            'type' => Region::$city,
+                            'title' => $city['name'],
+                            'geo_center' => ($clat !== null && $clng !== null) ? DB::raw('point(' . $clat . ',' . $clng . ')') : null,
+                            'created_at' => time()
+                        ]);
+                    }
+                }
+            });
+        } else {
+            // Legacy single region create (province/city/district or manual country)
+            $this->validate($request, [
+                'title' => 'required|string',
+                'latitude' => 'required',
+                'longitude' => 'required',
+                'country_id' => 'required_if:type,province,city,district',
+                'province_id' => 'required_if:type,city,district',
+                'city_id' => 'required_if:type,district',
+            ]);
+
+            Region::create([
+                'country_id' => $data['country_id'] ?? null,
+                'province_id' => $data['province_id'] ?? null,
+                'city_id' => $data['city_id'] ?? null,
+                'type' => $data['type'],
+                'title' => $data['title'],
+                'geo_center' => DB::raw('point(' . $data['latitude'] . ',' . $data['longitude'] . ')'),
+                'created_at' => time()
+            ]);
+        }
 
         $url = getAdminPanelUrl('/regions/');
         if ($data['type'] == Region::$country) {

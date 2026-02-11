@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Mixins\Installment\InstallmentPlans;
+use App\User;
 use Illuminate\Database\Eloquent\Model;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
@@ -17,6 +18,12 @@ class Subscribe extends Model implements TranslatableContract
     protected $guarded = ['id'];
 
     public $translatedAttributes = ['title', 'subtitle', 'description'];
+
+    // Enums
+    static $targetTypes = ['all', 'courses', 'bundles'];
+    static $courseTargets = ['all_courses', 'live_classes', 'video_courses', 'text_courses', 'specific_categories', 'specific_instructors', 'specific_courses'];
+    static $bundleTargets = ['all_bundles', 'specific_categories', 'specific_instructors', 'specific_bundles'];
+
 
     public function getTitleAttribute()
     {
@@ -33,6 +40,10 @@ class Subscribe extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'description');
     }
 
+    /* ==========
+     | Relations
+     * ==========*/
+
     public function sales()
     {
         return $this->hasMany('App\Models\Sale', 'subscribe_id', 'id');
@@ -42,6 +53,37 @@ class Subscribe extends Model implements TranslatableContract
     {
         return $this->hasMany('App\Models\SubscribeUse', 'subscribe_id', 'id');
     }
+
+    public function specificationItems() // used just in query
+    {
+        return $this->hasMany(SubscribeSpecificationItem::class, 'subscribe_id', 'id');
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'subscribe_specification_items', 'subscribe_id', 'category_id');
+    }
+
+    public function instructors()
+    {
+        return $this->belongsToMany(User::class, 'subscribe_specification_items', 'subscribe_id', 'instructor_id');
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Webinar::class, 'subscribe_specification_items', 'subscribe_id', 'course_id');
+    }
+
+    public function bundles()
+    {
+        return $this->belongsToMany(Bundle::class, 'subscribe_specification_items', 'subscribe_id', 'bundle_id');
+    }
+
+
+
+    /* ==========
+     | Helpers
+     * ==========*/
 
     public static function getActiveSubscribe($userId)
     {

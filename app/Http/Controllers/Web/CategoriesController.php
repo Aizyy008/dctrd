@@ -18,14 +18,14 @@ class CategoriesController extends Controller
 {
     public function index(Request $request, $categorySlug, $subCategorySlug = null)
     {
-
         if (!empty($categorySlug)) {
-
             $categoryQuery = Category::query()->where('slug', $categorySlug);
 
             if (!empty($subCategorySlug)) {
                 $categoryQuery = Category::query()->where('slug', $subCategorySlug);
             }
+
+            $categoryQuery->where('enable', true);
 
             $category = $categoryQuery->withCount('webinars')
                 ->with(['filters' => function ($query) {
@@ -60,7 +60,6 @@ class CategoriesController extends Controller
 
 
                 $webinarsQuery = Webinar::where('webinars.status', 'active')
-                    ->where('private', false)
                     ->whereIn('category_id', $categoryIds);
 
                 $filterMaxPrice = $webinarsQuery->max('price') ?? 10000;
@@ -77,6 +76,10 @@ class CategoriesController extends Controller
                     $classesController->tableName = 'bundles';
                     $classesController->columnId = 'bundle_id';
                 }
+
+
+                $webinarsQuery->where('private', false); // Ignore Private (Courses||Bundles)
+                $webinarsQuery->where('only_for_students', false); // Ignore Available Only for Students
 
                 $coursesRatingsCount = $classesController->getCoursesCountByRatings(deepClone($webinarsQuery));
 

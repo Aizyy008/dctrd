@@ -6,6 +6,7 @@ use App\Enums\LandingBuilderComponentsNames;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\LandingBuilder\traits\LandingBuilderTrait;
 use App\Http\Controllers\LandingBuilder\traits\LandingComponentsTrait;
+use App\Models\Category;
 use App\Models\Landing;
 use App\Models\LandingComponent;
 use App\Models\Role;

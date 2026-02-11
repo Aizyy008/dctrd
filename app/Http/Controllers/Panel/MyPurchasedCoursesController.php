@@ -74,6 +74,7 @@ class MyPurchasedCoursesController extends Controller
                         ->where('sales.type', 'webinar')
                         ->whereHas('webinar', function ($query) {
                             $query->where('status', 'active');
+                            $query->orWhere('only_for_students', true);
                         });
                 });
                 $query->orWhere(function ($query) {
@@ -81,6 +82,7 @@ class MyPurchasedCoursesController extends Controller
                         ->where('sales.type', 'bundle')
                         ->whereHas('bundle', function ($query) {
                             $query->where('status', 'active');
+                            $query->orWhere('only_for_students', true);
                         });
                 });
                 $query->orWhere(function ($query) {

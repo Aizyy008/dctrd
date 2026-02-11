@@ -38,7 +38,7 @@ class Setting extends Model implements TranslatableContract
         $othersPersonalization, $installmentsSettings, $installmentsTermsSettings, $registrationBonusSettings, $registrationBonusTermsSettings, $statisticsSettings,
         $maintenanceSettings, $restrictionSettings, $generalOptions, $giftsGeneralSettings, $aiContentsSettings, $certificateSettings, $abandonedCartSettings, $smsChannelsSettings,
         $commissionSettings, $instructorFinderSettings, $becomeInstructorSettings, $forumsHomepageSettings, $forumsHomepageRevolverSettings, $forumsCtaSectionSettings, $forumsGeneralSettings, $forumsImagesSettings, $guarantyTextSettings, $contentReviewInformationSettings, $blogFeaturedContentsSettings,
-        $storeFeaturedProductsSettings, $userDashboardDataSettings, $mobileAppGeneralSettings;
+        $storeFeaturedProductsSettings, $userDashboardDataSettings, $mobileAppGeneralSettings, $attendanceSettings, $eventsSettings, $meetingPackagesSettings;
 
     // settings name , Using these keys, values are taken from the settings table
     static $seoMetasName = 'seo_metas';
@@ -101,11 +101,14 @@ class Setting extends Model implements TranslatableContract
     static $storeFeaturedProductsSettingsName = 'store_featured_products_settings';
     static $userDashboardDataSettingsName = 'user_dashboard_data';
     static $mobileAppGeneralSettingsName = 'mobile_app_general_settings';
+    static $attendanceSettingsName = 'attendances_settings';
+    static $eventsSettingsName = 'events_settings';
+    static $meetingPackagesSettingsName = 'meeting_packages_settings';
 
     //statics
     static $pagesSeoMetas = ['home', 'search', 'tags', 'categories', 'classes', 'login', 'register', 'contact', 'blog', 'certificate_validation',
         'instructors', 'organizations', 'instructor_finder_wizard', 'instructor_finder', 'reward_courses', 'products_lists', 'reward_products',
-        'forum', 'upcoming_courses_lists', 'bundles_lists',
+        'forum', 'upcoming_courses_lists', 'bundles_lists', 'event_ticket_validation', 'events_lists', 'meeting_packages_lists',
     ];
     static $mainSettingSections = ['general', 'financial', 'payment'];
     static $mainSettingPages = ['general', 'financial', 'personalization', 'notifications', 'seo', 'customization', 'other'];
@@ -539,5 +542,20 @@ class Setting extends Model implements TranslatableContract
     static function getMobileAppGeneralSettings($key = null)
     {
         return self::getSetting(self::$mobileAppGeneralSettings, self::$mobileAppGeneralSettingsName, $key);
+    }
+
+    static function getAttendanceSettings($key = null)
+    {
+        return self::getSetting(self::$attendanceSettings, self::$attendanceSettingsName, $key);
+    }
+
+    static function getEventsSettings($key = null)
+    {
+        return self::getSetting(self::$eventsSettings, self::$eventsSettingsName, $key);
+    }
+
+    static function getMeetingPackagesSettings($key = null)
+    {
+        return self::getSetting(self::$meetingPackagesSettings, self::$meetingPackagesSettingsName, $key);
     }
 }

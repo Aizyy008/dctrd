@@ -20,6 +20,7 @@ trait LearningPageItemInfoTrait
 {
     public function getItemInfo(Request $request, $courseSlug)
     {
+        $user = auth()->user();
         $data = $request->all();
 
         $validator = Validator::make($data, [
@@ -34,11 +35,9 @@ trait LearningPageItemInfoTrait
             ], 422);
         }
 
-        $course = Webinar::where('slug', $courseSlug)
-            ->where('status', 'active')
-            ->first();
+        $course = Webinar::where('slug', $courseSlug)->first();
 
-        if (empty($course)) {
+        if (empty($course) or (!$course->checkUserHasBought($user) and !$course->canAccess($user) and !$user->isAdmin())) {
             return response()->json([], 404);
         }
 
@@ -76,6 +75,10 @@ trait LearningPageItemInfoTrait
 
         if (!$result) {
             $result = $course->isPartnerTeacher($user->id);
+        }
+
+        if (!$result) {
+            $result = $user->isAdmin();
         }
 
         return $result;
@@ -153,7 +156,7 @@ trait LearningPageItemInfoTrait
             // Learning Last View
             $this->storeCourseLearningLastView($session->webinar_id, $session->id, 'session');
 
-            $isFinished = false;//$session->isFinished();
+            $isFinished = $session->isFinished();
             $isStarted = (time() > $session->date);
 
             $sessionPersonalNote = $session->personalNote()->where('user_id', $user->id)->first();
@@ -172,7 +175,7 @@ trait LearningPageItemInfoTrait
 
             return response()->json([
                 'code' => 200,
-                'type' => 'file',
+                'type' => 'session',
                 'html' => $html,
             ]);
         }
@@ -300,7 +303,7 @@ trait LearningPageItemInfoTrait
 
             return response()->json([
                 'code' => 200,
-                'type' => 'file',
+                'type' => 'quiz',
                 'html' => $html,
             ]);
         }
@@ -348,7 +351,7 @@ trait LearningPageItemInfoTrait
 
             return response()->json([
                 'code' => 200,
-                'type' => 'file',
+                'type' => 'text_lesson',
                 'html' => $html,
             ]);
         }

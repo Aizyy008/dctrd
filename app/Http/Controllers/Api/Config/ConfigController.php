@@ -68,6 +68,9 @@ class ConfigController extends Controller
             'allow_instructor_delete_content' => $allowInstructorDeleteContent,
             'content_delete_method' => $contentDeleteMethod,
             'referralSettings' => $referralSettings,
+            'free_mode' => !empty($featuresSettings['free_mode']),
+            'free_mode_show_price' => !empty($featuresSettings['free_mode_show_price']),
+            'free_mode_show_cart' => !empty($featuresSettings['free_mode_show_cart']),
         ];
 
         return apiResponse2(1, 'retrieved', trans('api.public.retrieved'),

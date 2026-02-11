@@ -34,9 +34,7 @@ class FilterController extends Controller
     {
         $this->authorize('admin_filters_create');
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('admin/main.filter_new_page_title'),
@@ -82,9 +80,7 @@ class FilterController extends Controller
         $this->authorize('admin_filters_edit');
 
         $filter = Filter::findOrFail($id);
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $filterOptions = FilterOption::where('filter_id', $filter->id)
             ->orderBy('order', 'asc')

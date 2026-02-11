@@ -62,9 +62,7 @@ class WebinarController extends Controller
             ->whereNull('sales.refund_at')
             ->first();
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $inProgressWebinars = 0;
         if ($type == 'webinar') {
@@ -317,7 +315,7 @@ class WebinarController extends Controller
         removeContentLocale();
 
         $teachers = User::where('role_name', Role::$teacher)->get();
-        $categories = Category::where('parent_id', null)->get();
+        $categories = Category::getCategories();
 
         $data = [
             'pageTitle' => trans('admin/main.webinar_new_page_title'),
@@ -401,14 +399,15 @@ class WebinarController extends Controller
             'start_date' => (!empty($data['start_date'])) ? $data['start_date'] : null,
             'timezone' => $data['timezone'] ?? null,
             'duration' => $data['duration'] ?? null,
-            'support' => !empty($data['support']) ? true : false,
-            'certificate' => !empty($data['certificate']) ? true : false,
-            'downloadable' => !empty($data['downloadable']) ? true : false,
-            'partner_instructor' => !empty($data['partner_instructor']) ? true : false,
-            'subscribe' => !empty($data['subscribe']) ? true : false,
-            'private' => !empty($data['private']) ? true : false,
-            'forum' => !empty($data['forum']) ? true : false,
-            'enable_waitlist' => (!empty($data['enable_waitlist'])),
+            'support' => (!empty($data['support']) and $data['support'] == "on"),
+            'certificate' => (!empty($data['certificate']) and $data['certificate'] == "on"),
+            'downloadable' => (!empty($data['downloadable']) and $data['downloadable'] == "on"),
+            'partner_instructor' => (!empty($data['partner_instructor']) and $data['partner_instructor'] == "on"),
+            'subscribe' => (!empty($data['subscribe']) and $data['subscribe'] == "on"),
+            'private' => (!empty($data['private']) and $data['private'] == "on"),
+            'only_for_students' => (!empty($data['only_for_students']) and $data['only_for_students'] == "on"),
+            'forum' => (!empty($data['forum']) and $data['forum'] == "on"),
+            'enable_waitlist' => (!empty($data['enable_waitlist']) and $data['enable_waitlist'] == "on"),
             'access_days' => $data['access_days'] ?? null,
             'price' => $data['price'],
             'organization_price' => $data['organization_price'] ?? null,
@@ -641,15 +640,15 @@ class WebinarController extends Controller
             $data['start_date'] = null;
         }
 
-
-        $data['support'] = !empty($data['support']) ? true : false;
-        $data['certificate'] = !empty($data['certificate']) ? true : false;
-        $data['downloadable'] = !empty($data['downloadable']) ? true : false;
-        $data['partner_instructor'] = !empty($data['partner_instructor']) ? true : false;
-        $data['subscribe'] = !empty($data['subscribe']) ? true : false;
-        $data['forum'] = !empty($data['forum']) ? true : false;
-        $data['private'] = !empty($data['private']) ? true : false;
-        $data['enable_waitlist'] = (!empty($data['enable_waitlist']));
+        $data['support'] = (!empty($data['support']) and $data['support'] == "on");
+        $data['certificate'] = (!empty($data['certificate']) and $data['certificate'] == "on");
+        $data['downloadable'] = (!empty($data['downloadable']) and $data['downloadable'] == "on");
+        $data['partner_instructor'] = (!empty($data['partner_instructor']) and $data['partner_instructor'] == "on");
+        $data['subscribe'] = (!empty($data['subscribe']) and $data['subscribe'] == "on");
+        $data['forum'] = (!empty($data['forum']) and $data['forum'] == "on");
+        $data['private'] = (!empty($data['private']) and $data['private'] == "on");
+        $data['enable_waitlist'] = (!empty($data['enable_waitlist']) and $data['enable_waitlist'] == "on");
+        $data['only_for_students'] = (!empty($data['only_for_students']) and $data['only_for_students'] == "on");
 
         if (empty($data['partner_instructor'])) {
             WebinarPartnerTeacher::where('webinar_id', $webinar->id)->delete();
@@ -734,6 +733,7 @@ class WebinarController extends Controller
             'support' => $data['support'],
             'certificate' => $data['certificate'],
             'private' => $data['private'],
+            'only_for_students' => $data['only_for_students'],
             'enable_waitlist' => $data['enable_waitlist'],
             'downloadable' => $data['downloadable'],
             'partner_instructor' => $data['partner_instructor'],
@@ -861,6 +861,7 @@ class WebinarController extends Controller
         $option = $request->get('option', null);
 
         $query = Webinar::select('id', 'teacher_id')
+            ->where('only_for_students', false)
             ->whereTranslationLike('title', "%$term%");
 
         if (!empty($option) and $option == 'just_webinar') {

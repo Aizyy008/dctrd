@@ -461,7 +461,7 @@ class UserController extends Controller
         $email_regex = "/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,})$/i";
 
         $username = 'mobile';
-        if (preg_match($email_regex, request('username', null))) {
+        if (preg_match($email_regex, request('email_or_mobile', null))) {
             $username = 'email';
         }
 
@@ -473,13 +473,13 @@ class UserController extends Controller
         $this->authorize('admin_users_create');
         $data = $request->all();
 
-        $email_or_mobile = $this->getEmailOrMobile($data);
-        $data[$email_or_mobile] = $data['email_or_mobile'];
-        $request->merge([$email_or_mobile => $data['email_or_mobile']]);
+        $emailOrMobile = $this->getEmailOrMobile($data);
+        $data[$emailOrMobile] = $data['email_or_mobile'];
+        $request->merge([$emailOrMobile => $data['email_or_mobile']]);
         unset($data['email_or_mobile']);
 
         $this->validate($request, [
-            $email_or_mobile => ($email_or_mobile == 'mobile') ? 'required|numeric|unique:users' : 'required|string|email|max:255|unique:users',
+            $emailOrMobile => ($emailOrMobile == 'mobile') ? 'required|numeric|unique:users' : 'required|string|email|max:255|unique:users',
             'full_name' => 'required|min:3|max:255',
             'role_id' => 'required|exists:roles,id',
             'password' => 'required|string|min:6',
@@ -498,7 +498,7 @@ class UserController extends Controller
                     'full_name' => $data['full_name'],
                     'role_name' => $role->name,
                     'role_id' => $data['role_id'],
-                    $email_or_mobile => $data[$email_or_mobile],
+                    $emailOrMobile => $data[$emailOrMobile],
                     'password' => User::generatePassword($data['password']),
                     'status' => $data['status'],
                     'affiliate' => $usersAffiliateStatus,
@@ -568,20 +568,22 @@ class UserController extends Controller
         }
 
         $becomeInstructor = null;
-        $becomeInstructorFormFieldValues = null;
+        $becomeInstructorForm = null;
+        $becomeInstructorFormFieldsSubmissions = null;
 
         if (!empty($request->get('type')) and $request->get('type') == 'check_instructor_request') {
             $becomeInstructor = BecomeInstructor::where('user_id', $user->id)
                 ->first();
 
             if (!empty($becomeInstructor)) {
-                $becomeInstructorFormFieldValues = $this->getBecomeInstructorFormFieldValues($becomeInstructor);
+                $becomeInstructorForm = $this->getFormFieldsByType('become_instructor');
+
+                $becomeInstructorFormFieldsSubmissions = \App\Models\UserFormField::query()->where('become_instructor_id', $becomeInstructor->id)->get();
+                //$becomeInstructorFormFieldValues = $this->getBecomeInstructorFormFieldValues($becomeInstructor);
             }
         }
 
-        $categories = Category::where('parent_id', null)
-            ->with('subCategories')
-            ->get();
+        $categories = Category::getCategories();
 
         $occupations = $user->occupations->pluck('category_id')->toArray();
 
@@ -668,7 +670,8 @@ class UserController extends Controller
             'districts' => $districts,
             'userBanks' => $userBanks,
             'formFieldsHtml' => $formFieldsHtml,
-            'becomeInstructorFormFieldValues' => $becomeInstructorFormFieldValues,
+            'becomeInstructorForm' => $becomeInstructorForm,
+            'becomeInstructorFormFieldsSubmissions' => $becomeInstructorFormFieldsSubmissions,
             'userLoginHistories' => $userLoginHistories,
         ];
 
@@ -697,7 +700,7 @@ class UserController extends Controller
         return view('admin.users.edit', $data);
     }
 
-    private function getBecomeInstructorFormFieldValues($becomeInstructor)
+   /* private function getBecomeInstructorFormFieldValues($becomeInstructor)
     {
         $values = [];
         $becomeInstructorFields = \App\Models\UserFormField::query()->where('become_instructor_id', $becomeInstructor->id)->get();
@@ -705,11 +708,11 @@ class UserController extends Controller
         foreach ($becomeInstructorFields as $becomeInstructorField) {
             $field = $becomeInstructorField->field;
 
-            $values[$field->title] = $becomeInstructorField->value;
+            $values[$field->title] = $field->getFieldValueTitle($becomeInstructorField->value);
         }
 
         return $values;
-    }
+    }*/
 
     private function getPurchasedClassesData($user)
     {
@@ -900,7 +903,7 @@ class UserController extends Controller
 
             if ($user->role_id != $role->id and $role->name == Role::$teacher) {
                 $becomeInstructor = BecomeInstructor::where('user_id', $user->id)
-                    ->where('status', 'pending')
+                    ->whereIn('status', ['pending' , 'pending_pay_package'])
                     ->first();
 
                 if (!empty($becomeInstructor)) {
@@ -948,14 +951,13 @@ class UserController extends Controller
         }
 
         $user->verified = (!empty($data['verified']) and $data['verified'] == '1');
-
         $user->affiliate = (!empty($data['affiliate']) and $data['affiliate'] == '1');
-
         $user->can_create_store = (!empty($data['can_create_store']) and $data['can_create_store'] == '1');
-
         $user->access_content = (!empty($data['access_content']) and $data['access_content'] == '1');
-
         $user->enable_ai_content = (!empty($data['enable_ai_content']) and $data['enable_ai_content'] == '1');
+        $user->public_message = (!empty($data['public_message']) and $data['public_message'] == '1');
+        $user->enable_profile_statistics = (!empty($data['enable_profile_statistics']) and $data['enable_profile_statistics'] == '1');
+        $user->auto_renew_subscription = (!empty($data['auto_renew_subscription']) and $data['auto_renew_subscription'] == '1');
 
         $user->save();
 
@@ -1047,7 +1049,8 @@ class UserController extends Controller
         $data = $request->all();
 
         $user->update([
-            'identity_scan' => $data['identity_scan'],
+            'identity_scan' => $data['identity_scan'] ?? null,
+            'certificate' => $data['certificate'] ?? null,
             'address' => $data['address'],
             'financial_approval' => (!empty($data['financial_approval']) and $data['financial_approval'] == 'on'),
             'installment_approval' => (!empty($data['installment_approval']) and $data['installment_approval'] == 'on'),
@@ -1391,6 +1394,9 @@ class UserController extends Controller
             'courses_capacity' => 'nullable|numeric',
             'courses_count' => 'nullable|numeric',
             'meeting_count' => 'nullable|numeric',
+            'product_count' => 'nullable|numeric',
+            'events_count' => 'nullable|numeric',
+            'meeting_packages_count' => 'nullable|numeric',
         ]);
 
         $user = User::findOrFail($id);
@@ -1406,6 +1412,9 @@ class UserController extends Controller
                 'courses_capacity' => $data['courses_capacity'] ?? null,
                 'courses_count' => $data['courses_count'] ?? null,
                 'meeting_count' => $data['meeting_count'] ?? null,
+                'product_count' => $data['product_count'] ?? null,
+                'events_count' => $data['events_count'] ?? null,
+                'meeting_packages_count' => $data['meeting_packages_count'] ?? null,
                 'status' => $data['status'],
                 'created_at' => time(),
             ]);

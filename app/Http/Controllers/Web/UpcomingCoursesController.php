@@ -34,14 +34,7 @@ class UpcomingCoursesController extends Controller
             return $getListData;
         }
 
-        $categories = Category::whereNull('parent_id')
-            ->with([
-                'subCategories' => function ($query) {
-                    $query->orderBy('order', 'asc');
-                },
-            ])
-            ->get();
-
+        $categories = Category::getCategories();
 
         $seoSettings = getSeoMetas('upcoming_courses_lists');
         $pageTitle = $seoSettings['title'] ?? trans('update.upcoming_courses');
@@ -233,7 +226,7 @@ class UpcomingCoursesController extends Controller
                     $query->orderBy('order', 'asc');
                 },
                 'teacher' => function ($query) {
-                    $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio', 'about', 'verified');
+                    $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio', 'about', 'verified', 'cover_img', 'profile_secondary_image');
                 },
                 'comments' => function ($query) {
                     $query->where('status', 'active');

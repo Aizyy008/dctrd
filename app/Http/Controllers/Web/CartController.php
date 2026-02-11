@@ -76,7 +76,7 @@ class CartController extends Controller
                     'user' => $user,
                     'carts' => $carts,
                     'calculatePrices' => $calculate,
-                    'userGroup' => !empty($user->userGroup) ? $user->userGroup->group : null,
+                    'userGroup' => $user->getUserGroup(),
                     'hasPhysicalProduct' => (count($hasPhysicalProduct) > 0),
                     'deliveryEstimateTime' => $deliveryEstimateTime,
                     'totalCashbackAmount' => $totalCashbackAmount,
@@ -245,6 +245,11 @@ class CartController extends Controller
         $subTotalWithoutDiscount = $subTotal - $totalDiscount;
         $productDeliveryFee = $this->calculateProductDeliveryFee($carts);
 
+        if (($subTotalWithoutDiscount + $productDeliveryFee) <= 0) {
+            $taxPrice = 0;
+            $tax = 0;
+        }
+
         $total = $subTotalWithoutDiscount + $taxPrice + $productDeliveryFee;
 
         if ($total < 0) {
@@ -324,13 +329,14 @@ class CartController extends Controller
                     'paymentChannels' => $paymentChannels,
                     'carts' => $carts,
                     'calculatePrices' => $calculate,
-                    'userGroup' => $user->userGroup ? $user->userGroup->group : null,
+                    'userGroup' => $user->getUserGroup(),
                     'order' => $order,
                     'count' => $carts->count(),
                     'userCharge' => $user->getAccountingCharge(),
                     'razorpay' => $razorpay,
                     'totalCashbackAmount' => $totalCashbackAmount,
                     'previousUrl' => url()->previous(),
+                    'offlineBanks' => \App\Models\OfflineBank::query()->orderBy('created_at', 'desc')->with(['specifications'])->get(),
                 ];
 
                 return view('design_1.web.cart.payment.index', $data);
@@ -438,15 +444,18 @@ class CartController extends Controller
                 'order_id' => $order->id,
                 'webinar_id' => $cart->webinar_id ?? null,
                 'bundle_id' => $cart->bundle_id ?? null,
+                'event_ticket_id' => $cart->event_ticket_id ?? null,
                 'product_id' => (!empty($cart->product_order_id) and !empty($cart->productOrder->product)) ? $cart->productOrder->product->id : null,
                 'product_order_id' => (!empty($cart->product_order_id)) ? $cart->product_order_id : null,
                 'reserve_meeting_id' => $cart->reserve_meeting_id ?? null,
+                'meeting_package_id' => $cart->meeting_package_id ?? null,
                 'subscribe_id' => $cart->subscribe_id ?? null,
                 'promotion_id' => $cart->promotion_id ?? null,
                 'gift_id' => $cart->gift_id ?? null,
                 'installment_payment_id' => $cart->installment_payment_id ?? null,
                 'ticket_id' => !empty($ticket) ? $ticket->id : null,
                 'discount_id' => $discountCoupon ? $discountCoupon->id : null,
+                'quantity' => $cart->quantity ?? 1,
                 'amount' => $price,
                 'total_amount' => $totalAmount,
                 'tax' => $tax,
@@ -486,6 +495,10 @@ class CartController extends Controller
             $user = $cart->reserveMeeting->meeting->creator;
         } elseif (!empty($cart->product_order_id) and !empty($cart->productOrder)) {
             $user = $cart->productOrder->seller;
+        } elseif (!empty($cart->event_ticket_id) and !empty($cart->eventTicket)) {
+            $user = $cart->eventTicket->event->creator;
+        } elseif (!empty($cart->meeting_package_id) and !empty($cart->meetingPackage)) {
+            $user = $cart->meetingPackage->creator;
         }
 
         return $user;
@@ -553,7 +566,6 @@ class CartController extends Controller
         $taxPrice = 0;
         $commissionPrice = 0;
         $priceWithoutDiscount = 0;
-
 
         if (!empty($cart->webinar_id) or !empty($cart->bundle_id)) {
             $item = !empty($cart->webinar_id) ? $cart->webinar : $cart->bundle;
@@ -654,10 +666,47 @@ class CartController extends Controller
 
             $totalDiscount += $discount;
             $subTotal += $price;
+        } elseif (!empty($cart->event_ticket_id)) {
+            $quantity = $cart->quantity ?? 1;
+            $eventTicket = $cart->eventTicket;
+            $price = $eventTicket->price * $quantity;
+            $discount = $eventTicket->getDiscountPrice() * $quantity;
+
+            $priceWithoutDiscount = $price - $discount;
+
+            if ($tax > 0 and $priceWithoutDiscount > 0) {
+                $taxPrice += $priceWithoutDiscount * $tax / 100;
+            }
+
+            $commissionPrice += $this->getCommissionPrice("events", $priceWithoutDiscount, $seller);
+
+            $totalDiscount += $discount;
+            $subTotal += $price;
+        } elseif (!empty($cart->meeting_package_id)) {
+            $meetingPackage = $cart->meetingPackage;
+
+            $price = $meetingPackage->price;
+            $discount = $meetingPackage->getDiscountPrice();
+
+            $priceWithoutDiscount = $price - $discount;
+
+            if ($tax > 0 and $priceWithoutDiscount > 0) {
+                $taxPrice += $priceWithoutDiscount * $tax / 100;
+            }
+
+            $commissionPrice += $this->getCommissionPrice("meeting_packages", $priceWithoutDiscount, $seller);
+
+            $totalDiscount += $discount;
+            $subTotal += $price;
         }
 
         if (!empty($discountCoupon)) {
             $totalDiscount += $this->getCouponDiscountByCartItem($discountCoupon, $cart, $user);
+        }
+
+        $userGroup = $user->getUserGroup();
+        if (!empty($userGroup) and !empty($userGroup->discount) and $subTotal > 0) {
+            $totalDiscount += ($subTotal * $userGroup->discount) / 100;
         }
 
         if ($totalDiscount > $subTotal) {
@@ -790,6 +839,25 @@ class CartController extends Controller
 
                 $applyDiscount = true;
             }
+        } elseif ($couponDiscount->source == Discount::$discountSourceEvent) {
+            $discountEventsIds = $couponDiscount->discountEvents()->pluck('event_id')->toArray();
+            $eventTicket = $cart->eventTicket;
+            $quantity = $cart->quantity ?? 1;
+
+            if (!empty($eventTicket) and (in_array($eventTicket->event_id, $discountEventsIds) or count($discountEventsIds) < 1)) {
+                $totalItemAmount += $eventTicket->price * $quantity;
+                //$otherDiscounts += $event->getDiscount($cart->ticket, $user);
+
+                $applyDiscount = true;
+            }
+        } elseif ($couponDiscount->source == Discount::$discountSourceMeetingPackage) {
+            $discountMeetingPackagesIds = $couponDiscount->discountMeetingPackages()->pluck('meeting_package_id')->toArray();
+            $meetingPackage = $cart->meetingPackage;
+
+            if (!empty($meetingPackage) and (in_array($meetingPackage->id, $discountMeetingPackagesIds) or count($discountMeetingPackagesIds) < 1)) {
+                $totalItemAmount += $meetingPackage->price;
+                $applyDiscount = true;
+            }
         } elseif ($couponDiscount->source == Discount::$discountSourceProduct) {
             if (!empty($cart->productOrder)) {
                 $product = $cart->productOrder->product;
@@ -856,7 +924,22 @@ class CartController extends Controller
                     $applyDiscount = true;
                 }
             }
+
+            $eventTicket = $cart->eventTicket;
+            if (!empty($eventTicket)) {
+                $quantity = $cart->quantity ?? 1;
+
+                $totalItemAmount += $eventTicket->price * $quantity;
+                $applyDiscount = true;
+            }
+
+            $meetingPackage = $cart->meetingPackage;
+            if (!empty($meetingPackage)) {
+                $totalItemAmount += $meetingPackage->price;
+                $applyDiscount = true;
+            }
         }
+
 
         if ($applyDiscount) {
             if ($couponDiscount->discount_type == Discount::$discountTypeFixedAmount) {

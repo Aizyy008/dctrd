@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Mixins\Certificate\MakeCertificate;
+use App\Mixins\RegistrationPackage\SubscribeMixins;
 use App\Models\Traits\CascadeDeletes;
 use App\User;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
@@ -35,6 +36,8 @@ class Webinar extends Model implements TranslatableContract
     static $webinar = 'webinar';
     static $course = 'course';
     static $textLesson = 'text_lesson';
+
+    static $allTypes = ['webinar', 'course', 'text_lesson'];
 
     static $statuses = [
         'active', 'pending', 'is_draft', 'inactive'
@@ -1215,7 +1218,7 @@ class Webinar extends Model implements TranslatableContract
         return $userCertificate;
     }
 
-    public function getUserPassedCourseCertificate($user=null)
+    public function getUserPassedCourseCertificate($user = null)
     {
         $certificate = null;
 
@@ -1329,6 +1332,20 @@ class Webinar extends Model implements TranslatableContract
         }
 
         return $icon;
+    }
+
+    public function canUseSubscribe()
+    {
+        $result = false;
+
+        if ($this->subscribe) {
+            $subscribeMixins = (new SubscribeMixins());
+            $subscribes = $subscribeMixins->getSubscribesByTargetProducts("courses", $this->category_id, $this->creator_id, $this->id, $this->type);
+
+            $result = (count($subscribes) > 0);
+        }
+
+        return $result;
     }
 
 }

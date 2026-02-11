@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bundle;
 use App\Models\Role;
 use App\Models\Webinar;
 use App\User;
@@ -21,8 +22,8 @@ class MyOrganizationCoursesController extends Controller
             $organization = $user->organization;
 
             if (!empty($organization)) {
-                $query = Webinar::query()->where('creator_id', $user->organ_id)
-                    ->where('status', 'active');
+                $source = $request->get('source', 'courses');
+                $query = $this->getQueryBySource($organization, $source);
 
                 $pageListData = $this->getPageListData($request, $query);
 
@@ -43,6 +44,7 @@ class MyOrganizationCoursesController extends Controller
                     'pageTitle' => $pageTitle,
                     'breadcrumbs' => $breadcrumbs,
                     'organization' => $organization,
+                    'organizationHaveItems' => $this->checkOrganizationHaveItems($organization),
                     ...$topStats,
                     ...$pageListData,
                 ];
@@ -54,14 +56,41 @@ class MyOrganizationCoursesController extends Controller
         abort(404);
     }
 
+    private function getQueryBySource($organization, $source): Builder
+    {
+        if ($source == 'bundles') {
+            $query = Bundle::query()->where('creator_id', $organization->id)
+                ->where('status', 'active');
+        } else {
+            $query = Webinar::query()->where('creator_id', $organization->id)
+                ->where('status', 'active');
+        }
+
+        return $query;
+    }
+
+    private function checkOrganizationHaveItems($organization)
+    {
+        $query = $this->getQueryBySource($organization, 'courses');
+        $courses = $query->count();
+
+        if ($courses < 1) {
+            $query2 = $this->getQueryBySource($organization, 'bundles');
+            $courses = $query2->count();
+        }
+
+        return ($courses > 0);
+    }
 
     private function handlePageTopStats($organization): array
     {
-        $studentsCount = User::query()->where('organ_id', $organization->id)
+        $usersQuery = User::query()->where('organ_id', $organization->id);
+
+        $studentsCount = deepClone($usersQuery)
             ->where('role_name', Role::$user)
             ->count();
 
-        $instructorsCount = User::query()->where('organ_id', $organization->id)
+        $instructorsCount = deepClone($usersQuery)
             ->where('role_name', Role::$teacher)
             ->count();
 
@@ -117,10 +146,11 @@ class MyOrganizationCoursesController extends Controller
     private function handleAjaxResponse(Request $request, $courses, $total, $count)
     {
         $html = "";
+        $source = $request->get('source', 'courses');
 
         foreach ($courses as $courseItem) {
-            $html .= '<div class="col-12 col-md-6 col-lg-3 mt-20">';
-            $html .= (string)view()->make("design_1.panel.webinars.organization_classes.grid_card", ['course' => $courseItem]);
+            $html .= '<div class="col-12 col-md-4 col-lg-3 col-xl-2 mt-20">';
+            $html .= (string)view()->make("design_1.panel.webinars.organization_classes.grid_card", ['course' => $courseItem, 'pageSource' => $source]);
             $html .= '</div>';
         }
 

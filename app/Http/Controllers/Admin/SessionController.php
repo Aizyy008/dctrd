@@ -91,6 +91,7 @@ class SessionController extends Controller
                     'moderator_secret' => $data['moderator_secret'] ?? '',
                     'check_previous_parts' => $data['check_previous_parts'],
                     'access_after_day' => $data['access_after_day'],
+                    'enable_attendance' => (!empty($data['enable_attendance']) and $data['enable_attendance'] == 'on'),
                     'status' => (!empty($data['status']) and $data['status'] == 'on') ? Session::$Active : Session::$Inactive,
                     'created_at' => time()
                 ]);
@@ -224,6 +225,7 @@ class SessionController extends Controller
                     'agora_settings' => $agoraSettings,
                     'check_previous_parts' => $data['check_previous_parts'],
                     'access_after_day' => $data['access_after_day'],
+                    'enable_attendance' => (!empty($data['enable_attendance']) and $data['enable_attendance'] == 'on'),
                     'updated_at' => time()
                 ]);
 
