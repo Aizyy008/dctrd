@@ -9,9 +9,10 @@ return [
     */
 
     'categories' => 'Categories',
-    'courses' => 'Courses',
     'edit_page_title' => 'Edit',
+    'edit_category' => 'Edit Category',
 
 
 
 ];
+ 

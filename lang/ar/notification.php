@@ -1,22 +1,13 @@
-<?php
-
-return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Notifications
-    |--------------------------------------------------------------------------
-    */
-
-    'all_notifications' => 'كل الاشعارات',
-    'sender' => 'المرسل',
-    'notifications_page_lists_lead' => 'قائمة الاشعارات. بمكنك حذفها او تعديلها...',
-    'send_notification' => 'ارسل اشعار',
-    'edit_notification' => 'تعديل الاشعار',
-    'empty_notifications' => 'الاشعارات الفارغة',
-    'email_ignore_msg' => 'اذا لم تكن انت صاحب هذا الطلب فالرجاء نجاهله.',
-    'send_noticeboard' => 'ارسال اشعار جديد',
-    'edit_noticeboard' => 'تعديل الاشعار',
-    'post_notice' => 'نشر اشعار جديد',
-    'receiver' => 'المستقبل',
-];
+<?php return array (
+  'all_notifications' => 'كل الإشعارات',
+  'sender' => 'مرسل',
+  'notifications_page_lists_lead' => 'قائمة الإخطارات. يمكنك تحرير أو حذف ...',
+  'send_notification' => 'إرسال إشعار',
+  'edit_notification' => 'تحرير الإخطار',
+  'empty_notifications' => 'الإخطارات الفارغة',
+  'email_ignore_msg' => 'إذا لم تقدم هذا الطلب ، فيرجى تجاهله.',
+  'send_noticeboard' => 'أرسل إشعارًا جديدًا',
+  'edit_noticeboard' => 'تحرير إشعار',
+  'post_notice' => 'أرسل الإشعار',
+  'receiver' => 'المتلقي',
+);

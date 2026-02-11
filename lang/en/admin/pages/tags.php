@@ -8,18 +8,19 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'tags_list_page_title' => 'Tags list',
+    'tags_list_page_title' => 'Tags List',
     'tag' => 'Tag',
     'tags' => 'Tags',
     'title' => 'Title',
-    'create_field_title_placeholder' => 'choose a title.',
-    'tags_count' => 'Tags count',
-    'new_page_lead' => 'You can create a new tag.',
-    'page_lists_lead' => 'List of tags. You can edit or delete any row.',
+    'create_field_title_placeholder' => 'Enter a title.',
+    'tags_count' => 'Number of Tags',
+    'new_page_lead' => 'Create a new tag.',
+    'page_lists_lead' => 'List of tags. You can edit or delete any entry.',
 
     'admin_tags' => 'Tags',
     'admin_tags_list' => 'Tags List',
-    'admin_tags_create' => 'Tags Create',
-    'admin_tags_edit' => 'Tags Edit',
-    'admin_tags_delete' => 'Tags Delete',
+    'admin_tags_create' => 'Create Tag',
+    'admin_tags_edit' => 'Edit Tag',
+    'admin_tags_delete' => 'Delete Tag',
+
 ];

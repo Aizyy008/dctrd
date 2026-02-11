@@ -1,86 +1,57 @@
-<?php
-
-return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Home 
-    |--------------------------------------------------------------------------
-    */
-
-    'home_title' => 'Inicio',
-
-    'slider_heading' => 'Enjoy online learning',
-    'slider_hint' => "Online education is one of the best choices to grow \n learn from the best teachers around the world",
-
-    'slider_search_placeholder' => 'Busca Cursos, formadores y organizaciones...',
-    'find' => 'Buscar',
-
-    'view_all' => 'Ver Todo',
-    // stats
-    'teachers' => 'Formadores',
-    'skillful_teachers' => 'Habilidades de los Formadores',
-    'skillful_teachers_hint' => 'Empiece a aprender de formadores experimentados.',
-
-    'live_classes' => 'Clases en vivo',
-    'live_classes_hint' => 'Mejora tus habilidades usando nuestras Clases/Webinars en Directo.',
-
-    'happy_students' => 'Estudiantes contentos',
-    'happy_students_hint' => 'Se inscribió en nuestras clases y mejoró sus habilidades.',
-
-    'offline_courses' => 'Cursos de Video',
-    'offline_courses_hint' => 'Aprenda sin limitaciones geográficas ni de tiempo.',
-
-    'hours' => 'Horas',
-
-    'featured_classes' => 'Cursos destacados',
-    'featured_webinars' => 'Webinars destacados',
-    'featured_classes_hint' => '#Explora los Cursos VIP y potencia tus habilidades',
-
-    'latest_classes' => 'Nuevos Cursos',
-    'latest_webinars' => 'Nuevos Webinars',
-    'latest_webinars_hint' => '#Cursos publicados recientemente',
-
-    'featured' => 'Presentaciones',
-    'downloadable' => 'Descargable',
-    'download' => 'Descargar',
-    'downloads' => 'Descargas',
-
-    'trending_categories' => 'Categorías populares',
-    'trending_categories_hint' => '#Busca temas de aprendizaje populares y de tendencia',
-
-    'best_sellers' => 'Cursos más vendidos',
-    'best_sellers_hint' => '#Aprende de los cursos más vendidos',
-
-    'best_rates' => 'Cursos Mejor Valorados',
-    'best_rates_hint' => '#Disfruta del contenido de más alta calidad y mejor valorado',
-
-    'discount_classes' => 'Cursos con Descuentos',
-    'discount_classes_hint' => '#Inscríbete a nuestros Cursos más asequibles',
-
-    'free_classes' => 'Cursos Gratuitos',
-    'free_classes_hint' => '#Aprovecha nuestros Cursos gratuitos y aprende gratis',
-
-    'testimonials' => 'Testimonios',
-    'testimonials_hint' => '#Que opinan nuestros alumnos de Nextlevelmind',
-
-    'subscribe_now' => '¡Suscríbete ahora!',
-    'subscribe_now_hint' => '¡Elige un plan de suscripción y ahorra dinero!',
-
-    'instructors' => 'Formadores',
-    'all_instructors' => 'Todos los Formadores',
-    'instructors_hint' => '#Aprende de los mejores Formadores y de sus habilidades',
-    'reserve_a_live_class' => 'Reserva una clase en Directo',
-
-    'organization' => 'Organización',
-    'organizations' => 'Organizaciones',
-    'all_organizations' => 'Todas las Organizaciones',
-    'organizations_hint' => '#Las mejores Organizaciones de Crecimiento Personal están aquí para ayudarte',
-
-    'blog' => 'Blog',
-    'all_blog' => 'Todos los Posts',
-    'blog_hint' => '#Exploras las últimas noticias y artículos',
-
-    'platform_address' => 'Dirección',
-    'order_summary' => 'Resumen del Pedido',
-];
+<?php return array (
+  'home_title' => 'Hogar',
+  'slider_heading' => 'Disfrute del aprendizaje en línea',
+  'slider_hint' => 'La educación en línea es una de las mejores opciones para crecer 
+ aprende de los mejores profesores de todo el mundo',
+  'slider_search_placeholder' => 'Buscar cursos, instructores y organizaciones...',
+  'find' => 'Buscar',
+  'view_all' => 'Ver todo',
+  'teachers' => 'Instructores',
+  'skillful_teachers' => 'Instructores hábiles',
+  'skillful_teachers_hint' => 'Empiece a aprender de instructores experimentados.',
+  'live_classes' => 'Clases en vivo',
+  'live_classes_hint' => 'Mejore sus habilidades utilizando el flujo de conocimiento en vivo.',
+  'happy_students' => 'Estudiantes felices',
+  'happy_students_hint' => 'Se inscribieron en nuestros cursos y mejoraron sus habilidades.',
+  'offline_courses' => 'Cursos en vídeo',
+  'offline_courses_hint' => 'Aprenda sin limitaciones geográficas ni de tiempo.',
+  'hours' => 'Horas',
+  'featured_classes' => 'Cursos destacados',
+  'featured_webinars' => 'Cursos destacados',
+  'featured_classes_hint' => '#Explore cursos destacados y adquiera habilidades',
+  'latest_classes' => 'Cursos más recientes',
+  'latest_webinars' => 'Cursos más recientes',
+  'latest_webinars_hint' => '#Cursos publicados recientemente',
+  'featured' => 'Presentado',
+  'downloadable' => 'Descargable',
+  'download' => 'Descargar',
+  'downloads' => 'Descargas',
+  'trending_categories' => 'Categorías de tendencia',
+  'trending_categories_hint' => '#Buscar temas de aprendizaje populares y de tendencia',
+  'best_sellers' => 'Cursos más vendidos',
+  'best_sellers_hint' => '#Aprenda de los cursos más vendidos',
+  'best_rates' => 'Cursos mejor valorados',
+  'best_rates_hint' => '#Disfruta del contenido mejor calificado y de alta calidad',
+  'discount_classes' => 'Cursos con descuento',
+  'discount_classes_hint' => '#Obtén cursos al último precio',
+  'free_classes' => 'Cursos Gratis',
+  'free_classes_hint' => '#Nunca pierdas oportunidades de aprendizaje gratuitas',
+  'testimonials' => 'Testimonios',
+  'testimonials_hint' => '#Lo que nuestros clientes dicen de nosotros',
+  'subscribe_now' => '¡Suscríbete ahora!',
+  'subscribe_now_hint' => '#¡Elija un plan de suscripción y ahorre dinero!',
+  'instructors' => 'Instructores',
+  'all_instructors' => 'Todos los instructores',
+  'instructors_hint' => '#Aprenda de instructores experimentados y hábiles.',
+  'reserve_a_live_class' => 'Reserve una reunión en vivo',
+  'organization' => 'Organización',
+  'organizations' => 'Organizaciones',
+  'all_organizations' => 'Todas las organizaciones',
+  'organizations_hint' => '#Las mejores organizaciones educativas están aquí para ayudarte',
+  'blog' => 'Blog',
+  'all_blog' => 'Publicaciones de blog',
+  'blog_hint' => '#Explore las últimas noticias y artículos',
+  'platform_address' => 'DIRECCIÓN',
+  'order_summary' => 'Resumen del pedido',
+  'blog_search_placeholder' => 'Buscar publicaciones de blog...',
+);

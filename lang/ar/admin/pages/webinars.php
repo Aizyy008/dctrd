@@ -73,7 +73,5 @@ return [
 
     'webinars_reports' => 'بلاغات الجلسات',
     'webinars_reports_lists_lead' => 'قائمة بلاغات الجلسات يمكنك حذف او تعديل اي صف.',
-    'import_webinars_from_excel' => 'Import Courses from Excel' ,
-    'upload_excel_file' => 'Upload Excel File',
-    'submit_excel' => ' Submit Excel' ,
+
 ];

@@ -1,18 +1,31 @@
-<?php return array (
-  'role' => 'دور',
-  'roles' => 'أدوار',
-  'select_sections_level' => 'حدد مستوى الأقسام',
-  'page_lists_title' => 'أدوار المستخدم',
-  'page_lists_lead' => 'قائمة الأدوار. يمكنك تحرير أو حذف أي صف.',
-  'new_page_title' => 'دور جديد',
-  'sections' => 'أقسام',
-  'new_page_lead' => 'يمكنك إنشاء دور جديد.',
-  'select_type' => 'حدد نوعًا',
-  'create_field_name_placeholder' => 'مثال: المسؤول',
-  'is_admin' => 'إمكانية الوصول إلى لوحة المسؤول',
-  'admin_roles' => 'أدوار',
-  'admin_roles_list' => 'قائمة الأدوار',
-  'admin_roles_create' => 'أدوار خلق',
-  'admin_roles_edit' => 'أدوار تحرير',
-  'admin_roles_delete' => 'أدوار حذف',
-);
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin User Roles Translation
+    |--------------------------------------------------------------------------
+    */
+
+    'role' => 'دور',
+    'roles' => 'الادوار',
+    'select_sections_level' => 'اختيار مستوى الاقسام',
+    'page_lists_title' => 'ادوار المستخدم',
+    'page_lists_lead' => 'قائمة الادوار يمكنك تعديل او حذف اي صف.',
+    'new_page_title' => 'دور جديد',
+
+    'sections' => 'الاقسام',
+    'new_page_lead' => 'يمكنك انشاء دور جديد.',
+    'select_type' => 'اختر نوع',
+
+    'create_field_name_placeholder' => 'مثال : مدير',
+    'is_admin' => 'صلاحية الدخول للوحة تحكم المدير',
+
+    'admin_roles' => 'الادوار',
+    'admin_roles_list' => 'قائمة الادوار',
+    'admin_roles_create' => 'انشاء ادوار',
+    'admin_roles_edit' => 'تعديل ادوار',
+    'admin_roles_delete' => 'حذف ادوار',
+
+];

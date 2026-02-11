@@ -1,24 +1,12 @@
-<?php
-
-return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Navbar
-    |--------------------------------------------------------------------------
-    */
-
-    'search_anything' => 'Buscar...',
-    'home' => 'Inicio',
-    'about_us' => 'Quienes somos',
-    'contact' => 'Contacto',
-    'blog' => 'Blog',
-    'terms' => 'Terminos',
-    'items' => 'Items',
-    'menu' => 'Menu',
-    'title' => 'Título',
-    'start_a_live_class' => 'Comenzar un nuevo Curso',
-
-
-
-];
+<?php return array (
+  'search_anything' => 'Buscar...',
+  'home' => 'Hogar',
+  'about_us' => 'Sobre nosotros',
+  'contact' => 'Contacto',
+  'blog' => 'Blog',
+  'terms' => 'Términos',
+  'items' => 'Elementos',
+  'menu' => 'Menú',
+  'title' => 'Título',
+  'start_a_live_class' => 'Iniciar un nuevo curso',
+);

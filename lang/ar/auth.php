@@ -67,4 +67,5 @@
   'login_failed_your_account_is_not_verified' => 'فشل تسجيل الدخول! البريد الإلكتروني/الهاتف الخاص بك لم يتم التحقق منه.',
   'logout' => 'تسجيل الخروج',
   'phone' => 'هاتف',
+  'reset_password_notification' => 'إعادة تعيين كلمة المرور',
 );

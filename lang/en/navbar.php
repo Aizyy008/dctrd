@@ -10,15 +10,13 @@ return [
 
     'search_anything' => 'Search...',
     'home' => 'Home',
-    'about_us' => 'About us',
+    'about_us' => 'About Us',
     'contact' => 'Contact',
     'blog' => 'Blog',
-    'terms' => 'Terms',
+    'terms' => 'Terms of Service',
     'items' => 'Items',
     'menu' => 'Menu',
     'title' => 'Title',
-    'start_a_live_class' => 'Start a new course',
-
-
+    'start_a_live_class' => 'Start a New Course',
 
 ];

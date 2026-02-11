@@ -1628,7 +1628,6 @@ return [
 "insert_the_selected_currency_exchange_rate_to_the_default_currency" => "أدخل سعر صرف العملة المحددة إلى العملة الافتراضية (:sign)",
 "currency" => "عملة",
 "disabled_payment_gateways" => "بوابات الدفع المعطلة",
-'language_over_ip' => 'اللغات خلال بروتوكل الانترنت' ,
 "disabled_payment_gateways_hint" => "لا يمكنك معالجة الدفع باستخدام البوابات التالية لأنها لا تدعم العملة المحددة. يرجى تغيير العملة إذا كنت ترغب في إجراء المدفوعات باستخدامها.",
 "access_denied" => "تم رفض الوصول!",
 "you_have_an_overdue_installment_please_pay_it_to_access_this_course" => "لديك قسط مستحق. يرجى دفعه للوصول إلى هذه الدورة!",
@@ -2451,10 +2450,6 @@ return [
 'restrictions_hint_description_2' => 'يمكنك تحديد نطاق IP وحظر جميع العناوين داخل هذا النطاق بنقرة واحدة',
 'restrictions_hint_title_3' => 'حظر عناوين IP الخاصة بالدول',
 'restrictions_hint_description_3' => 'لدينا قاعدة بيانات لعناوين IP الخاصة بالدول، لذا يمكنك بسهولة حظر نطاقات IP من دول معينة',
-'Specifications' => 'خصائص',
-'No Specifications' =>'لاتوجد خصائص',
-'Please Select Category At The First' =>'أختر التصنيف اولا',
-'variations' =>'المتغيرات',
-'variations_no_result' => 'لا توجد متغيرات',
-'variations_no_result_hint' => 'من فضلك اختر التخصص اولا'
+
+
 ];
