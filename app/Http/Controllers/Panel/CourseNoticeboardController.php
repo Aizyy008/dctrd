@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\CourseNoticeboard;
 use App\Models\CourseNoticeboardStatus;
 use App\Models\Webinar;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -21,16 +23,18 @@ class CourseNoticeboardController extends Controller
             abort(404);
         }
 
-        $query = CourseNoticeboard::where('creator_id', $user->id);
+        $query = CourseNoticeboard::query()->where('creator_id', $user->id);
 
-        $noticeboards = $this->handleFilters($request, $query)
-            ->with([
-                'webinar'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $copyQuery = deepClone($query);
+        $query = $this->handleFilters($request, $query);
+        $getListData = $this->getListsData($request, $query);
 
-        $webinars = Webinar::select('id')
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
+
+        $webinars = Webinar::select('id', 'category_id')
             ->where('status', Webinar::$active)
             ->where(function ($query) use ($user) {
                 $query->where('creator_id', $user->id);
@@ -38,23 +42,31 @@ class CourseNoticeboardController extends Controller
             })
             ->get();
 
+        $categoriesIds = $webinars->pluck('category_id')->toArray();
+        $categories = Category::query()->whereIn('id', $categoriesIds)->get();
+
+
         $data = [
             'pageTitle' => trans('panel.noticeboards'),
-            'noticeboards' => $noticeboards,
             'isCourseNotice' => true,
             'webinars' => $webinars,
+            'categories' => $categories,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view(getTemplate() . '.panel.noticeboard.index', $data);
+        return view('design_1.panel.noticeboard.lists.index', $data);
     }
 
-    public function handleFilters(Request $request, $query)
+    private function handleFilters(Request $request, Builder $query): Builder
     {
         $from = $request->get('from');
         $to = $request->get('to');
         $webinarId = $request->get('webinar_id');
-        $title = $request->get('title');
         $color = $request->get('color');
+        $category_id = $request->get('category_id');
+        $search = $request->get('search');
+        $type = $request->get('type');
+        $sort = $request->get('sort');
 
         // $from and $to
         $query = fromAndToDateFilter($from, $to, $query, 'created_at');
@@ -63,16 +75,87 @@ class CourseNoticeboardController extends Controller
             $query->where('webinar_id', $webinarId);
         }
 
+        if (!empty($category_id)) {
+            $query->whereHas('webinar', function ($query) use ($category_id) {
+                $query->where('category_id', $category_id);
+            });
+        }
+
         if (!empty($color)) {
             $query->where('color', $color);
         }
 
-        if (!empty($title)) {
-            $query->where('title', 'like', "%$title%");
+        if (!empty($search)) {
+            $query->where('title', 'like', "%$search%");
+        }
+
+        if (!empty($type)) {
+            if ($type == 'course') {
+                $query->whereNotNull('webinar_id');
+            } else {
+                $query->where('type', $type);
+            }
+        }
+
+        if (!empty($sort)) {
+            switch ($sort) {
+                case 'create_date_asc':
+                    $query->orderBy('created_at', 'asc');
+                    break;
+                case 'create_date_desc':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
 
         return $query;
     }
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $noticeboards = $query
+            ->with([
+                'webinar'
+            ])
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $noticeboards, $total, $count);
+        }
+
+        return [
+            'noticeboards' => $noticeboards,
+            'pagination' => $this->makePagination($request, $noticeboards, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $noticeboards, $total, $count)
+    {
+        $html = "";
+
+        foreach ($noticeboards as $noticeboardRow) {
+            $html .= (string)view()->make('design_1.panel.noticeboard.lists.table_items', [
+                'noticeboard' => $noticeboardRow,
+                'isCourseNotice' => true,
+            ]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $noticeboards, $total, $count, true)
+        ]);
+    }
+
 
     public function create()
     {
@@ -98,7 +181,7 @@ class CourseNoticeboardController extends Controller
             'webinars' => $webinars,
         ];
 
-        return view(getTemplate() . '.panel.noticeboard.create', $data);
+        return view('design_1.panel.noticeboard.create.index', $data);
     }
 
     public function store(Request $request)
@@ -196,7 +279,7 @@ class CourseNoticeboardController extends Controller
                 'isCourseNotice' => true,
             ];
 
-            return view(getTemplate() . '.panel.noticeboard.create', $data);
+            return view('design_1.panel.noticeboard.create.index', $data);
         }
 
         abort(404);

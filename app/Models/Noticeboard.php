@@ -24,4 +24,9 @@ class Noticeboard extends Model
     {
         return $this->belongsTo('App\Models\Webinar', 'webinar_id', 'id');
     }
+
+    public function senderUser()
+    {
+        return $this->belongsTo('App\Models\User', 'sender_id', 'id');
+    }
 }

@@ -29,22 +29,28 @@ class RegistrationBonusController extends Controller
             ->where('system', false)
             ->first();
 
+        $earnedRegistrationBonus = Accounting::where('is_affiliate_amount', true)
+            ->where('system', false)
+            ->where('user_id', $user->id)
+            ->sum('amount');
+
         $data = [
             'pageTitle' => trans('update.registration_bonus'),
             'accounting' => $accounting,
+            'earnedRegistrationBonus' => $earnedRegistrationBonus,
             'bonusStatusReferredUsersChart' => $this->bonusStatusReferredUsersChart($user, $registrationBonusSettings),
             'bonusStatusUsersPurchasesChart' => $this->bonusStatusUsersPurchasesChart($user, $registrationBonusSettings),
             'referredUsers' => $this->getReferredUsers($user, $registrationBonusSettings),
         ];
 
-        return view('web.default.panel.marketing.registration_bonus', $data);
+        return view('design_1.panel.marketing.registration_bonus.index', $data);
     }
 
     private function bonusStatusReferredUsersChart($user, $registrationBonusSettings)
     {
         if (!empty($registrationBonusSettings['unlock_registration_bonus_with_referral']) and !empty($registrationBonusSettings['number_of_referred_users'])) {
             $condition = $registrationBonusSettings['number_of_referred_users'];
-            $userCount = Affiliate::query()->where('affiliate_user_id', $user->id)->count();;
+            $userCount = Affiliate::query()->where('affiliate_user_id', $user->id)->count();
 
             return [
                 'labels' => [trans('update.complete'), trans('update.not_complete')],

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Affiliate;
 use App\Models\Verification;
 use App\User;
@@ -23,6 +23,8 @@ class VerificationController extends Controller
         }
 
         if (!empty($value)) {
+            $value = ltrim($value, '+');
+
             $verification = Verification::where($username, $value)
                 ->where('expired_at', '>', time())
                 ->where(function ($query) {
@@ -86,14 +88,13 @@ class VerificationController extends Controller
         $value = $username;
         if (!$username) {
             $value = $request->input('username');
-            $username = $request->input('username');
         }
         $code = $request->get('code');
         $username = $this->username($value);
         $request[$username] = $value;
         $time = time();
 
-        Verification::where($username, $value)
+        Verification::where($username, ltrim($value, '+'))
             ->whereNull('verified_at')
             ->where('code', $code)
             ->where('created_at', '>', $time - 24 * 60 * 60)

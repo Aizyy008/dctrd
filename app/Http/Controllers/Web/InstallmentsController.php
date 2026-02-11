@@ -84,7 +84,7 @@ class InstallmentsController extends Controller
                         $data = array_merge($data, $this->getLocationsData($user));
                     }
 
-                    return view('web.default.installment.verify', $data);
+                    return view('design_1.web.installments.verify.index', $data);
                 }
             }
         }
@@ -450,7 +450,7 @@ class InstallmentsController extends Controller
             'pageTitle' => trans('update.installment_request_submitted'),
         ];
 
-        return view('web.default.installment.request_submitted', $data);
+        return view('design_1.web.installments.status.request_submitted', $data);
     }
 
     public function requestRejected()
@@ -459,6 +459,6 @@ class InstallmentsController extends Controller
             'pageTitle' => trans('update.installment_request_rejected'),
         ];
 
-        return view('web.default.installment.request_rejected', $data);
+        return view('design_1.web.installments.status.request_rejected', $data);
     }
 }

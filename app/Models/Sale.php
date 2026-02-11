@@ -229,6 +229,7 @@ class Sale extends Model
         if (!empty($orderItem->webinar_id)) {
             $notifyOptions = [
                 '[u.name]' => $orderItem->user->full_name,
+                '[u.mobile]' => $orderItem->user->mobile,
                 '[c.title]' => $title,
                 '[amount]' => handlePrice($orderItem->total_amount),
                 '[time.date]' => dateTimeFormat(time(), 'j M Y H:i'),

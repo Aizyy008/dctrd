@@ -9,6 +9,7 @@ use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
 use Cviebrock\EloquentSluggable\Services\SlugService;
 use Cviebrock\EloquentSluggable\Sluggable;
+use Google\Service\Classroom\Student;
 use Illuminate\Database\Eloquent\Model;
 use Jorenvh\Share\ShareFacade;
 use Spatie\CalendarLinks\Link;
@@ -24,7 +25,7 @@ class Webinar extends Model implements TranslatableContract
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 
-    public $morphsFunctions = ['productBadgeContent', 'relatedCourses', 'deleteRequest'];
+    public $morphsFunctions = ['productBadgeContents', 'relatedCourses', 'deleteRequest'];
 
     static $active = 'active';
     static $pending = 'pending';
@@ -36,15 +37,12 @@ class Webinar extends Model implements TranslatableContract
     static $textLesson = 'text_lesson';
 
     static $statuses = [
-        'active',
-        'pending',
-        'is_draft',
-        'inactive'
+        'active', 'pending', 'is_draft', 'inactive'
     ];
 
     static $videoDemoSource = ['upload', 'youtube', 'vimeo', 'external_link', 'secure_host'];
 
-    public $translatedAttributes = ['title', 'description', 'seo_description'];
+    public $translatedAttributes = ['title', 'description', 'summary', 'seo_description'];
 
     public function getTitleAttribute()
     {
@@ -54,6 +52,11 @@ class Webinar extends Model implements TranslatableContract
     public function getDescriptionAttribute()
     {
         return getTranslateAttributeValue($this, 'description');
+    }
+
+    public function getSummaryAttribute()
+    {
+        return getTranslateAttributeValue($this, 'summary');
     }
 
     public function getSeoDescriptionAttribute()
@@ -140,6 +143,11 @@ class Webinar extends Model implements TranslatableContract
         return $this->hasMany('App\Models\Prerequisite', 'webinar_id', 'id');
     }
 
+    public function certificates()
+    {
+        return $this->hasMany('App\Models\Certificate', 'webinar_id', 'id');
+    }
+
     public function quizzes()
     {
         return $this->hasMany('App\Models\Quiz', 'webinar_id', 'id');
@@ -170,6 +178,17 @@ class Webinar extends Model implements TranslatableContract
         return $this->hasMany('App\Models\WebinarReview', 'webinar_id', 'id');
     }
 
+    public function visits()
+    {
+        return $this->morphMany(VisitLog::class, 'targetable');
+    }
+
+    public function timeSpents()
+    {
+        return $this->hasMany(TimeSpentOnCourse::class, 'course_id', 'id');
+    }
+
+
     public function sales()
     {
         return $this->hasMany('App\Models\Sale', 'webinar_id', 'id')
@@ -192,7 +211,7 @@ class Webinar extends Model implements TranslatableContract
         return $this->hasMany('App\Models\CourseForum', 'webinar_id', 'id');
     }
 
-    public function productBadgeContent()
+    public function productBadgeContents()
     {
         return $this->morphMany(ProductBadgeContent::class, 'targetable');
     }
@@ -237,6 +256,13 @@ class Webinar extends Model implements TranslatableContract
         return $rate > 0 ? number_format($rate, 2) : 0;
     }
 
+    public function getRateCount()
+    {
+        return $this->reviews()
+            ->where('status', 'active')
+            ->count();
+    }
+
     /**
      * Return the sluggable configuration array for this model.
      *
@@ -258,10 +284,6 @@ class Webinar extends Model implements TranslatableContract
 
     public function bestTicket($with_percent = false)
     {
-        if (!$this->exists) {  // تأكد من أن الكائن موجود في قاعدة البيانات
-            return null;  // أو يمكنك إرجاع قيمة افتراضية هنا
-        }
-
         $ticketPercent = 0;
         $bestTicket = $this->price;
 
@@ -272,6 +294,7 @@ class Webinar extends Model implements TranslatableContract
             $ticketPercent = $activeSpecialOffer->percent;
         } else {
             foreach ($this->tickets as $ticket) {
+
                 if ($ticket->isValid()) {
                     $discount = $this->price - ($this->price * $ticket->discount / 100);
 
@@ -292,7 +315,6 @@ class Webinar extends Model implements TranslatableContract
 
         return $bestTicket;
     }
-
 
     public function getDiscount($ticket = null, $user = null)
     {
@@ -376,7 +398,7 @@ class Webinar extends Model implements TranslatableContract
         return strtotime("+{$this->access_days} days", $purchaseDate) > $time;
     }
 
-    public function getSaleItem($user = null)
+    public function getSaleItem($user = null, $checkBundle = false)
     {
         if (empty($user)) {
             $user = auth()->user();
@@ -385,7 +407,7 @@ class Webinar extends Model implements TranslatableContract
         $sale = null;
 
         if (!empty($user)) {
-            $sale =  Sale::query()->where('buyer_id', $user->id)
+            $sale = Sale::query()->where('buyer_id', $user->id)
                 ->where('webinar_id', $this->id)
                 ->where('type', 'webinar')
                 ->whereNull('refund_at')
@@ -393,13 +415,13 @@ class Webinar extends Model implements TranslatableContract
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            if (empty($sale)) {
+            if (empty($sale) and $checkBundle) {
                 $bundleWebinar = BundleWebinar::where('webinar_id', $this->id)
                     ->with([
                         'bundle'
                     ])->get();
 
-                /*if ($bundleWebinar->isNotEmpty()) {
+                if ($bundleWebinar->isNotEmpty()) {
                     foreach ($bundleWebinar as $item) {
                         if (!empty($item->bundle)) {
                             $itemBundleSale = $item->bundle->getSaleItem($user);
@@ -409,7 +431,7 @@ class Webinar extends Model implements TranslatableContract
                             }
                         }
                     }
-                }*/
+                }
             }
         }
 
@@ -712,12 +734,16 @@ class Webinar extends Model implements TranslatableContract
         ];
     }
 
-    public function getProgress($isLearningPage = false)
+    public function getProgress($isLearningPage = false, $user = null)
     {
         $progress = 0;
 
+        if (empty($user)) {
+            $user = auth()->user();
+        }
+
         if (
-            auth()->check() and
+            !empty($user) and
             $this->checkUserHasBought() and
             (
                 !$this->isWebinar() or
@@ -725,13 +751,13 @@ class Webinar extends Model implements TranslatableContract
                 $isLearningPage
             )
         ) {
-            $user_id = auth()->id();
+            $userId = $user->id;
 
-            $filesStat = $this->getFilesLearningProgressStat($user_id);
-            $sessionsStat = $this->getSessionsLearningProgressStat($user_id);
-            $textLessonsStat = $this->getTextLessonsLearningProgressStat($user_id);
-            $assignmentsStat = $this->getAssignmentsLearningProgressStat($user_id);
-            $quizzesStat = $this->getQuizzesLearningProgressStat($user_id);
+            $filesStat = $this->getFilesLearningProgressStat($userId);
+            $sessionsStat = $this->getSessionsLearningProgressStat($userId);
+            $textLessonsStat = $this->getTextLessonsLearningProgressStat($userId);
+            $assignmentsStat = $this->getAssignmentsLearningProgressStat($userId);
+            $quizzesStat = $this->getQuizzesLearningProgressStat($userId);
 
             $passed = $filesStat['passed'] + $sessionsStat['passed'] + $textLessonsStat['passed'] + $assignmentsStat['passed'] + $quizzesStat['passed'];
             $count = $filesStat['count'] + $sessionsStat['count'] + $textLessonsStat['count'] + $assignmentsStat['count'] + $quizzesStat['count'];
@@ -739,7 +765,7 @@ class Webinar extends Model implements TranslatableContract
             if ($passed > 0 and $count > 0) {
                 $progress = ($passed * 100) / $count;
 
-                $this->handleLearningProgress100Reward($progress, $user_id, $this->id);
+                $this->handleLearningProgress100Reward($progress, $userId, $this->id);
             }
         } else if (!is_null($this->capacity)) {
             $salesCount = $this->getSalesCount();
@@ -750,6 +776,30 @@ class Webinar extends Model implements TranslatableContract
         }
 
         return round($progress, 2);
+    }
+
+    public function getAverageLearning()
+    {
+        $percent = 0;
+
+        $studentsIds = $this->getStudentsIds();
+
+        if (count($studentsIds)) {
+            $studentsLearning = [];
+
+            foreach ($studentsIds as $studentId) {
+                $student = User::query()->where('id', $studentId)->first();
+
+                if (!empty($student)) {
+                    $studentsLearning[$student->id] = $this->getProgress(true, $student);
+                }
+            }
+
+            $sumStudentsLearning = array_sum($studentsLearning);
+            $percent = ($sumStudentsLearning > 0 and count($studentsLearning) > 0) ? (array_sum($studentsLearning) / count($studentsLearning)) : 0;
+        }
+
+        return round($percent, 2);
     }
 
     public function checkShowProgress($isLearningPage = false)
@@ -985,6 +1035,7 @@ class Webinar extends Model implements TranslatableContract
             ->twitter()
             ->whatsapp()
             ->telegram()
+            ->linkedin()
             ->getRawLinks();
 
         return !empty($link[$social]) ? $link[$social] : '';
@@ -1144,13 +1195,15 @@ class Webinar extends Model implements TranslatableContract
 
     public function makeCertificateForUser($user)
     {
+        $userCertificate = null;
+
         if (!empty($user) and $this->certificate and $this->getProgress(true) >= 100) {
-            $check = Certificate::where('type', 'course')
+            $userCertificate = Certificate::where('type', 'course')
                 ->where('student_id', $user->id)
                 ->where('webinar_id', $this->id)
                 ->first();
 
-            if (empty($check)) {
+            if (empty($userCertificate)) {
                 $makeCertificate = new MakeCertificate();
                 $userCertificate = $makeCertificate->saveCourseCertificate($user, $this);
 
@@ -1158,6 +1211,26 @@ class Webinar extends Model implements TranslatableContract
                 RewardAccounting::makeRewardAccounting($userCertificate->student_id, $certificateReward, Reward::CERTIFICATE, $userCertificate->id, true);
             }
         }
+
+        return $userCertificate;
+    }
+
+    public function getUserPassedCourseCertificate($user=null)
+    {
+        $certificate = null;
+
+        if (empty($user)) {
+            $user = auth()->user();
+        }
+
+        if (!empty($user) and $this->certificate) {
+            $certificate = Certificate::where('type', 'course')
+                ->where('student_id', $user->id)
+                ->where('webinar_id', $this->id)
+                ->first();
+        }
+
+        return $certificate;
     }
 
     public function getSalesCount()
@@ -1171,14 +1244,91 @@ class Webinar extends Model implements TranslatableContract
         return $count;
     }
 
-    // Cross Selling
-    public function crossSellings()
+    public function getAllLessonsCount()
     {
-        return $this->morphMany(CrossSellingRelation::class, 'source');
+        return $this->files->count() +
+            $this->textLessons->count() +
+            $this->sessions->count() +
+            $this->quizzes->count() +
+            $this->assignments->count();
     }
 
-    public function recommendedFor()
+    public function isFavoriteAuthUser()
     {
-        return $this->morphMany(CrossSellingRelation::class, 'target');
+        $result = false;
+
+        if (auth()->check()) {
+            $isFavorite = Favorite::where('webinar_id', $this->id)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            $result = !empty($isFavorite);
+        }
+
+        return $result;
     }
+
+    public function getTimeSpentOnCourse($returnType = null)
+    {
+        $seconds = $this->timeSpents()->sum('seconds_spent');
+
+        if ($returnType == "min") {
+            return ($seconds > 0) ? $seconds / 60 : 0;
+        } else if ($returnType == "hour") {
+            return ($seconds > 0) ? ($seconds / (60 * 60)) : 0;
+        }
+
+        return $seconds;
+    }
+
+    public function getAllAssignmentsCount()
+    {
+        return $this->assignments()
+            ->where('status', 'active')
+            ->count();
+    }
+
+    public function allBadges()
+    {
+        $badges = collect();
+
+        $productBadgeContents = $this->productBadgeContents()
+            ->whereHas('badge', function ($query) {
+                $query->where('enable', true);
+            })
+            ->get();
+
+        foreach ($productBadgeContents as $productBadgeContent) {
+            $badge = $productBadgeContent->badge;
+
+            if ($badge->isActive()) {
+                $badges->push($productBadgeContent->badge);
+            }
+        }
+
+        return $badges;
+    }
+
+    public function getAllChaptersDurations()
+    {
+        $minutes = 0;
+
+        foreach ($this->chapters as $chapter) {
+            $minutes += $chapter->getDuration();
+        }
+
+        return $minutes;
+    }
+
+    public function getIcon($useThumbnail = true)
+    {
+        $icon = $this->icon;
+
+        if ($useThumbnail and empty($icon)) {
+            $icon = $this->thumbnail;
+        }
+
+        return $icon;
+    }
+
 }

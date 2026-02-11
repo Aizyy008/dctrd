@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Mixins\Geo\Geo;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Region extends Model
 {
@@ -22,6 +24,11 @@ class Region extends Model
         'city',
         'district',
     ];
+
+    public function getGeoCenterAttribute()
+    {
+        return Geo::get_geo_array($this->attributes['geo_center']);
+    }
 
     public function country()
     {
@@ -77,4 +84,19 @@ class Region extends Model
     {
         return $this->hasMany('App\User', 'district_id', 'id');
     }
+
+
+    static public function getRegionsByTypeAndColumn($type, $column = null, $columnId = null)
+    {
+        $query = self::query()
+            ->select(DB::raw('*, ST_AsText(geo_center) as geo_center'))
+            ->where('type', $type);
+
+        if (!empty($column) and !empty($columnId)) {
+            $query->where($column, $columnId);
+        }
+
+        return $query->orderBy('created_at', 'desc')->get();
+    }
+
 }

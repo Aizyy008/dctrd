@@ -44,9 +44,11 @@ class ProductFaqController extends Controller
             ]);
 
             if (!empty($faq)) {
+                $locale = $request->get('locale', getDefaultLocale());
+
                 ProductFaqTranslation::updateOrCreate([
                     'product_faq_id' => $faq->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                     'answer' => $data['answer'],
@@ -92,9 +94,11 @@ class ProductFaqController extends Controller
                 ->first();
 
             if (!empty($faq)) {
+                $locale = $request->get('locale', getDefaultLocale());
+
                 ProductFaqTranslation::updateOrCreate([
                     'product_faq_id' => $faq->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                     'answer' => $data['answer'],

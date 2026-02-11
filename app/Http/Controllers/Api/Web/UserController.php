@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Web;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Mixins\Cashback\CashbackRules;
 use App\Models\Api\Meeting;
 use App\Models\Newsletter;
@@ -103,7 +103,10 @@ class UserController extends Controller
             });
 
         if ($has_meeting) {
-            $query->whereHas('meeting');
+            $query->whereHas('meeting', function ($query) {
+                $query->where('disabled', false);
+                $query->whereHas('meetingTimes');
+            });
         }
 
         $users = $this->filterProviders($request, deepClone($query), $role)

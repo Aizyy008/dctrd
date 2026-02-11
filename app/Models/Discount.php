@@ -23,11 +23,6 @@ class Discount extends Model
     static $discountTypes = ['percentage', 'fixed_amount'];
     static $discountTypePercentage = 'percentage';
     static $discountTypeFixedAmount = 'fixed_amount';
-    // =============== discount_coupon_product() ===============
-    public function discount_coupon_product()
-    {
-        return $this->belongsToMany(Product::class, 'discount_coupon_product', 'discount_id', 'product_id');
-    }
 
     public function creator()
     {
@@ -98,22 +93,23 @@ class Discount extends Model
         ];
     }
 
-    public function checkValidDiscount()
+    public function checkValidDiscount($user = null)
     {
         if ($this->expired_at < time()) {
             return trans('update.discount_code_has_expired'); // expired
         }
 
-        $user = auth()->user();
+        if (empty($user)) {
+            $user = auth()->user();
+        }
+        
         $carts = Cart::where('creator_id', $user->id)->get();
 
 
-        if (($this->source == self::$discountSourceCourse or $this->source == self::$discountSourceCategory))
-        {
+        if (($this->source == self::$discountSourceCourse or $this->source == self::$discountSourceCategory)) {
             $webinarCount = array_filter($carts->pluck('webinar_id')->toArray());
-            // dd($webinarCount);
-            if (empty($webinarCount) or count($webinarCount) < 1)
-            {
+
+            if (empty($webinarCount) or count($webinarCount) < 1) {
                 return trans('update.discount_code_is_for_courses_error');
             }
         } elseif ($this->source == self::$discountSourceBundle) {
@@ -168,13 +164,11 @@ class Discount extends Model
             }
         }
 
-        if ($this->source == self::$discountSourceProduct)
-        {
+        if ($this->source == self::$discountSourceProduct) {
             $hasSpecialProducts = false;
-            foreach ($carts as $cart)
-            {
-                if (!empty($cart->productOrder))
-                {
+
+            foreach ($carts as $cart) {
+                if (!empty($cart->productOrder)) {
                     $product = $cart->productOrder->product;
 
                     if (!empty($product) and ($this->product_type == 'all' or $this->product_type == $product->type)) {
@@ -203,9 +197,8 @@ class Discount extends Model
                 return trans('update.your_coupon_is_valid_for_another_category');
             }
         }
-        // ++++++++++++++ type = special_users ++++++++++++++
-        if ($this->type == 'special_users')
-        {
+
+        if ($this->type == 'special_users') {
             $userDiscount = DiscountUser::where('user_id', $user->id)
                 ->where('discount_id', $this->id)
                 ->first();
@@ -214,14 +207,12 @@ class Discount extends Model
                 return trans('cart.coupon_invalid'); // not for this user
             }
         }
-        // ++++++++++++++ minimum_order ++++++++++++++
-        if (!empty($this->minimum_order))
-        {
-            // check user orders minimum amounts
+
+
+        if (!empty($this->minimum_order)) { // check user orders minimum amounts
             $totalCartsPrice = Cart::getCartsTotalPrice($carts);
 
-            if ($this->minimum_order > $totalCartsPrice)
-            {
+            if ($this->minimum_order > $totalCartsPrice) {
                 return trans('update.discount_code_minimum_order_error', ['min_order' => $this->minimum_order]); // the minimum order is less than the discount amount
             }
         }

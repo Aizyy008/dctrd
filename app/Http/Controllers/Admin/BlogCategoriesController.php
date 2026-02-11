@@ -29,13 +29,19 @@ class BlogCategoriesController extends Controller
         $this->authorize('admin_blog_categories_create');
 
         $this->validate($request, [
-            'title' => 'required|string',
+            'title' => 'required|string|max:255',
+            'slug' => 'nullable|max:255|unique:blog_categories,slug',
         ]);
 
         $data = $request->all();
 
         $category = BlogCategory::create([
-            'slug' => BlogCategory::makeSlug($data['title']),
+            'slug' => !empty($data['slug']) ? $data['slug'] : BlogCategory::makeSlug($data['title']),
+            'icon' => !empty($data['icon']) ? $data['icon'] : null,
+            'cover_image' => !empty($data['cover_image']) ? $data['cover_image'] : null,
+            'icon2' => !empty($data['icon2']) ? $data['icon2'] : null,
+            'icon2_box_color' => !empty($data['icon2_box_color']) ? $data['icon2_box_color'] : null,
+            'overlay_image' => !empty($data['overlay_image']) ? $data['overlay_image'] : null,
         ]);
 
         BlogCategoryTranslation::query()->updateOrCreate([
@@ -43,9 +49,15 @@ class BlogCategoriesController extends Controller
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
         ]);
 
-        return redirect(getAdminPanelUrl() . '/blog/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.category_created_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/blog/categories/{$category->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function edit(Request $request, $category_id)
@@ -69,22 +81,39 @@ class BlogCategoriesController extends Controller
     {
         $this->authorize('admin_blog_categories_edit');
 
-        $this->validate($request, [
-            'title' => 'required',
-        ]);
-
         $category = BlogCategory::findOrFail($category_id);
 
+        $this->validate($request, [
+            'title' => 'required',
+            'slug' => 'nullable|max:255|unique:blog_categories,slug,' . $category->id,
+        ]);
+
         $data = $request->all();
+
+        $category->update([
+            'slug' => !empty($data['slug']) ? $data['slug'] : BlogCategory::makeSlug($data['title']),
+            'icon' => !empty($data['icon']) ? $data['icon'] : null,
+            'cover_image' => !empty($data['cover_image']) ? $data['cover_image'] : null,
+            'icon2' => !empty($data['icon2']) ? $data['icon2'] : null,
+            'icon2_box_color' => !empty($data['icon2_box_color']) ? $data['icon2_box_color'] : null,
+            'overlay_image' => !empty($data['overlay_image']) ? $data['overlay_image'] : null,
+        ]);
+
 
         BlogCategoryTranslation::query()->updateOrCreate([
             'blog_category_id' => $category->id,
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
         ]);
 
-        return redirect(getAdminPanelUrl() . '/blog/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.category_updated_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/blog/categories/{$category->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function delete($category_id)
@@ -95,6 +124,11 @@ class BlogCategoriesController extends Controller
 
         $editCategory->delete();
 
-        return redirect(getAdminPanelUrl() . '/blog/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.category_deleted_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl() . '/blog/categories')->with(['toast' => $toastData]);
     }
 }

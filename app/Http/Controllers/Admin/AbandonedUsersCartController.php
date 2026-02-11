@@ -35,7 +35,7 @@ class AbandonedUsersCartController extends Controller
         $carts = $this->handleFilters($request, $query)
             ->with([
                 'user' => function ($query) {
-                    $query->select('id', 'full_name', 'role_name', 'role_id', 'mobile', 'email');
+                    $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'mobile', 'email');
                     $query->with(['carts']);
                 }
             ])

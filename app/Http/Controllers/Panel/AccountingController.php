@@ -11,51 +11,27 @@ use App\Models\OfflinePayment;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentChannel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
 
 class AccountingController extends Controller
 {
-    public function index()
-    {
-        $this->authorize("panel_financial_summary");
 
-        $userAuth = auth()->user();
 
-        $accountings = Accounting::where('user_id', $userAuth->id)
-            ->where('system', false)
-            ->where('tax', false)
-            ->with([
-                'webinar',
-                'promotion',
-                'subscribe',
-                'meetingTime' => function ($query) {
-                    $query->with(['meeting' => function ($query) {
-                        $query->with(['creator' => function ($query) {
-                            $query->select('id', 'full_name');
-                        }]);
-                    }]);
-                }
-            ])
-            ->orderBy('created_at', 'desc')
-            ->orderBy('id', 'desc')
-            ->paginate(10);
-
-        $data = [
-            'pageTitle' => trans('financial.summary_page_title'),
-            'accountings' => $accountings,
-            'commission' => getFinancialSettings('commission') ?? 0,
-        ];
-
-        return view(getTemplate() . '.panel.financial.summary', $data);
-    }
-
-    public function account($id = null)
+    public function account(Request $request, $id = null)
     {
         $this->authorize("panel_financial_charge_account");
 
         $userAuth = auth()->user();
+        $offlinePaymentsQuery = OfflinePayment::query()->where('user_id', $userAuth->id);
+
+        $getOfflinePaymentsListData = $this->getOfflinePaymentsListsData($request, $offlinePaymentsQuery);
+
+        if ($request->ajax()) {
+            return $getOfflinePaymentsListData;
+        }
 
         $editOfflinePayment = null;
         if (!empty($id)) {
@@ -64,9 +40,7 @@ class AccountingController extends Controller
                 ->first();
         }
 
-
         $paymentChannels = PaymentChannel::where('status', 'active')->get();
-        $offlinePayments = OfflinePayment::where('user_id', $userAuth->id)->orderBy('created_at', 'desc')->get();
 
         $offlineBanks = OfflineBank::query()
             ->orderBy('created_at', 'desc')
@@ -104,7 +78,6 @@ class AccountingController extends Controller
 
         $data = [
             'pageTitle' => trans('financial.charge_account_page_title'),
-            'offlinePayments' => $offlinePayments,
             'paymentChannels' => $paymentChannels,
             'offlineBanks' => $offlineBanks,
             'accountCharge' => $userAuth->getAccountingCharge(),
@@ -115,8 +88,47 @@ class AccountingController extends Controller
             'registrationBonusAmount' => $registrationBonusAmount,
             'cashbackRules' => $cashbackRules ?? null,
         ];
+        $data = array_merge($data, $getOfflinePaymentsListData);
 
-        return view('web.default.panel.financial.account', $data);
+        return view('design_1.panel.financial.account.index', $data);
+    }
+
+    private function getOfflinePaymentsListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $offlinePayments = $query
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getOfflinePaymentsAjaxResponse($request, $offlinePayments, $total, $count);
+        }
+
+        return [
+            'offlinePayments' => $offlinePayments,
+            'pagination' => $this->makePagination($request, $offlinePayments, $total, $count, true),
+        ];
+    }
+
+    private function getOfflinePaymentsAjaxResponse(Request $request, $offlinePayments, $total, $count)
+    {
+        $html = "";
+
+        foreach ($offlinePayments as $offlinePaymentRow) {
+            $html .= (string)view()->make("design_1.panel.financial.account.offline_transactions.table_items", ['offlinePayment' => $offlinePaymentRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $offlinePayments, $total, $count, true)
+        ]);
     }
 
     public function charge(Request $request)
@@ -240,22 +252,9 @@ class AccountingController extends Controller
 
     private function handleUploadAttachment($user, $file)
     {
-        $storage = Storage::disk('public');
-
-        $path = '/' . $user->id . '/offlinePayments';
-
-        if (!$storage->exists($path)) {
-            $storage->makeDirectory($path);
-        }
-
-        $img = Image::make($file);
-        $name = time() . '.' . $file->getClientOriginalExtension();
-
-        $path = $path . '/' . $name;
-
-        $storage->put($path, (string)$img->encode());
-
-        return $name;
+        $path = 'financial/offlinePayments';
+        $path = $this->uploadFile($file, $path, null, $user->id);
+        return $path;
     }
 
     private function echoRozerpayForm($order)

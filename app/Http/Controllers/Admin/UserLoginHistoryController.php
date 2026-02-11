@@ -98,11 +98,11 @@ class UserLoginHistoryController extends Controller
             $sessionManager->getHandler()->destroy($session->session_id);
 
 
-           if (!empty($user) and $user->logged_count > 0) {
-                   $user->update([
-                       'logged_count' => $user->logged_count - 1
-               ]);
-           }
+            if (!empty($user) and $user->logged_count > 0) {
+                $user->update([
+                    'logged_count' => $user->logged_count - 1
+                ]);
+            }
 
         }
 
@@ -137,7 +137,8 @@ class UserLoginHistoryController extends Controller
     {
         $this->authorize('admin_user_login_history_end_session');
 
-        $sessions = UserLoginHistory::query()->where('user_id',$userId)
+        $targetUser = User::query()->findOrFail($userId);
+        $sessions = UserLoginHistory::query()->where('user_id', $userId)
             ->whereNull('session_end_at')
             ->get();
 
@@ -149,6 +150,12 @@ class UserLoginHistoryController extends Controller
 
             $sessionManager = app('session');
             $sessionManager->getHandler()->destroy($session->session_id);
+        }
+
+        if ($targetUser->logged_count > 0) {
+            $targetUser->update([
+                'logged_count' => 0
+            ]);
         }
 
         $toastData = [

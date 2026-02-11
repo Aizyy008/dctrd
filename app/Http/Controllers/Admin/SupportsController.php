@@ -357,9 +357,9 @@ class SupportsController extends Controller
             })
             ->with(['department', 'conversations' => function ($query) {
                 $query->with(['sender' => function ($qu) {
-                    $qu->select('id', 'full_name', 'avatar');
+                    $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
                 }, 'supporter' => function ($qu) {
-                    $qu->select('id', 'full_name', 'avatar');
+                    $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings');
                 }]);
                 $query->orderBy('created_at', 'asc');
             }, 'user' => function ($qu) {

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin\Store;
 use App\Exports\StoreProductsExport;
 use App\Http\Controllers\Admin\traits\ProductBadgeTrait;
 use App\Http\Controllers\Controller;
-use App\Imports\ProductsImport;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductDiscount;
@@ -14,7 +13,6 @@ use App\Models\ProductOrder;
 use App\Models\ProductSelectedFilterOption;
 use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationCategory;
-use App\Models\ProductVariant;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\Translation\ProductTranslation;
@@ -23,8 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+
 class ProductsController extends Controller
 {
     use ProductBadgeTrait;
@@ -322,7 +319,6 @@ class ProductsController extends Controller
             'pageTitle' => trans('update.create_new_product'),
         ];
 
-
         return view('admin.store.products.create', $data);
     }
 
@@ -467,13 +463,11 @@ class ProductsController extends Controller
             'productSpecifications' => $productSpecifications,
         ];
 
-
         return view('admin.store.products.create', $data);
     }
 
     public function update(Request $request, $id)
     {
-        // dd($request->all());
         $this->authorize('admin_store_delete_product');
 
         $product = Product::findOrFail($id);
@@ -503,7 +497,7 @@ class ProductsController extends Controller
             'commission' => 'nullable|integer',
             'inventory' => 'required_without:unlimited_inventory',
             'thumbnail' => 'required',
-            'images' => 'required|array|min:1|max:4',
+            'images' => 'required|array|min:1',
             'category_id' => 'required',
         ];
 
@@ -586,31 +580,6 @@ class ProductsController extends Controller
             }
         }
 
-        if (isset($request->variant_name) && is_array($request->variant_name)) {
-            foreach (array_values(array_unique($request->variant_name)) as $key => $name) {
-               
-                  $var=  ProductVariant::updateOrCreate(
-                        [
-                            'product_id' => $product->id,
-                            'id' => $request->variant_id[$key] ?? null,
-                        ],
-                        [
-                            'name' => $name,
-                            'price' => $request->variant_price[$key],
-                            'stock' => $request->variant_stock[$key],
-                            'initial_price' => $request->variant_initial_price[$key],
-                            'discount' => $request->variant_discount[$key],
-                            'sku' => $request->variant_sku[$key],
-                            'image' => $request->variant_image[$key],
-                        ]
-                    );
-                    
-                
-
-            }
-
-        }
-
         // Product Badge
         $this->handleProductBadges($product, $data);
 
@@ -687,6 +656,7 @@ class ProductsController extends Controller
             ->whereTranslationLike('title', "%$term%");
 
         if (!empty($option)) {
+
         }
 
         $products = $query->get();
@@ -701,29 +671,6 @@ class ProductsController extends Controller
 
         return response()->json($result, 200);
     }
-    // ++++++++++++++++++++ start : getProductsByType ++++++++++++++++++++
-    public function getProductsByType(Request $request)
-    {
-        $productType = $request->input('product_type');
-        // Start query and load translations
-        $query = Product::query()->with('translations');
-        if ($productType && $productType !== 'all') {
-            $query->where('type', $productType);
-        }
-        $products = $query->get()->map(function ($product) {
-            // Get translation with fallback
-            $locale = app()->getLocale();
-            $title = optional($product->translate($locale))->title
-                ?? optional($product->translate('en'))->title
-                ?? 'Untitled'; // Default if no translation exists
-            return [
-                'id' => $product->id,
-                'title' => $title,
-            ];
-        });
-        return response()->json(['products' => $products]);
-    }
-    // ++++++++++++++++++++ end : getProductsByType ++++++++++++++++++++
 
     public function getContentItemByLocale(Request $request, $id)
     {
@@ -872,6 +819,7 @@ class ProductsController extends Controller
             $query->whereHas('creator', function ($query) use ($adminRoleIds) {
                 $query->whereIn('role_id', $adminRoleIds);
             });
+
         }
 
         $products = $this->handleFilters($query, $request)
@@ -945,165 +893,4 @@ class ProductsController extends Controller
         return redirect(getAdminPanelUrl("/store/products"))->with(['toast' => $toastData]);
     }
 
-    public function save_product_variants(Request $request)
-    {
-        $validatedData = $request->validate([
-            'variant.id' => 'nullable|exists:product_variants,id',
-            'variant.name' => 'nullable|string|max:255',
-            'variant.price' => 'nullable|numeric|min:0',
-            'variant.stock' => 'nullable|integer|min:0',
-            'variant.sku' => 'nullable|string|max:255',
-            'variant.initial_price' => 'nullable|numeric|min:0',
-            'variant.discount' => 'nullable|numeric|min:0|max:100',
-            'variant.image' => 'nullable|string',
-            'variant.product_id' => 'nullable|exists:products,id',
-        ]);
-
-        $variant = ProductVariant::updateOrCreate(
-            ['id' => $validatedData['variant']['id'] ?? null], // Search by ID (if exists)
-            $validatedData['variant'] // Update existing or create new record
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Variants saved successfully!',
-            'id' => $variant->id
-        ]);
-    }
-
-    public function update_product_variants(Request $request)
-    {
-        $variant = ProductVariant::find($request->id);
-
-        if (!$variant) {
-            return response()->json(['success' => false, 'message' => 'Variant not found'], 404);
-        }
-
-        $variant->price = $request->price;
-        $variant->stock = $request->stock;
-        $variant->initial_price = $request->initial_price;
-        $variant->discount = $request->discount;
-        $variant->sku = $request->sku;
-        $variant->image = $request->image;
-
-        $variant->save();
-
-        return response()->json(['success' => true, 'message' => 'Variant updated successfully']);
-    }
-
-    public function delete_product_variants($id)
-    {
-        $variant = ProductVariant::findOrFail($id);
-        $variant->delete();
-
-        return back();
-    }
-    // ++++++++++++++++++++++ importExcel() : import excel ++++++++++++++++++++++
-    public function importExcel(Request $request)
-    {
-        $this->authorize('admin_webinars_create');
-
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-        ], [
-            'file.required' => 'Please upload an Excel file.',
-            'file.file' => 'The uploaded file must be a valid file.',
-            'file.mimes' => 'Only .xlsx and .xls files are supported.',
-        ]);
-
-        try 
-        {
-            $import = new ProductsImport();
-            Excel::import($import, $request->file('file'));
-            // If no errors, return success
-            return redirect()->back()->with('success', 'Products imported successfully.');
-        } 
-        catch (\Exception $e) 
-        {
-            $message = $e->getMessage();
-
-            // Customize error messages for better user understanding
-            if ($message === 'Unauthorized') 
-            {
-                $userMessage = 'You do not have permission to import products. Contact an administrator.';
-                return redirect()->back()->withErrors(['import_error' => $userMessage]);
-            } 
-            elseif (str_contains($message, 'SQLSTATE'))
-            {
-                $userMessage = 'There was an issue with the database. Please try again or contact support.';
-                return redirect()->back()->withErrors(['import_error' => $userMessage]);
-            } 
-            else 
-            {
-                // Get validation errors from the import class
-                $importErrors = method_exists($e, 'getErrors') ? $e->getErrors() : [$message];
-                return redirect()->back()->withErrors($importErrors);
-            }
-        }
-    }
-    // +++++++++++++++++ downloadTemplate() ++++++++++++++++
-    public function downloadTemplate()
-    {
-        return Excel::download(new class implements FromArray, WithHeadings
-        {
-            public function headings(): array
-            {
-                return [
-                    'type',
-                    'locale',
-                    'title',
-                    'category_id',
-                    'price',
-                    'point',
-                    'unlimited_inventory',
-                    'ordering',
-                    'inventory',
-                    'inventory_warning',
-                    'delivery_fee',
-                    'delivery_estimated_time',
-                    'message_for_reviewer',
-                    'tax',
-                    'commission_type',
-                    'commission',
-                    'seo_description',
-                    'summary',
-                    'description',
-                    'variants', // New
-                    'media',    // New
-                    'filter_options', // New
-                ];
-            }
-
-            public function array(): array
-            {
-                // return [
-                //     [
-                //         'physical',                          // type
-                //         'en,ar',                            // locale
-                //         'Product Title|عنوان المنتج',       // title
-                //         '1',                                // category_id
-                //         '99.99',                            // price
-                //         '60',                               // point
-                //         '0',                                // unlimited_inventory
-                //         '1',                                // ordering
-                //         '100',                              // inventory
-                //         '10',                               // inventory_warning
-                //         '5.00',                             // delivery_fee
-                //         '2',                                // delivery_estimated_time
-                //         'Please review this product',       // message_for_reviewer
-                //         '15',                               // tax
-                //         'fixed_amount',                     // commission_type
-                //         '87',                               // commission
-                //         'SEO Desc EN|وصف SEO AR',           // seo_description
-                //         'Summary EN|ملخص AR',               // summary
-                //         'Description EN|وصف AR',            // description
-                //         'Size S:10:50|Size M:15:30',        // variants (name:price:inventory)
-                //         '/images/1.jpg|/images/2.jpg',      // media
-                //         '[1,2]',                          // filter_options
-                //     ],
-                // ];
-                return [];
-            }
-        }, 'product_template.xlsx');
-    }
 }

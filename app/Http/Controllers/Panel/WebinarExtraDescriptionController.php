@@ -33,6 +33,7 @@ class WebinarExtraDescriptionController extends Controller
         $canStore = $this->checkItem($user, $data);
 
         if ($canStore) {
+            $locale = $request->get("locale", getDefaultLocale());
             $columnName = !empty($data['webinar_id']) ? 'webinar_id' : 'upcoming_course_id';
             $columnValue = !empty($data['webinar_id']) ? $data['webinar_id'] : $data['upcoming_course_id'];
 
@@ -53,7 +54,7 @@ class WebinarExtraDescriptionController extends Controller
             if (!empty($webinarExtraDescription)) {
                 WebinarExtraDescriptionTranslation::updateOrCreate([
                     'webinar_extra_description_id' => $webinarExtraDescription->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'value' => $data['value'],
                 ]);
@@ -65,6 +66,42 @@ class WebinarExtraDescriptionController extends Controller
         }
 
         abort(403);
+    }
+
+    public function storeCompanyLogos(Request $request, $columnName, $columnValue, $folder)
+    {
+        if (!empty($request->file('companyLogos'))) {
+            $user = auth()->user();
+            $locale = getDefaultLocale();
+
+            foreach ($request->file('companyLogos') as $logo) {
+                $tmpName = random_str(6) . "_" . time();
+
+                $logoPath = $this->uploadFile($logo, "{$folder}/{$columnValue}", $tmpName, $user->id);
+
+                $order = WebinarExtraDescription::query()
+                        ->where($columnName, $columnValue)
+                        ->where('type', 'company_logos')
+                        ->count() + 1;
+
+                $webinarExtraDescription = WebinarExtraDescription::create([
+                    'creator_id' => $user->id,
+                    'webinar_id' => ($columnName == "webinar_id") ? $columnValue : null,
+                    'upcoming_course_id' => ($columnName == "upcoming_course_id") ? $columnValue : null,
+                    'type' => 'company_logos',
+                    'order' => $order,
+                    'created_at' => time()
+                ]);
+
+                WebinarExtraDescriptionTranslation::updateOrCreate([
+                    'webinar_extra_description_id' => $webinarExtraDescription->id,
+                    'locale' => mb_strtolower($locale),
+                ], [
+                    'value' => $logoPath,
+                ]);
+
+            }
+        }
     }
 
     private function checkItem($user, $data)
@@ -108,6 +145,7 @@ class WebinarExtraDescriptionController extends Controller
         $canStore = $this->checkItem($user, $data);
 
         if ($canStore) {
+            $locale = $request->get("locale", getDefaultLocale());
             $columnName = !empty($data['webinar_id']) ? 'webinar_id' : 'upcoming_course_id';
             $columnValue = !empty($data['webinar_id']) ? $data['webinar_id'] : $data['upcoming_course_id'];
 
@@ -122,7 +160,7 @@ class WebinarExtraDescriptionController extends Controller
 
                 WebinarExtraDescriptionTranslation::updateOrCreate([
                     'webinar_extra_description_id' => $webinarExtraDescription->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'value' => $data['value'],
                 ]);
@@ -151,7 +189,19 @@ class WebinarExtraDescriptionController extends Controller
             }
 
             if ($webinarExtraDescription->creator_id == $user->id or (!empty($item) and $item->canAccess($user))) {
+                $filePath = null;
+
+                if ($webinarExtraDescription->type == WebinarExtraDescription::$COMPANY_LOGOS) {
+                    $filePath = $webinarExtraDescription->value;
+                }
+
                 $webinarExtraDescription->delete();
+
+
+                if (!empty($filePath)) {
+                    $this->removeFile($filePath);
+                }
+
             }
         }
 

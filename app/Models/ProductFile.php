@@ -45,4 +45,36 @@ class ProductFile extends Model implements TranslatableContract
     {
         return url($this->path);
     }
+
+    public function getVolume()
+    {
+        return $this->volume . ' MB';
+    }
+
+    public function getIconXByType($type = null)
+    {
+        $icon = 'document';
+
+        if (empty($type)) {
+            $type = $this->file_type;
+        }
+
+        // 'pdf', 'powerpoint', 'sound', 'video', 'image', 'archive', 'document', 'project'
+        if (!empty($type)) {
+            if (in_array($type, ['pdf', 'powerpoint', 'document'])) {
+                $icon = 'document-text';
+            } else if (in_array($type, ['sound'])) {
+                $icon = 'music-play';
+            } else if (in_array($type, ['video'])) {
+                $icon = 'video-vertical';
+            } else if (in_array($type, ['image'])) {
+                $icon = 'image';
+            } else if (in_array($type, ['archive'])) {
+                $icon = 'archive-book';
+            }
+        }
+
+        return $icon;
+    }
+
 }

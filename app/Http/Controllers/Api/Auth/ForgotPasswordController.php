@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Notifications\SendResetPasswordSMS;
 use App\User;
 use Carbon\Carbon;

@@ -128,6 +128,11 @@ class SessionController extends Controller
                     WebinarChapterItem::makeItem($webinar->creator_id, $session->chapter_id, $session->id, WebinarChapterItem::$chapterSession);
                 }
 
+                $webinar->update([
+                    'updated_at' => time()
+                ]);
+
+
                 return response()->json([
                     'code' => 200,
                 ], 200);
@@ -233,6 +238,10 @@ class SessionController extends Controller
                 if ($changeChapter) {
                     WebinarChapterItem::changeChapter($session->creator_id, $oldChapterId, $session->chapter_id, $session->id, WebinarChapterItem::$chapterSession);
                 }
+
+                $webinar->update([
+                    'updated_at' => time()
+                ]);
 
                 removeContentLocale();
 

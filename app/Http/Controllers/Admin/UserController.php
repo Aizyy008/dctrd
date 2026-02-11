@@ -5,14 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Bitwise\UserLevelOfTraining;
 use App\Exports\InstructorsExport;
 use App\Exports\OrganizationsExport;
-use App\Exports\StaffsExport;
 use App\Exports\StudentsExport;
+use App\Exports\UsersExport;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\traits\UserFormFieldsTrait;
-use App\Imports\StaffsImport;
-use App\Imports\StudentsImport;
-use App\Imports\InstructorsImport;
-use App\Imports\OrganizationsImport;
+use App\Mixins\Geo\Geo;
 use App\Models\Badge;
 use App\Models\BecomeInstructor;
 use App\Models\Category;
@@ -39,10 +36,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\MessageBag;
+
 class UserController extends Controller
 {
     use UserFormFieldsTrait;
@@ -462,7 +456,7 @@ class UserController extends Controller
         return view('admin.users.create', $data);
     }
 
-    private function username($data)
+    private function getEmailOrMobile($data)
     {
         $email_regex = "/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,})$/i";
 
@@ -479,25 +473,17 @@ class UserController extends Controller
         $this->authorize('admin_users_create');
         $data = $request->all();
 
-        $username = $this->username($data);
-        $data[$username] = $data['username'];
-        $request->merge([$username => $data['username']]);
-        unset($data['username']);
+        $email_or_mobile = $this->getEmailOrMobile($data);
+        $data[$email_or_mobile] = $data['email_or_mobile'];
+        $request->merge([$email_or_mobile => $data['email_or_mobile']]);
+        unset($data['email_or_mobile']);
 
         $this->validate($request, [
-            $username => ($username == 'mobile') ? 'required|numeric|unique:users' : 'required|string|email|max:255|unique:users',
-            'full_name' => 'nullable|min:3|max:128',
+            $email_or_mobile => ($email_or_mobile == 'mobile') ? 'required|numeric|unique:users' : 'required|string|email|max:255|unique:users',
+            'full_name' => 'required|min:3|max:255',
             'role_id' => 'required|exists:roles,id',
-            'password' => 'nullable|string|min:6',
+            'password' => 'required|string|min:6',
             'status' => 'required',
-            'backend_link' => 'nullable|url|max:255',
-            'frontend_link' => 'nullable|url|max:255',
-            'frontend_link_gk' => 'nullable|url|max:255',
-            'front_iframe_height_gk' => 'nullable|integer|min:100',
-            'front_iframe_height' => 'nullable|integer|min:100',
-            'back_iframe_height' => 'nullable|integer|min:100',
-            // -------- chat_widget --------
-            'chat_widget' => 'nullable|string|min:3',
         ]);
 
         if (!empty($data['role_id'])) {
@@ -512,20 +498,12 @@ class UserController extends Controller
                     'full_name' => $data['full_name'],
                     'role_name' => $role->name,
                     'role_id' => $data['role_id'],
-                    $username => $data[$username],
+                    $email_or_mobile => $data[$email_or_mobile],
                     'password' => User::generatePassword($data['password']),
                     'status' => $data['status'],
                     'affiliate' => $usersAffiliateStatus,
                     'verified' => true,
                     'created_at' => time(),
-                    'backend_link' => $data['backend_link'] ?? null,
-                    'frontend_link' => $data['frontend_link'] ?? null,
-                    'frontend_link_gk' => $data['frontend_link_gk'] ?? null,
-                    'front_iframe_height' => $data['front_iframe_height'] ?? null,
-                    'front_iframe_height_gk' => $data['front_iframe_height_gk'] ?? null,
-                    'back_iframe_height' => $data['back_iframe_height'] ?? null,
-                    // ------- chat_widget ---------
-                    'chat_widget' => $data['chat_widget'] ?? null
                 ]);
 
                 if (!empty($data['group_id'])) {
@@ -561,7 +539,8 @@ class UserController extends Controller
     {
         $this->authorize('admin_users_edit');
 
-        $user = User::where('id', $id)
+        $user = User::query()
+            ->where('id', $id)
             ->with([
                 'customBadges' => function ($query) {
                     $query->with('badge');
@@ -578,12 +557,6 @@ class UserController extends Controller
 
         if (empty($user)) {
             abort(404);
-        }
-
-        if (!empty($user->location)) {
-            $user->location = \Geo::getST_AsTextFromBinary($user->location);
-
-            $user->location = \Geo::get_geo_array($user->location);
         }
 
         $userMetas = $user->userMetas;
@@ -889,24 +862,17 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $this->validate($request, [
-            'full_name' => 'required|min:3|max:128',
+            'full_name' => 'required|min:3|max:255',
             'email' => (!empty($user->email)) ? 'required|email|unique:users,email,' . $user->id . ',id,deleted_at,NULL' : 'nullable|email|unique:users',
             'mobile' => (!empty($user->mobile)) ? 'required|numeric|unique:users,mobile,' . $user->id . ',id,deleted_at,NULL' : 'nullable|numeric|unique:users',
+            'username' => 'required|max:255|unique:users,username,' . $user->id,
             'password' => 'nullable|string',
             'bio' => 'nullable|string|min:3|max:48',
             'about' => 'nullable|string|min:3',
-            // -------- chat_widget --------
-            'chat_widget' => 'nullable|string|min:3',
             'certificate_additional' => 'nullable|string|max:255',
             'status' => 'required|' . Rule::in(User::$statuses),
             'ban_start_at' => 'required_if:ban,on',
             'ban_end_at' => 'required_if:ban,on',
-            'backend_link' => 'nullable|url|max:255',
-            'frontend_link' => 'nullable|url|max:255',
-            'front_iframe_height' => 'nullable|integer|min:100',
-            'back_iframe_height' => 'nullable|integer|min:100',
-            'frontend_link_gk' => 'nullable|url|max:255',
-            'front_iframe_height_gk' => 'nullable|integer|min:100',
         ]);
 
         $data = $request->all();
@@ -950,26 +916,18 @@ class UserController extends Controller
 
 
         $user->full_name = !empty($data['full_name']) ? $data['full_name'] : null;
+        $user->username = $data['username'];
         $user->role_name = $userRoleName;
         $user->role_id = $userRoleId;
         $user->timezone = $data['timezone'] ?? null;
         $user->currency = $data['currency'] ?? null;
-        $user->backend_link = $data['backend_link'] ?? null;
-        $user->frontend_link = $data['frontend_link'] ?? null;
-        $user->frontend_link_gk = $data['frontend_link_gk'] ?? null;
-        $user->front_iframe_height = $data['front_iframe_height'] ?? null;
-        $user->front_iframe_height_gk = $data['front_iframe_height_gk'] ?? null;
-        $user->back_iframe_height = $data['back_iframe_height'] ?? null;
         $user->organ_id = !empty($data['organ_id']) ? $data['organ_id'] : null;
         $user->email = !empty($data['email']) ? $data['email'] : null;
         $user->mobile = !empty($data['mobile']) ? $data['mobile'] : null;
         $user->bio = !empty($data['bio']) ? $data['bio'] : null;
         $user->about = !empty($data['about']) ? $data['about'] : null;
-        // ------- chat_widget ---------
-        $user->chat_widget = !empty($data['chat_widget']) ? $data['chat_widget'] : null;
         $user->status = !empty($data['status']) ? $data['status'] : null;
         $user->language = !empty($data['language']) ? $data['language'] : null;
-
 
 
         if (!empty($data['password'])) {
@@ -987,18 +945,6 @@ class UserController extends Controller
             $user->ban = false;
             $user->ban_start_at = null;
             $user->ban_end_at = null;
-        }
-
-        if (!empty($data['cross_selling']) and $data['cross_selling'] == '1') {
-            $user->cross_selling = true;
-        } else {
-            $user->cross_selling = false;
-        }
-
-        if (!empty($data['up_selling']) and $data['up_selling'] == '1') {
-            $user->up_selling = true;
-        } else {
-            $user->up_selling = false;
         }
 
         $user->verified = (!empty($data['verified']) and $data['verified'] == '1');
@@ -1336,7 +1282,7 @@ class UserController extends Controller
 
         return redirect('/panel');
     }
-    // +++++++++++++++ exportExcelOrganizations() +++++++++++++++
+
     public function exportExcelOrganizations(Request $request)
     {
         $this->authorize('admin_users_export_excel');
@@ -1347,7 +1293,7 @@ class UserController extends Controller
 
         return Excel::download($usersExport, 'organizations.xlsx');
     }
-    // +++++++++++++++ exportExcelInstructors() +++++++++++++++
+
     public function exportExcelInstructors(Request $request)
     {
         $this->authorize('admin_users_export_excel');
@@ -1358,7 +1304,7 @@ class UserController extends Controller
 
         return Excel::download($usersExport, 'instructors.xlsx');
     }
-    // +++++++++++++++ exportExcelStudents() +++++++++++++++
+
     public function exportExcelStudents(Request $request)
     {
         $this->authorize('admin_users_export_excel');
@@ -1369,18 +1315,72 @@ class UserController extends Controller
 
         return Excel::download($usersExport, 'students.xlsx');
     }
-    // +++++++++++++++ exportExcelStaffs() +++++++++++++++
-    public function exportExcelStaffs(Request $request)
+
+    public function allUsers(Request $request, $is_export_excel = false)
+    {
+        $this->authorize('admin_users_list');
+
+        $query = User::query();
+
+        $totalUsers = deepClone($query)->count();
+        $activeUsers = deepClone($query)->where('status', 'active')->count();
+        $inactiveUsers = deepClone($query)->where('status', 'inactive')->count();
+        $banUsers = deepClone($query)->where('ban', true)
+            ->whereNotNull('ban_end_at')
+            ->where('ban_end_at', '>', time())
+            ->count();
+
+        $userGroups = Group::where('status', 'active')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $roles = Role::all();
+
+        $organizations = User::select('id', 'full_name', 'created_at')
+            ->where('role_name', Role::$organization)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $query = $this->filters($query, $request);
+
+        if ($is_export_excel) {
+            $users = $query->orderBy('users.created_at', 'desc')->get();
+        } else {
+            $users = $query->orderBy('users.created_at', 'desc')
+                ->paginate(10);
+        }
+
+        $users = $this->addUsersExtraInfo($users);
+
+        if ($is_export_excel) {
+            return $users;
+        }
+
+        $data = [
+            'pageTitle' => trans('admin/main.users_list'),
+            'users' => $users,
+            'totalUsers' => $totalUsers,
+            'activeUsers' => $activeUsers,
+            'inactiveUsers' => $inactiveUsers,
+            'banUsers' => $banUsers,
+            'userGroups' => $userGroups,
+            'roles' => $roles,
+            'organizations' => $organizations,
+        ];
+
+        return view('admin.users.all_users', $data);
+    }
+
+    public function exportExcelAllUsers(Request $request)
     {
         $this->authorize('admin_users_export_excel');
-        // ------- start : Get Users -------
-        $staffsRoles = Role::where('is_admin', true)->get();
-        $staffsRoleIds = $staffsRoles->pluck('id')->toArray();
-        // ------- end : Get Users -------
-        $users = User::whereIn('role_id', $staffsRoleIds)->get();
-        $usersExport = new StaffsExport($users);
-        return Excel::download($usersExport, 'staffs.xlsx');
+
+        $users = $this->allUsers($request, true);
+
+        $export = new UsersExport($users);
+        return Excel::download($export, 'users.xlsx');
     }
+
     public function userRegistrationPackage(Request $request, $id)
     {
         $this->authorize('admin_update_user_registration_package');
@@ -1526,289 +1526,4 @@ class UserController extends Controller
 
         return back()->with(['toast' => $toastData]);
     }
-    // ++++++++++++++++++ importStaffs() ++++++++++++++++++
-    public function importStaffs(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls',
-        ]);
-
-        try
-        {
-            $import = new StaffsImport();
-            Excel::import($import, $request->file('excel_file'));
-            // Check for errors after import
-            if ($import->hasErrors())
-            {
-                Log::warning('Import completed with errors', ['errors' => $import->getErrors()]);
-                // Create a MessageBag for errors
-                $errors = new MessageBag();
-                foreach ($import->getErrors() as $error) 
-                {
-                    $errors->add('import', $error); // Add each error under the 'import' key
-                }
-                return redirect()->back()->withErrors($errors);
-            }
-            return redirect()->back()->with('success', 'Staff imported successfully.');
-        }
-        catch (\Exception $e)
-        {
-            Log::error('Import failed: ' . $e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->with('error', 'Error importing staff: ' . $e->getMessage());
-        }
-    }
-    // ++++++++++++++++++ importExcelStudents() ++++++++++++++++++
-    public function importExcelStudents(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls',
-        ]);
-
-        try 
-        {
-            $import = new StudentsImport();
-            Excel::import($import, $request->file('excel_file'));
-            // Check for errors after import
-            if ($import->hasErrors())
-            {
-                Log::warning('Import completed with errors', ['errors' => $import->getErrors()]);
-                // Create a MessageBag for errors
-                $errors = new MessageBag();
-                foreach ($import->getErrors() as $error) 
-                {
-                    $errors->add('import', $error); // Add each error under the 'import' key
-                }
-                return redirect()->back()->withErrors($errors);
-            }
-            return redirect()->back()->with('success', 'Student imported successfully.');
-        } 
-        catch (\Exception $e)
-        {
-            Log::error('Import failed: ' . $e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->with('error', 'Error importing Student ' . $e->getMessage());
-        }
-    }
-    // ++++++++++++++++++ importExcelInstructors() ++++++++++++++++++
-    public function importExcelInstructors(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls',
-        ]);
-
-        try 
-        {
-            $import = new InstructorsImport();
-            Excel::import($import, $request->file('excel_file'));
-            // Check for errors after import
-            if ($import->hasErrors())
-            {
-                Log::warning('Import completed with errors', ['errors' => $import->getErrors()]);
-                // Create a MessageBag for errors
-                $errors = new MessageBag();
-                foreach ($import->getErrors() as $error) 
-                {
-                    $errors->add('import', $error); // Add each error under the 'import' key
-                }
-                return redirect()->back()->withErrors($errors);
-            }
-            return redirect()->back()->with('success', 'Instructor imported successfully.');
-        } 
-        catch (\Exception $e) 
-        {
-            Log::error('Import failed: ' . $e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->with('error', 'Error importing Instructor ' . $e->getMessage());
-        }
-    }
-    // ++++++++++++++++++ importExcelOrganizations() ++++++++++++++++++
-    public function importExcelOrganizations(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|mimes:xlsx,xls',
-        ]);
-
-        try {
-            $import = new OrganizationsImport();
-            Excel::import($import, $request->file('excel_file'));
-            // Check for errors after import
-            if ($import->hasErrors())
-            {
-                Log::warning('Import completed with errors', ['errors' => $import->getErrors()]);
-                // Create a MessageBag for errors
-                $errors = new MessageBag();
-                foreach ($import->getErrors() as $error) {
-                    $errors->add('import', $error); // Add each error under the 'import' key
-                }
-                return redirect()->back()->withErrors($errors);
-            }
-            return redirect()->back()->with('success', 'Organization imported successfully.');
-        } catch (\Exception $e) {
-            Log::error('Import failed: ' . $e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->with('error', 'Error importing Organization ' . $e->getMessage());
-        }
-    }
-    // ++++++++++++++++++++++ downloadTemplateOrganizations() : download excel template ++++++++++++++++++++++
-    public function downloadTemplateOrganizations()
-    {
-        return Excel::download(new class implements FromArray, WithHeadings
-        {
-            public function headings(): array
-            {
-                return [
-                    'full_name', 'mobile', 'email', 'backend_link',
-                    'back_iframe_height', 'frontend_link', 'front_iframe_height', 'bio', 'password',
-                    'facebook_id', 'remember_token', 'logged_count', 'verified', 'financial_approval',
-                    'installment_approval', 'enable_installments', 'disable_cashback',
-                    'enable_registration_bonus', 'registration_bonus_amount',
-                    'cover_img', 'headline', 'about', 'address' , 'status', 'access_content',
-                    'enable_ai_content', 'language', 'currency', 'timezone', 'newsletter',
-                    'public_message', 'identity_scan', 'certificate', 'affiliate', 'can_create_store',
-                    'ban', 'ban_start_at', 'ban_end_at', 'offline', 'offline_message',
-                ];
-            }
-            public function array(): array
-            {
-                // ++++++++++++ If you prefer an empty template, return []; ++++++++++++
-                return [];
-            }
-        }, 'organization_template.xlsx');
-    }
-    // ++++++++++++++++++++++ downloadTemplateStaff() : download excel template ++++++++++++++++++++++
-    public function downloadTemplateStaff()
-    {
-        return Excel::download(new class implements FromArray, WithHeadings
-        {
-            public function headings(): array
-            {
-                return [
-                    'full_name', 'mobile', 'email', 'backend_link',
-                    'back_iframe_height', 'frontend_link', 'front_iframe_height', 'bio', 'password',
-                    'facebook_id', 'remember_token', 'logged_count', 'verified', 'financial_approval',
-                    'installment_approval', 'enable_installments', 'disable_cashback',
-                    'enable_registration_bonus', 'registration_bonus_amount',
-                    'cover_img', 'headline', 'about', 'address' , 'status', 'access_content',
-                    'enable_ai_content', 'language', 'currency', 'timezone', 'newsletter',
-                    'public_message', 'identity_scan', 'certificate', 'affiliate', 'can_create_store',
-                    'ban', 'ban_start_at', 'ban_end_at', 'offline', 'offline_message',
-                ];
-            }
-            public function array(): array
-            {
-                // ++++++++++++ If you prefer an empty template, return []; ++++++++++++
-                return [];
-            }
-        }, 'staff_template.xlsx');
-    }
-    // ++++++++++++++++++++++ downloadTemplateStudents() : download excel template ++++++++++++++++++++++
-    public function downloadTemplateStudents()
-    {
-        return Excel::download(new class implements FromArray, WithHeadings
-        {
-            public function headings(): array
-            {
-                return [
-                    'full_name', 'mobile', 'email', 'backend_link',
-                    'back_iframe_height', 'frontend_link', 'front_iframe_height', 'bio', 'password',
-                    'facebook_id', 'remember_token', 'logged_count', 'verified', 'financial_approval',
-                    'installment_approval', 'enable_installments', 'disable_cashback',
-                    'enable_registration_bonus', 'registration_bonus_amount',
-                    'cover_img', 'headline', 'about', 'address' , 'status', 'access_content',
-                    'enable_ai_content', 'language', 'currency', 'timezone', 'newsletter',
-                    'public_message', 'identity_scan', 'certificate', 'affiliate', 'can_create_store',
-                    'ban', 'ban_start_at', 'ban_end_at', 'offline', 'offline_message',
-                ];
-            }
-            public function array(): array
-            {
-                    // return [
-                    //     [
-                    //         'John Doe', 'Admin', '1', '1', '1234567890', 'john.doe@example.com',
-                    //         'https://backend.example.com', '500', 'https://frontend.example.com', '600',
-                    //         'Experienced admin', 'password123', 'fb123456', 'token123', '5', '1', '0',
-                    //         '0', '1', '0', '1', '100.50', 'settings1', '/cover.jpg', 'Staff Member',
-                    //         'About John', '123 Main St', '1', '2', '3', '4', 'lat:10,long:20', 'online',
-                    //         'active', '1', '0', 'en', 'USD', 'UTC', '1', '0', 'scan.jpg', 'cert.pdf',
-                    //         '1', '0', '0', '1698777600', '1704067200', '0', 'Offline for maintenance',
-                    //     ],
-                    // ];
-                    // ++++++++++++ If you prefer an empty template, return []; ++++++++++++
-                    return [];
-            }
-        }, 'students_template.xlsx');
-    }
-    // ++++++++++++++++++++++ downloadTemplateInstructors() : download excel template ++++++++++++++++++++++
-    public function downloadTemplateInstructors()
-    {
-        return Excel::download(new class implements FromArray, WithHeadings
-        {
-            public function headings(): array
-            {
-                return [
-                    'full_name', 'mobile', 'email', 'backend_link',
-                    'back_iframe_height', 'frontend_link', 'front_iframe_height', 'bio', 'password',
-                    'facebook_id', 'remember_token', 'logged_count', 'verified', 'financial_approval',
-                    'installment_approval', 'enable_installments', 'disable_cashback',
-                    'enable_registration_bonus', 'registration_bonus_amount',
-                    'cover_img', 'headline', 'about', 'address' , 'status', 'access_content',
-                    'enable_ai_content', 'language', 'currency', 'timezone', 'newsletter',
-                    'public_message', 'identity_scan', 'certificate', 'affiliate', 'can_create_store',
-                    'ban', 'ban_start_at', 'ban_end_at', 'offline', 'offline_message',
-                ];
-            }
-            public function array(): array
-            {
-                // ++++++++++++ If you prefer an empty template, return []; ++++++++++++
-                return [];
-            }
-        }, 'instructors_template.xlsx');
-    }
-    // ++++++++++++++++++++++ downloadTemplateUsers() : download excel template ++++++++++++++++++++++
-    // public function downloadTemplateUsers()
-    // {
-    //     return Excel::download(new class implements FromArray, WithHeadings
-    //     {
-    //         public function headings(): array
-    //         {
-    //             return [
-    //                 'full_name', 'role_name', 'role_id', 'mobile', 'email', 'backend_link',
-    //                 'back_iframe_height', 'frontend_link', 'front_iframe_height', 'bio', 'password',
-    //                 'facebook_id', 'remember_token', 'logged_count', 'verified', 'financial_approval',
-    //                 'installment_approval', 'enable_installments', 'disable_cashback',
-    //                 'enable_registration_bonus', 'registration_bonus_amount',
-    //                 'cover_img', 'headline', 'about', 'address' , 'status', 'access_content',
-    //                 'enable_ai_content', 'language', 'currency', 'timezone', 'newsletter',
-    //                 'public_message', 'identity_scan', 'certificate', 'affiliate', 'can_create_store',
-    //                 'ban', 'ban_start_at', 'ban_end_at', 'offline', 'offline_message',
-    //             ];
-    //         }
-    //         public function array(): array
-    //         {
-    //                 // ++++++++++++ Optional: Include a sample row to guide users ++++++++++++
-    //                  return [
-    //                     [
-    //                         '', 'education', '6', '1', '', '',
-    //                         '', '', '', '',
-    //                         '', '', '', '', '', '', '',
-    //                         '', '', '', '', '', '', '', '',
-    //                         '', '', '', '', '', '', '', '',
-    //                         '', '', '', '', '', '', '', '', '', '',
-    //                         '', '', '', '', '', '', '',
-    //                     ],
-    //                 ];
-    //                 // return [
-    //                 //     [
-    //                 //         'John Doe', 'Admin', '1', '1', '1234567890', 'john.doe@example.com',
-    //                 //         'https://backend.example.com', '500', 'https://frontend.example.com', '600',
-    //                 //         'Experienced admin', 'password123', 'fb123456', 'token123', '5', '1', '0',
-    //                 //         '0', '1', '0', '1', '100.50', 'settings1', '/cover.jpg', 'Staff Member',
-    //                 //         'About John', '123 Main St', '1', '2', '3', '4', 'lat:10,long:20', 'online',
-    //                 //         'active', '1', '0', 'en', 'USD', 'UTC', '1', '0', 'scan.jpg', 'cert.pdf',
-    //                 //         '1', '0', '0', '1698777600', '1704067200', '0', 'Offline for maintenance',
-    //                 //     ],
-    //                 // ];
-    //                 // ++++++++++++ If you prefer an empty template, return []; ++++++++++++
-    //                 // return [];
-    //         }
-    //     }, 'users_template.xlsx');
-    // }
-
 }

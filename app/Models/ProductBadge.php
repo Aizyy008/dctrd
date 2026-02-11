@@ -33,5 +33,28 @@ class ProductBadge extends Model implements TranslatableContract
         return $this->hasMany('App\Models\ProductBadgeContent', 'product_badge_id', 'id');
     }
 
+    /********
+     * Helpers
+     * ******/
+
+    public function isActive()
+    {
+        $result = !!$this->enable;
+
+        if ($result) {
+            $time = time();
+
+            if (!empty($this->start_at) and $this->start_at > $time) {
+                $result = false;
+            }
+
+            if (!empty($this->expire_at) and $this->expire_at < $time) {
+                $result = false;
+            }
+        }
+
+        return $result;
+    }
+
 
 }

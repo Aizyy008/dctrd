@@ -73,7 +73,7 @@ class RegistrationPackagesController extends Controller
             'accountStatistics' => $this->handleAccountStatistics($user),
         ];
 
-        return view('web.default.panel.financial.registration_packages', $data);
+        return view('design_1.panel.financial.registration_packages.index', $data);
     }
 
     private function handleAccountStatistics($user)

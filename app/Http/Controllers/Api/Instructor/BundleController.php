@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Instructor;
 
 use App\Exports\WebinarStudents;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\BundleResource;
 use App\Models\Bundle;
 use App\Models\Sale;

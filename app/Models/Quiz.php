@@ -27,6 +27,11 @@ class Quiz extends Model implements TranslatableContract
         return getTranslateAttributeValue($this, 'title');
     }
 
+    public function getDescriptionAttribute()
+    {
+        return getTranslateAttributeValue($this, 'description');
+    }
+
 
     public function quizQuestions()
     {
@@ -113,5 +118,118 @@ class Quiz extends Model implements TranslatableContract
         }
 
         return $result;
+    }
+
+    public function getExpireTimestamp($user = null)
+    {
+        $timestamp = null;
+
+        if (!empty($this->expiry_days)) {
+            $webinar = $this->webinar;
+
+            if (empty($user)) {
+                $user = auth()->user();
+            }
+
+            $sale = $webinar->getSaleItem($user);
+
+            if (!empty($sale)) {
+                $purchaseDate = $sale->created_at;
+                $gift = $sale->gift;
+
+                if (!empty($gift) and !empty($gift->date)) {
+                    $purchaseDate = $gift->date;
+                }
+
+                $purchaseDate = endOfDayTimestamp($purchaseDate);
+
+                $timestamp = strtotime("+{$this->expiry_days} days", $purchaseDate);
+            }
+        }
+
+        return $timestamp;
+    }
+
+    public function checkCanAccessByExpireDays($user = null)
+    {
+        $hasAccess = true;
+
+        if (!empty($this->expiry_days)) {
+            $expireTimestamp = $this->getExpireTimestamp($user);
+
+            $time = time();
+            $hasAccess = (!empty($expireTimestamp) and $expireTimestamp > $time);
+        }
+
+        return $hasAccess;
+    }
+
+    public function checkUserCanStartByAttempt($user = null)
+    {
+        if (empty($user)) {
+            $user = auth()->user();
+        }
+
+        $userQuizDone = QuizzesResult::where('quiz_id', $this->id)
+            ->where('user_id', $user->id)
+            ->get();
+
+        $statusPass = false;
+        foreach ($userQuizDone as $result) {
+            if ($result->status == QuizzesResult::$passed) {
+                $statusPass = true;
+            }
+        }
+
+        // true => user can start
+        // false => user can not start
+        return (!isset($this->attempt) or ($userQuizDone->count() < $this->attempt and !$statusPass));
+    }
+
+    public function hasDescriptiveQuestion()
+    {
+        $questions = $this->quizQuestions()->where('type', QuizzesQuestion::$descriptive)->count();
+
+        return ($questions > 0);
+    }
+
+    public function getStatusByUser($user=null)
+    {
+        if (empty($user)) {
+            $user = auth()->user();
+        }
+
+        $status = "not_participated";
+
+        $userQuizDone = QuizzesResult::where('quiz_id', $this->id)
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($userQuizDone->isNotEmpty()) {
+            $passed = false;
+            foreach ($userQuizDone as $result) {
+                if ($result->status == QuizzesResult::$passed) {
+                    $passed = true;
+                }
+            }
+
+            $status = $passed ? QuizzesResult::$passed : $userQuizDone->first()->status;
+        }
+
+        return $status;
+    }
+
+    public function getQuestionsCount()
+    {
+        $count = 0;
+
+        if ($this->display_limited_questions and !empty($this->display_number_of_questions)) {
+            $count = $this->display_number_of_questions;
+        } else {
+            $count = $this->quizQuestions->count();
+        }
+
+        return $count;
     }
 }

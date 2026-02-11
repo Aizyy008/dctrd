@@ -29,6 +29,8 @@ class PanelAuthenticate
             $aiContentTemplates = AiContentTemplate::query()->where('enable', true)->get();
             view()->share('aiContentTemplates', $aiContentTemplates);
 
+            view()->share('navbarPages', getNavbarLinks());
+
             return $next($request);
         }
 

@@ -18,6 +18,17 @@ use Illuminate\Validation\Rule;
 
 class ChapterController extends Controller
 {
+
+    public function getForm(Request $request)
+    {
+        $html = (string)view()->make("design_1.panel.webinars.create.modals.chapter");
+
+        return response()->json([
+            'code' => 200,
+            'html' => $html
+        ]);
+    }
+
     public function getChapter(Request $request, $id)
     {
         $user = auth()->user();
@@ -120,9 +131,11 @@ class ChapterController extends Controller
             ]);
 
             if (!empty($chapter)) {
+                $locale = $request->get("locale", getDefaultLocale());
+
                 WebinarChapterTranslation::updateOrCreate([
                     'webinar_chapter_id' => $chapter->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                 ]);
@@ -134,6 +147,30 @@ class ChapterController extends Controller
         }
 
         abort(403);
+    }
+
+    public function edit(Request $request, $id)
+    {
+        $user = auth()->user();
+        $chapter = WebinarChapter::where('id', $id)->first();
+
+        $webinar = $chapter->webinar;
+
+        if ($chapter->user_id == $user->id or (!empty($webinar) and $webinar->canAccess($user))) {
+            $data = [
+                'title' => $chapter->title,
+                'chapter' => $chapter,
+            ];
+
+            $html = (string)view()->make("design_1.panel.webinars.create.modals.chapter", $data);
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html
+            ]);
+        }
+
+        abort(404);
     }
 
     public function update(Request $request, $id)
@@ -168,6 +205,7 @@ class ChapterController extends Controller
                 ->first();
 
             if (!empty($chapter)) {
+                $locale = $request->get("locale", getDefaultLocale());
                 $status = (!empty($data['status']) and $data['status'] == 'on') ? WebinarChapter::$chapterActive : WebinarChapter::$chapterInactive;
 
                 $chapter->update([
@@ -177,7 +215,7 @@ class ChapterController extends Controller
 
                 WebinarChapterTranslation::updateOrCreate([
                     'webinar_chapter_id' => $chapter->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                 ]);

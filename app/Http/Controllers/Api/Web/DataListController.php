@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\FeatureWebinar;
 use App\Models\Ticket;
 use App\Models\Webinar;

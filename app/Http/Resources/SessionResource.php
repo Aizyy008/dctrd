@@ -16,6 +16,7 @@ class SessionResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'content_type' => 'session',
             'title' => $this->title,
             'can_view_error' => $this->canViewError(),
             'auth_has_read' => $this->read,

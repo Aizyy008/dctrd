@@ -10,7 +10,6 @@ use App\Models\DiscountCourse;
 use App\Models\DiscountGroup;
 use App\Models\DiscountUser;
 use App\Models\Group;
-use App\Models\Product;
 use App\Models\Role;
 use App\User;
 use Illuminate\Http\Request;
@@ -64,6 +63,7 @@ class DiscountController extends Controller
         $to = $request->get('to');
         $search = $request->get('search');
         $user_ids = $request->get('user_ids', []);
+        $status = $request->get('status');
         $sort = $request->get('sort');
 
 
@@ -77,7 +77,20 @@ class DiscountController extends Controller
         }
 
         if (isset($search)) {
-            $query = $query->where('name', 'like', '%' . $search . '%');
+            $query->where(function ($query) use ($search) {
+                $query->where('title', 'like', '%' . $search . '%');
+            });
+        }
+
+        if (!empty($status)) {
+            $time = time();
+
+            if ($status == 'expired') {
+                $query->where('expired_at', '<', $time);
+            } else if ($status == 'active') {
+                $query->where('status', 'active');
+                $query->where('expired_at', '>', $time);
+            }
         }
 
         if (!empty($sort)) {
@@ -145,14 +158,12 @@ class DiscountController extends Controller
         $this->authorize('admin_discount_codes_create');
 
         $userGroups = Group::orderBy('created_at', 'desc')->where('status', 'active')->get();
-        // +++++++++++++++++++ products ++++++++++++++++++
-        $productsGroups = Product::with('translations')->orderBy('created_at', 'desc')->where('status', 'active')->get();
+
         $data = [
             'pageTitle' => trans('admin/main.new_discount_title'),
             'userGroups' => $userGroups,
-            'selectedProductIds' => [], // No selected products
-            'productsGroups' => $productsGroups,
         ];
+
         return view('admin.financial.discount.new', $data);
     }
 
@@ -170,8 +181,6 @@ class DiscountController extends Controller
             'amount' => 'nullable',
             'count' => 'nullable',
             'expired_at' => 'required',
-            'products_ids' => 'nullable|array',
-            'products_ids.*' => 'exists:products,id',
         ]);
 
         $data = $request->all();
@@ -203,11 +212,6 @@ class DiscountController extends Controller
             'expired_at' => $expiredAt->getTimestamp(),
             'created_at' => time(),
         ]);
-        // ======== products discount : Attach products to discount ========
-        if ($request->source == 'product' && $request->has('products_ids'))
-        {
-            $discount->discount_coupon_product()->sync($request->products_ids);
-        }
 
         $this->handleRelationItems($discount, $data);
 
@@ -283,10 +287,6 @@ class DiscountController extends Controller
         if (!empty($discount->discountGroups)) {
             $discountGroupIds = $discount->discountGroups->pluck('group_id')->toArray();
         }
-        // ++++++++++++++ discount coupon products ++++++++++++++
-        $selectedProductIds = $discount->discount_coupon_product->pluck('id')->toArray(); // Get associated products
-        // +++++++++++++++++++ products ++++++++++++++++++
-        $productsGroups = Product::with('translations')->orderBy('created_at', 'desc')->where('status', 'active')->get();
 
 
         $data = [
@@ -295,10 +295,6 @@ class DiscountController extends Controller
             'userDiscounts' => $userDiscounts,
             'userGroups' => $userGroups,
             'discountGroupIds' => $discountGroupIds,
-            // ======== discount coupon products ========
-            'selectedProductIds' => $selectedProductIds,
-            // ======== products ========
-            'productsGroups' => $productsGroups,
         ];
 
         return view('admin.financial.discount.new', $data);
@@ -360,11 +356,7 @@ class DiscountController extends Controller
         DiscountGroup::where('discount_id', $discount->id)->delete();
 
         $this->handleRelationItems($discount, $data);
-        // ======== products discount coupons : Attach products to discount ========
-        if ($request->source == 'product' && $request->has('products_ids'))
-        {
-            $discount->discount_coupon_product()->sync($request->products_ids);
-        }
+
         return redirect(getAdminPanelUrl() . '/financial/discounts');
     }
 
@@ -372,11 +364,7 @@ class DiscountController extends Controller
     {
         $this->authorize('admin_discount_codes_delete');
 
-        $discount = Discount::find($id);
-        // =========== products discount coupons : Detach all related products before deleting the discount
-        $discount->discount_coupon_product()->detach();
-        // =========== delete "discount" ===========
-        $discount->delete();
+        Discount::find($id)->delete();
 
         return redirect(getAdminPanelUrl() . '/financial/discounts');
     }

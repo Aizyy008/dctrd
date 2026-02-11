@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Instructor;
 
 use App\Exports\WebinarStudents;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Category;
 use App\Models\FAQ;
 use App\Models\File;
@@ -532,15 +532,15 @@ class WebinarsController extends Controller
 
         $webinar->update($data);
 
-        $url = '/panel/webinars';
+        $url = '/panel/courses';
         if ($getNextStep) {
             $nextStep = (!empty($getStep) and $getStep > 0) ? $getStep : $currentStep + 1;
 
-            $url = '/panel/webinars/' . $webinar->id . '/step/' . (($nextStep <= 8) ? $nextStep : 8);
+            $url = '/panel/courses/' . $webinar->id . '/step/' . (($nextStep <= 8) ? $nextStep : 8);
         }
 
         if ($webinarRulesRequired) {
-            $url = '/panel/webinars/' . $webinar->id . '/step/8';
+            $url = '/panel/courses/' . $webinar->id . '/step/8';
 
             return redirect($url)->withErrors(['rules' => trans('validation.required', ['attribute' => 'rules'])]);
         }
@@ -802,15 +802,15 @@ class WebinarsController extends Controller
 
         $webinar->update($data);
 
-        $url = '/panel/webinars';
+        $url = '/panel/courses';
         if ($getNextStep) {
             $nextStep = (!empty($getStep) and $getStep > 0) ? $getStep : $currentStep + 1;
 
-            $url = '/panel/webinars/' . $webinar->id . '/step/' . (($nextStep <= 8) ? $nextStep : 8);
+            $url = '/panel/courses/' . $webinar->id . '/step/' . (($nextStep <= 8) ? $nextStep : 8);
         }
 
         if ($webinarRulesRequired) {
-            $url = '/panel/webinars/' . $webinar->id . '/step/8';
+            $url = '/panel/courses/' . $webinar->id . '/step/8';
 
             return redirect($url)->withErrors(['rules' => trans('validation.required', ['attribute' => 'rules'])]);
         }
@@ -871,7 +871,7 @@ class WebinarsController extends Controller
 
             $newWebinar = Webinar::create($new);
 
-            return redirect('/panel/webinars/' . $newWebinar->id . '/edit');
+            return redirect('/panel/courses/' . $newWebinar->id . '/edit');
         }
 
         abort(404);

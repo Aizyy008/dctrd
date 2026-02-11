@@ -30,7 +30,6 @@ class SocialiteController extends Controller
     /**
      * Create a new controller instance.
      *
-     * @return void
      */
     public function redirectToGoogle()
     {
@@ -47,9 +46,10 @@ class SocialiteController extends Controller
         try {
             $account = Socialite::driver('google')->user();
 
-            $user = User::where('google_id', $account->id)
-                ->orWhere('email', $account->email)
-                ->first();
+            $user = User::query()->where(function ($query) use ($account) {
+                $query->where('google_id', $account->id)
+                    ->orWhere('email', $account->email);
+            })->first();
 
             if (empty($user)) {
                 $user = User::create([
@@ -80,9 +80,11 @@ class SocialiteController extends Controller
                 'google_id' => $account->id,
             ]);
 
-            Auth::login($user);
+            Auth::loginUsingId($user->id);
 
-            return redirect('/');
+            $loginController = (new LoginController());
+            return $loginController->afterLogged($request, true);
+
         } catch (Exception $e) {
             $toastData = [
                 'title' => trans('public.request_failed'),
@@ -96,7 +98,6 @@ class SocialiteController extends Controller
     /**
      * Create a redirect method to facebook api.
      *
-     * @return void
      */
     public function redirectToFacebook()
     {
@@ -113,7 +114,7 @@ class SocialiteController extends Controller
         try {
             $account = Socialite::driver('facebook')->user();
 
-            $user = User::where('facebook_id', $account->id)->first();
+            $user = User::query()->where('facebook_id', $account->id)->first();
 
             if (empty($user)) {
                 $user = User::create([
@@ -140,8 +141,11 @@ class SocialiteController extends Controller
                 }
             }
 
-            Auth::login($user);
-            return redirect('/');
+            Auth::loginUsingId($user->id);
+
+            $loginController = (new LoginController());
+            return $loginController->afterLogged($request, true);
+
         } catch (Exception $e) {
             $toastData = [
                 'title' => trans('public.request_failed'),

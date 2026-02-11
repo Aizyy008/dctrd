@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\MorphTypesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\traits\CheckContentLimitationTrait;
+use App\Mixins\Logs\VisitLogMixin;
 use App\Models\AdvertisingBanner;
 use App\Models\Category;
 use App\Models\Favorite;
@@ -20,14 +22,17 @@ class UpcomingCoursesController extends Controller
 
     public function index(Request $request)
     {
-        $query = UpcomingCourse::query()
-            ->where('status', UpcomingCourse::$active);
+        $query = UpcomingCourse::query()->where('status', UpcomingCourse::$active);
 
-        $upcomingCoursesCount = deepClone($query)->count();
+        $filterMaxPrice = (deepClone($query)->max('price') + 10) * 10;
 
         $query = $this->handleFilters($request, $query);
 
-        $upcomingCourses = $query->paginate(9);
+        $getListData = $this->getListData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
 
         $categories = Category::whereNull('parent_id')
             ->with([
@@ -37,15 +42,9 @@ class UpcomingCoursesController extends Controller
             ])
             ->get();
 
-        $selectedCategory = null;
-
-        if (!empty($request->get('category_id'))) {
-            $selectedCategory = Category::where('id', $request->get('category_id'))->first();
-        }
-
 
         $seoSettings = getSeoMetas('upcoming_courses_lists');
-        $pageTitle = $seoSettings['title'] ?? '';
+        $pageTitle = $seoSettings['title'] ?? trans('update.upcoming_courses');
         $pageDescription = $seoSettings['description'] ?? '';
         $pageRobot = getPageRobot('upcoming_courses_lists');
 
@@ -54,23 +53,27 @@ class UpcomingCoursesController extends Controller
             'pageDescription' => $pageDescription,
             'pageRobot' => $pageRobot,
             'categoriesLists' => $categories,
-            'selectedCategory' => $selectedCategory,
-            'upcomingCourses' => $upcomingCourses,
-            'upcomingCoursesCount' => $upcomingCoursesCount,
+            'seoSettings' => $seoSettings,
+            'pageBasePath' => "/upcoming_courses",
+            'filterMaxPrice' => ($filterMaxPrice > 1000) ? $filterMaxPrice : 1000,
         ];
 
-        return view(getTemplate() . '.upcoming_courses.lists', $data);
+        $data = array_merge($data, $getListData);
+
+        return view('design_1.web.upcoming_courses.lists.index', $data);
     }
 
     private function handleFilters(Request $request, $query)
     {
-        $free = $request->get('free');
-        $released = $request->get('released');
+        $free = $request->get('free_courses');
+        $released = $request->get('released_courses');
         $sort = $request->get('sort');
         $type = $request->get('type');
         $moreOptions = $request->get('moreOptions');
         $categoryId = $request->get('category_id', null);
         $filterOption = $request->get('filter_option', null);
+        $minPrice = $request->get('min_price', null);
+        $maxPrice = $request->get('max_price', null);
 
 
         if (!empty($free)) {
@@ -88,6 +91,14 @@ class UpcomingCoursesController extends Controller
             $query->whereIn('type', $type);
         }
 
+        if (!empty($minPrice)) {
+            $query->where('price', '>', $minPrice);
+        }
+
+        if (!empty($maxPrice)) {
+            $query->where('price', '<=', $maxPrice);
+        }
+
         if (!empty($moreOptions) and count($moreOptions)) {
             if (in_array('supported_courses', $moreOptions)) {
                 $query->where('support', true);
@@ -99,6 +110,18 @@ class UpcomingCoursesController extends Controller
 
             if (in_array('certificate_included', $moreOptions)) {
                 $query->where('certificate', true);
+            }
+
+            if (in_array('assignment_included', $moreOptions)) {
+                $query->where('assignments', true);
+            }
+
+            if (in_array('course_forum_included', $moreOptions)) {
+                $query->where('forum', true);
+            }
+
+            if (in_array('point_courses', $moreOptions)) {
+                $query->where('points', true);
             }
         }
 
@@ -143,6 +166,43 @@ class UpcomingCoursesController extends Controller
         return $query;
     }
 
+    private function getListData(Request $request, $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = 9;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $upcomingCourses = $query->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $upcomingCourses, $total, $count);
+        }
+
+        return [
+            'upcomingCourses' => $upcomingCourses,
+            'pagination' => $this->makePagination($request, $upcomingCourses, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $upcomingCourses, $total, $count)
+    {
+        $html = (string)view()->make('design_1.web.upcoming_courses.components.cards.grids.index', [
+            'upcomingCourses' => $upcomingCourses,
+            'gridCardClassName' => "col-12 col-md-6 col-lg-4 mt-24",
+            'withoutStyles' => true
+        ]);
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $upcomingCourses, $total, $count, true)
+        ]);
+    }
+
+
     public function show(Request $request, $slug)
     {
         $user = null;
@@ -161,6 +221,9 @@ class UpcomingCoursesController extends Controller
             ->where('slug', $slug)
             ->where('status', UpcomingCourse::$active)
             ->with([
+                'webinar' => function ($query) {
+                    $query->where('status', 'active');
+                },
                 'tags',
                 'followers',
                 'faqs' => function ($query) {
@@ -169,18 +232,21 @@ class UpcomingCoursesController extends Controller
                 'extraDescriptions' => function ($query) {
                     $query->orderBy('order', 'asc');
                 },
+                'teacher' => function ($query) {
+                    $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio', 'about', 'verified');
+                },
                 'comments' => function ($query) {
                     $query->where('status', 'active');
                     $query->whereNull('reply_id');
                     $query->with([
                         'user' => function ($query) {
-                            $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
+                            $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio');
                         },
                         'replies' => function ($query) {
                             $query->where('status', 'active');
                             $query->with([
                                 'user' => function ($query) {
-                                    $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
+                                    $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio');
                                 }
                             ]);
                         }
@@ -209,10 +275,10 @@ class UpcomingCoursesController extends Controller
             $followingUsers = UpcomingCourseFollower::query()
                 ->where('upcoming_course_id', $upcomingCourse->id)
                 ->inRandomOrder()
-                ->take(3)
+                ->take(4)
                 ->with([
                     'user' => function ($query) {
-                        $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
+                        $query->select('id', 'full_name', 'role_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio');
                     }
                 ])
                 ->get();
@@ -222,6 +288,12 @@ class UpcomingCoursesController extends Controller
                 ->whereIn('position', ['upcoming_course', 'upcoming_course_sidebar'])
                 ->get();
 
+            $commentController = new CommentController();
+            $upcomingCourseComments = $commentController->getComments($request, 'upcoming_course', $upcomingCourse->id);
+
+            // Visit Logs
+            $visitLogMixin = new VisitLogMixin();
+            $visitLogMixin->storeVisit($request, $upcomingCourse->creator_id, $upcomingCourse->id, MorphTypesEnum::UPCOMING_COURSE);
 
             $pageRobot = getPageRobot('upcoming_course_show'); // index
 
@@ -236,9 +308,10 @@ class UpcomingCoursesController extends Controller
                 'advertisingBannersSidebar' => $advertisingBanners->where('position', 'upcoming_course_sidebar'),
                 'followingUsers' => $followingUsers,
                 'followingUsersCount' => $followingUsersCount,
+                'upcomingCourseComments' => $upcomingCourseComments,
             ];
 
-            return view('web.default.upcoming_courses.show', $data);
+            return view('design_1.web.upcoming_courses.show.index', $data);
         }
 
         abort(404);
@@ -290,6 +363,7 @@ class UpcomingCoursesController extends Controller
 
             return response()->json([
                 'code' => 200,
+                'title' => trans('public.request_success'),
                 'msg' => $add ? trans('update.the_course_has_been_added_to_your_follow_list') : trans('update.the_course_has_been_removed_from_your_follow_list')
             ]);
         }
@@ -372,5 +446,49 @@ class UpcomingCoursesController extends Controller
         }
 
         abort(422);
+    }
+
+    public function getShareModal($slug)
+    {
+        $upcomingCourse = UpcomingCourse::query()->where('slug', $slug)
+            ->where('status', 'active')
+            ->first();
+
+        if (!empty($upcomingCourse)) {
+            $data = [
+                'upcomingCourse' => $upcomingCourse
+            ];
+
+            $html = (string)view("design_1.web.upcoming_courses.show.includes.modals.share_modal", $data)->render();
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html,
+            ]);
+        }
+
+        return response()->json([], 400);
+    }
+
+    public function getReportModal($slug)
+    {
+        $upcomingCourse = UpcomingCourse::query()->where('slug', $slug)
+            ->where('status', 'active')
+            ->first();
+
+        if (!empty($upcomingCourse)) {
+            $data = [
+                'upcomingCourse' => $upcomingCourse
+            ];
+
+            $html = (string)view("design_1.web.upcoming_courses.show.includes.modals.report_modal", $data)->render();
+
+            return response()->json([
+                'code' => 200,
+                'html' => $html,
+            ]);
+        }
+
+        return response()->json([], 400);
     }
 }

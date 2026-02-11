@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
+use App\Mixins\Logs\UserLoginHistoryMixin;
 use App\Models\Accounting;
 use App\Models\Cart;
 use App\Models\Order;
@@ -262,7 +263,11 @@ class PaymentsController extends Controller
 
     public function webChargeRender(User $user)
     {
-        Auth::login($user);
+        Auth::login($user, true);
+
+        $userLoginHistoryMixin = new UserLoginHistoryMixin();
+        $userLoginHistoryMixin->storeUserLoginHistory($user);
+
         return redirect('/panel/financial/account');
 
     }

@@ -5,17 +5,18 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\NotificationStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class NotificationsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize("panel_notifications_lists");
 
         $user = auth()->user();
 
-        $notifications = Notification::where(function ($query) use ($user) {
+        $query = Notification::query()->where(function ($query) use ($user) {
             $query->where('notifications.user_id', $user->id)
                 ->where('notifications.type', 'single');
         })->orWhere(function ($query) use ($user) {
@@ -28,13 +29,13 @@ class NotificationsController extends Controller
 
         $userGroup = $user->userGroup()->first();
         if (!empty($userGroup)) {
-            $notifications->orWhere(function ($query) use ($userGroup) {
+            $query->orWhere(function ($query) use ($userGroup) {
                 $query->where('notifications.group_id', $userGroup->group_id)
                     ->where('notifications.type', 'group');
             });
         }
 
-        $notifications->orWhere(function ($query) use ($user) {
+        $query->orWhere(function ($query) use ($user) {
             $query->whereNull('notifications.user_id')
                 ->whereNull('notifications.group_id')
                 ->where(function ($query) use ($user) {
@@ -49,29 +50,71 @@ class NotificationsController extends Controller
         });
 
         /* Get Course Students Notifications */
-        $userBoughtWebinarsIds = $user->getAllPurchasedWebinarsIds();
+        $userBoughtWebinarsIds = $user->getPurchasedCoursesIds();
 
         if (!empty($userBoughtWebinarsIds)) {
-            $notifications->orWhere(function ($query) use ($userBoughtWebinarsIds) {
+            $query->orWhere(function ($query) use ($userBoughtWebinarsIds) {
                 $query->whereIn('webinar_id', $userBoughtWebinarsIds)
                     ->where('type', 'course_students');
             });
         }
 
-        $notifications = $notifications->leftJoin('notifications_status', 'notifications.id', '=', 'notifications_status.notification_id')
-            ->selectRaw('notifications.*, count(notifications_status.notification_id) AS `count`')
-            ->with(['notificationStatus'])
-            ->groupBy('notifications.id')
-            ->orderBy('count', 'asc')
-            ->orderBy('notifications.created_at', 'DESC')
-            ->paginate(10);
+        $getListData = $this->getListsData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
 
         $data = [
             'pageTitle' => trans('panel.notifications'),
-            'notifications' => $notifications
+            ...$getListData,
         ];
 
-        return view(getTemplate() . '.panel.notifications.index', $data);
+        return view('design_1.panel.notifications.index', $data);
+    }
+
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $notifications = $query
+            ->leftJoin('notifications_status', 'notifications.id', '=', 'notifications_status.notification_id')
+            ->selectRaw('notifications.*, count(notifications_status.notification_id) AS `item_count`')
+            ->with(['notificationStatus'])
+            ->groupBy('notifications.id')
+            ->orderBy('item_count', 'asc')
+            ->orderBy('notifications.created_at', 'DESC')
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $notifications, $total, $count);
+        }
+
+        return [
+            'notifications' => $notifications,
+            'pagination' => $this->makePagination($request, $notifications, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $notifications, $total, $count)
+    {
+        $html = "";
+
+        foreach ($notifications as $notificationRow) {
+            $html .= (string)view()->make('design_1.panel.notifications.notif_card', ['notification' => $notificationRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $notifications, $total, $count, true)
+        ]);
     }
 
     public function saveStatus($id)

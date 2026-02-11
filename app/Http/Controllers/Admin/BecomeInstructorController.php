@@ -9,6 +9,8 @@ use App\Models\Order;
 use App\Models\RegistrationPackage;
 use App\Models\Role;
 use App\Models\Sale;
+use App\Models\Setting;
+use Illuminate\Http\Request;
 
 class BecomeInstructorController extends Controller
 {
@@ -90,4 +92,24 @@ class BecomeInstructorController extends Controller
             }
         }
     }
+
+    public function settings(Request $request)
+    {
+        $this->authorize('admin_instructor_finder_settings');
+
+        removeContentLocale();
+
+        $setting = Setting::where('page', 'general')
+            ->where('name', Setting::$becomeInstructorSettingsName)
+            ->first();
+
+        $data = [
+            'pageTitle' => trans('update.settings'),
+            'setting' => $setting,
+            'selectedLocale' => mb_strtolower($request->get('locale', Setting::$defaultSettingsLocale)),
+        ];
+
+        return view('admin.users.become_instructors.settings.index', $data);
+    }
+
 }

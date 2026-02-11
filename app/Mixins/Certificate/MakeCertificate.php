@@ -12,6 +12,24 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class MakeCertificate
 {
+
+    public function showCertificateByType($certificate)
+    {
+        if ($certificate->type == "quiz") {
+            $quizResult = $certificate->quizzesResult;
+
+            if (!empty($quizResult)) {
+                return $this->makeQuizCertificate($quizResult);
+            }
+
+            abort(404);
+        } else if ($certificate->type == "course") {
+            return $this->makeCourseCertificate($certificate);
+        } else if ($certificate->type == "bundle") {
+            return $this->makeBundleCertificate($certificate);
+        }
+    }
+
     public function makeQuizCertificate($quizResult)
     {
         $template = CertificateTemplate::where('status', 'publish')
@@ -51,6 +69,7 @@ class MakeCertificate
         $certificate = Certificate::where('quiz_id', $quiz->id)
             ->where('student_id', $user->id)
             ->where('quiz_result_id', $quizResult->id)
+            ->orderBy('created_at', 'desc')
             ->first();
 
         $data = [
@@ -308,6 +327,7 @@ class MakeCertificate
     {
         $certificate = Certificate::where('webinar_id', $course->id)
             ->where('student_id', $user->id)
+            ->orderBy('created_at', 'desc')
             ->first();
 
         $data = [
@@ -335,6 +355,7 @@ class MakeCertificate
     {
         $certificate = Certificate::where('bundle_id', $bundle->id)
             ->where('student_id', $user->id)
+            ->orderBy('created_at', 'desc')
             ->first();
 
         $data = [

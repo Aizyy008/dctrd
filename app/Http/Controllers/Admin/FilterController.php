@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Filter;
 use App\Models\FilterOption;
-use App\Models\ProductSpecification;
 use App\Models\Translation\FilterOptionTranslation;
 use App\Models\Translation\FilterTranslation;
 use Illuminate\Http\Request;
@@ -75,7 +74,7 @@ class FilterController extends Controller
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl() . '/filters');
+        return redirect(getAdminPanelUrl().'/filters');
     }
 
     public function edit(Request $request, $id)
@@ -143,7 +142,7 @@ class FilterController extends Controller
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl() . '/filters');
+        return redirect(getAdminPanelUrl().'/filters');
     }
 
     public function setSubFilters(Filter $filter, $filterOptions, $locale)
@@ -215,17 +214,5 @@ class FilterController extends Controller
         return response()->json([
             'filters' => $filters,
         ], 200);
-    }
-
-    public function getSpecifications($id)
-    {
-        $specifications = ProductSpecification::all();
-        $specifications_categories = [];
-        foreach ($specifications as $sp) {
-            if (in_array($id,$sp->categories->pluck('category_id')->toArray())) {
-                $specifications_categories[] = $sp->id;
-            }
-        }
-        return response()->json(ProductSpecification::whereIn('id',$specifications_categories)->with('multiValues')->get());
     }
 }

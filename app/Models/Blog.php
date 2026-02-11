@@ -21,8 +21,8 @@ class Blog extends Model implements TranslatableContract
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 
-    public $morphsFunctions = ['productBadgeContent', 'deleteRequest'];
-    public $translatedAttributes = ['title', 'description', 'meta_description', 'content'];
+    public $morphsFunctions = ['productBadgeContents', 'deleteRequest', 'relatedPosts'];
+    public $translatedAttributes = ['title', 'subtitle', 'description', 'meta_description', 'content'];
 
     /**
      * Return the sluggable configuration array for this model.
@@ -63,9 +63,19 @@ class Blog extends Model implements TranslatableContract
         return $this->morphOne(ContentDeleteRequest::class, 'targetable');
     }
 
-    public function productBadgeContent()
+    public function productBadgeContents()
     {
         return $this->morphMany(ProductBadgeContent::class, 'targetable');
+    }
+
+    public function relatedPosts()
+    {
+        return $this->morphMany(RelatedPost::class, 'targetable');
+    }
+
+    public function visits()
+    {
+        return $this->morphMany(VisitLog::class, 'targetable');
     }
 
 
@@ -77,6 +87,11 @@ class Blog extends Model implements TranslatableContract
     public function getTitleAttribute()
     {
         return getTranslateAttributeValue($this, 'title');
+    }
+
+    public function getSubtitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'subtitle');
     }
 
     public function getDescriptionAttribute()
@@ -101,19 +116,30 @@ class Blog extends Model implements TranslatableContract
             ->twitter()
             ->whatsapp()
             ->telegram()
+            ->linkedin()
             ->getRawLinks();
 
         return !empty($link[$social]) ? $link[$social] : '';
     }
 
-    // Cross Selling
-    public function crossSellings()
+    public function allBadges()
     {
-        return $this->morphMany(CrossSellingRelation::class, 'source');
-    }
+        $badges = collect();
 
-    public function recommendedFor()
-    {
-        return $this->morphMany(CrossSellingRelation::class, 'target');
+        $productBadgeContents = $this->productBadgeContents()
+            ->whereHas('badge', function ($query) {
+                $query->where('enable', true);
+            })
+            ->get();
+
+        foreach ($productBadgeContents as $productBadgeContent) {
+            $badge = $productBadgeContent->badge;
+
+            if ($badge->isActive()) {
+                $badges->push($productBadgeContent->badge);
+            }
+        }
+
+        return $badges;
     }
 }

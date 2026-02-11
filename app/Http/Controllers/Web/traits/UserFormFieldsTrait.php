@@ -40,7 +40,7 @@ trait UserFormFieldsTrait
                     }
                 }
 
-                $html = (string)view()->make('web.default.forms.handle_field', ['fields' => $form->fields, 'values' => $values]);
+                $html = (string)view()->make('design_1.web.forms.components.handle_field', ['fields' => $form->fields, 'values' => $values]);
             }
         }
 

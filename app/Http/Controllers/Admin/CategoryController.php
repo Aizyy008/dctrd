@@ -47,7 +47,7 @@ class CategoryController extends Controller
         $this->authorize('admin_categories_create');
 
         $this->validate($request, [
-            'title' => 'required|min:3|max:128',
+            'title' => 'required|min:3|max:255',
             'slug' => 'nullable|max:255|unique:categories,slug',
         ]);
 
@@ -62,6 +62,10 @@ class CategoryController extends Controller
         $category = Category::create([
             'slug' => $data['slug'] ?? Category::makeSlug($data['title']),
             'icon' => !empty($data['icon']) ? $data['icon'] : null,
+            'cover_image' => !empty($data['cover_image']) ? $data['cover_image'] : null,
+            'icon2' => !empty($data['icon2']) ? $data['icon2'] : null,
+            'icon2_box_color' => !empty($data['icon2_box_color']) ? $data['icon2_box_color'] : null,
+            'overlay_image' => !empty($data['overlay_image']) ? $data['overlay_image'] : null,
             'order' => $order,
         ]);
 
@@ -70,6 +74,9 @@ class CategoryController extends Controller
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => !empty($data['subtitle']) ? $data['subtitle'] : null,
+            'bottom_seo_title' => !empty($data['bottom_seo_title']) ? $data['bottom_seo_title'] : null,
+            'bottom_seo_content' => !empty($data['bottom_seo_content']) ? $data['bottom_seo_content'] : null,
         ]);
 
         $hasSubCategories = (!empty($request->get('has_sub')) and $request->get('has_sub') == 'on');
@@ -120,6 +127,10 @@ class CategoryController extends Controller
             'icon' => !empty($data['icon']) ? $data['icon'] : null,
             'slug' => $data['slug'] ?? Category::makeSlug($data['title']),
             'order' => $data['order'] ?? $category->order,
+            'cover_image' => !empty($data['cover_image']) ? $data['cover_image'] : null,
+            'icon2' => !empty($data['icon2']) ? $data['icon2'] : null,
+            'icon2_box_color' => !empty($data['icon2_box_color']) ? $data['icon2_box_color'] : null,
+            'overlay_image' => !empty($data['overlay_image']) ? $data['overlay_image'] : null,
         ]);
 
         CategoryTranslation::updateOrCreate([
@@ -127,6 +138,9 @@ class CategoryController extends Controller
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => !empty($data['subtitle']) ? $data['subtitle'] : null,
+            'bottom_seo_title' => !empty($data['bottom_seo_title']) ? $data['bottom_seo_title'] : null,
+            'bottom_seo_content' => !empty($data['bottom_seo_content']) ? $data['bottom_seo_content'] : null,
         ]);
 
         $hasSubCategories = (!empty($request->get('has_sub')) and $request->get('has_sub') == 'on');
@@ -137,7 +151,12 @@ class CategoryController extends Controller
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl() . '/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.category_updated_successful'),
+            'status' => 'success'
+        ];
+        return back()->with(['toast' => $toastData]);
     }
 
     public function destroy(Request $request, $id)
@@ -214,9 +233,13 @@ class CategoryController extends Controller
 
                     if (!empty($check)) {
                         $check->update([
+                            'slug' => $slug,
                             'order' => $order,
                             'icon' => $subCategory['icon'] ?? null,
-                            'slug' => $slug,
+                            'cover_image' => $subCategory['cover_image'] ?? null,
+                            'icon2' => !empty($subCategory['icon2']) ? $subCategory['icon2'] : null,
+                            'icon2_box_color' => !empty($subCategory['icon2_box_color']) ? $subCategory['icon2_box_color'] : null,
+                            'overlay_image' => !empty($subCategory['overlay_image']) ? $subCategory['overlay_image'] : null,
                         ]);
 
                         CategoryTranslation::updateOrCreate([
@@ -224,14 +247,21 @@ class CategoryController extends Controller
                             'locale' => mb_strtolower($locale),
                         ], [
                             'title' => $subCategory['title'],
+                            'subtitle' => !empty($subCategory['subtitle']) ? $subCategory['subtitle'] : null,
+                            'bottom_seo_title' => !empty($subCategory['bottom_seo_title']) ? $subCategory['bottom_seo_title'] : null,
+                            'bottom_seo_content' => !empty($subCategory['bottom_seo_content']) ? $subCategory['bottom_seo_content'] : null,
                         ]);
                     } else {
 
                         $new = Category::create([
                             'parent_id' => $category->id,
                             'slug' => $slug,
-                            'icon' => $subCategory['icon'] ?? null,
                             'order' => $order,
+                            'icon' => $subCategory['icon'] ?? null,
+                            'cover_image' => $subCategory['cover_image'] ?? null,
+                            'icon2' => !empty($subCategory['icon2']) ? $subCategory['icon2'] : null,
+                            'icon2_box_color' => !empty($subCategory['icon2_box_color']) ? $subCategory['icon2_box_color'] : null,
+                            'overlay_image' => !empty($subCategory['overlay_image']) ? $subCategory['overlay_image'] : null,
                         ]);
 
                         CategoryTranslation::updateOrCreate([
@@ -239,6 +269,9 @@ class CategoryController extends Controller
                             'locale' => mb_strtolower($locale),
                         ], [
                             'title' => $subCategory['title'],
+                            'subtitle' => !empty($subCategory['subtitle']) ? $subCategory['subtitle'] : null,
+                            'bottom_seo_title' => !empty($subCategory['bottom_seo_title']) ? $subCategory['bottom_seo_title'] : null,
+                            'bottom_seo_content' => !empty($subCategory['bottom_seo_content']) ? $subCategory['bottom_seo_content'] : null,
                         ]);
 
                         $oldIds[] = $new->id;

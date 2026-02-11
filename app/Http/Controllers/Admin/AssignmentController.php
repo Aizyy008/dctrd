@@ -245,12 +245,18 @@ class AssignmentController extends Controller
                 ]);
 
 
-                $this->handleAttachments($data['attachments'], $webinar->creator_id, $assignment->id);
+                if (!empty($data['attachments']) and count($data['attachments'])) {
+                    $this->handleAttachments($data['attachments'], $webinar->creator_id, $assignment->id);
+                }
 
                 if (!empty($assignment->chapter_id)) {
                     WebinarChapterItem::makeItem($webinar->creator_id, $assignment->chapter_id, $assignment->id, WebinarChapterItem::$chapterAssignment);
                 }
             }
+
+            $webinar->update([
+                'updated_at' => time()
+            ]);
 
             return response()->json([
                 'code' => 200,
@@ -344,7 +350,12 @@ class AssignmentController extends Controller
                 'description' => $data['description'],
             ]);
 
-            $this->handleAttachments($data['attachments'], $assignment->creator_id, $assignment->id);
+            $this->handleAttachments($data['attachments'] ?? [], $assignment->creator_id, $assignment->id);
+
+
+            $assignment->webinar->update([
+                'updated_at' => time()
+            ]);
 
             removeContentLocale();
 
@@ -373,9 +384,12 @@ class AssignmentController extends Controller
             $assignment->delete();
         }
 
-        return response()->json([
-            'code' => 200
-        ], 200);
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.assigment_deleted_successfully'),
+            'status' => 'success'
+        ];
+        return back()->with(['toast' => $toastData]);
     }
 
     private function handleAttachments($attachments, $creatorId, $assignmentId)

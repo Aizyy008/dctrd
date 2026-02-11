@@ -8,7 +8,6 @@ use App\Http\Controllers\Admin\traits\WebinarChangeCreator;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Panel\Traits\VideoDemoTrait;
 use App\Http\Controllers\Panel\WebinarStatisticController;
-use App\Imports\WebinarsImport;
 use App\Mail\SendNotifications;
 use App\Models\BundleWebinar;
 use App\Models\Category;
@@ -39,8 +38,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class WebinarController extends Controller
 {
@@ -341,6 +338,7 @@ class WebinarController extends Controller
             'slug' => 'max:255|unique:webinars,slug',
             'thumbnail' => 'required',
             'image_cover' => 'required',
+            'summary' => 'required',
             'description' => 'required',
             'teacher_id' => 'required|exists:users,id',
             'category_id' => 'required',
@@ -349,7 +347,10 @@ class WebinarController extends Controller
             'capacity' => 'nullable|numeric|min:0',
             'price' => 'nullable|numeric|min:0',
         ]);
+
         $data = $request->all();
+
+
         if (!empty($data['capacity']) and !empty($data['sales_count_number']) and $data['sales_count_number'] > $data['capacity']) {
             return back()->withErrors([
                 'sales_count_number' => [
@@ -392,6 +393,7 @@ class WebinarController extends Controller
             'creator_id' => $data['teacher_id'],
             'thumbnail' => $data['thumbnail'],
             'image_cover' => $data['image_cover'],
+            'icon' => $data['icon'] ?? null,
             'video_demo' => $data['video_demo'],
             'video_demo_source' => $data['video_demo'] ? $data['video_demo_source'] : null,
             'sales_count_number' => $data['sales_count_number'] ?? null,
@@ -424,6 +426,7 @@ class WebinarController extends Controller
                 'locale' => mb_strtolower($data['locale']),
             ], [
                 'title' => $data['title'],
+                'summary' => $data['summary'],
                 'description' => $data['description'],
                 'seo_description' => $data['seo_description'],
             ]);
@@ -577,6 +580,7 @@ class WebinarController extends Controller
             'slug' => 'max:255|unique:webinars,slug,' . $webinar->id,
             'thumbnail' => 'required',
             'image_cover' => 'required',
+            'summary' => 'required',
             'description' => 'required',
             'teacher_id' => 'required|exists:users,id',
             'category_id' => 'required',
@@ -719,6 +723,7 @@ class WebinarController extends Controller
             'type' => $data['type'],
             'thumbnail' => $data['thumbnail'],
             'image_cover' => $data['image_cover'],
+            'icon' => $data['icon'] ?? null,
             'video_demo' => $data['video_demo'],
             'video_demo_source' => $data['video_demo'] ? $data['video_demo_source'] : null,
             'capacity' => $data['capacity'] ?? null,
@@ -750,6 +755,7 @@ class WebinarController extends Controller
                 'locale' => mb_strtolower($data['locale']),
             ], [
                 'title' => $data['title'],
+                'summary' => $data['summary'],
                 'description' => $data['description'],
                 'seo_description' => $data['seo_description'],
             ]);
@@ -874,7 +880,7 @@ class WebinarController extends Controller
 
         return response()->json($result, 200);
     }
-    // +++++++++++++++++++++ exportExcel() +++++++++++++++++++++++
+
     public function exportExcel(Request $request)
     {
         $this->authorize('admin_webinars_export_excel');
@@ -884,7 +890,7 @@ class WebinarController extends Controller
         $query = $this->filterWebinar($query, $request)
             ->with(['teacher' => function ($qu) {
                 $qu->select('id', 'full_name');
-            }, 'sales','category']);
+            }, 'sales']);
 
         $webinars = $query->get();
 
@@ -1295,126 +1301,5 @@ class WebinarController extends Controller
         }
 
         abort(403);
-    }
-    // ++++++++++++++++++++++ importExcel() : import excel ++++++++++++++++++++++
-    public function importExcel(Request $request) 
-    {
-        $this->authorize('admin_webinars_create');
-
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls',
-        ], [
-            'excel_file.required' => 'Please upload an Excel file.',
-            'excel_file.file' => 'The uploaded file must be a valid file.',
-            'excel_file.mimes' => 'Only .xlsx and .xls files are supported.',
-        ]);
-
-        try {
-            Excel::import(new WebinarsImport, $request->file('excel_file'));
-            return redirect()->back()->with('success', trans('admin/pages/webinars.import_success'));
-        } catch (\Exception $e) {
-            $message = $e->getMessage();
-
-            // Customize error messages for better user understanding
-            if ($message === 'You must be logged in to import webinars.') {
-                $userMessage = 'Please log in to import webinars.';
-            } elseif ($message === 'You do not have permission to import webinars.') {
-                $userMessage = 'You lack the necessary permissions to import webinars. Contact an administrator.';
-            } elseif (str_contains($message, 'SQLSTATE')) {
-                $userMessage = 'There was an issue with the database. Please try again or contact support.';
-            } else {
-                $userMessage = 'An error occurred while importing the Excel file: ' . $message . '. Please check the file format and data.';
-            }
-
-            return redirect()->back()->withErrors(['import_error' => $userMessage]);
-        }
-    }
-    // ++++++++++++++++++++++ downloadTemplate() : download excel template ++++++++++++++++++++++
-    public function downloadTemplate()
-    {
-        return Excel::download(new class implements FromArray, WithHeadings {
-            public function headings(): array
-            {
-                return [
-                    'type',
-                    'locale',
-                    'title',
-                    'slug',
-                    'thumbnail',
-                    'image_cover',
-                    'description',
-                    'teacher_id',
-                    'category_id',
-                    'duration',
-                    'start_date',
-                    'timezone',
-                    'capacity',
-                    'price',
-                    'organization_price',
-                    'video_demo',
-                    'video_demo_source',
-                    'sales_count_number',
-                    'support',
-                    'certificate',
-                    'downloadable',
-                    'partner_instructor',
-                    'subscribe',
-                    'private',
-                    'forum',
-                    'enable_waitlist',
-                    'access_days',
-                    'points',
-                    'message_for_reviewer',
-                    'seo_description',
-                    'filters',
-                    'tags',
-                    'partners',
-                ];
-            }
-
-            public function array(): array
-            {
-                // ++++++++++++ Optional: Include a sample row to guide users ++++++++++++
-                // return [
-                //     [
-                //         'webinar',                          // type
-                //         'en,ar',                           // locale
-                //         'Intro to Coding|مقدمة في البرمجة', // title
-                //         'intro-to-coding',                 // slug
-                //         '/uploads/thumb1.jpg',             // thumbnail
-                //         '/uploads/cover1.jpg',             // image_cover
-                //         'Learn basic coding|تعلم البرمجة الأساسية', // description
-                //         '3',                               // teacher_id
-                //         '520',                             // category_id
-                //         '120',                             // duration
-                //         '06/15/2025 02:30:00 PM',          // start_date
-                //         'Europe/Saratov',                  // timezone
-                //         '50',                              // capacity
-                //         '99.99',                           // price
-                //         '89.99',                           // organization_price
-                //         '/uploads/demo1.mp4',              // video_demo
-                //         'upload',                          // video_demo_source
-                //         '10',                              // sales_count_number
-                //         '1',                               // support
-                //         '1',                               // certificate
-                //         '0',                               // downloadable
-                //         '1',                               // partner_instructor
-                //         '1',                               // subscribe
-                //         '0',                               // private
-                //         '1',                               // forum
-                //         '0',                               // enable_waitlist
-                //         '30',                              // access_days
-                //         '50',                              // points
-                //         'Please review soon',              // message_for_reviewer
-                //         'Learn coding in 30 days|تعلم البرمجة في 30 يومًا', // seo_description
-                //         '[9120,9166,9240]',                // filters
-                //         'Installment,Guitar',              // tags
-                //         '[1015,1016]',                     // partners
-                //     ],
-                // ];
-                // ++++++++++++ If you prefer an empty template, return []; ++++++++++++
-                return [];
-            }
-        }, 'webinar_template.xlsx');
     }
 }

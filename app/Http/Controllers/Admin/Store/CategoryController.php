@@ -44,7 +44,8 @@ class CategoryController extends Controller
         $this->authorize('admin_store_categories_create');
 
         $this->validate($request, [
-            'title' => 'required|min:3|max:128',
+            'title' => 'required|min:3|max:255',
+            'subtitle' => 'required|min:3',
             'icon' => 'required',
         ]);
 
@@ -58,15 +59,22 @@ class CategoryController extends Controller
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => $data['subtitle'],
+            'bottom_seo_title' => $data['bottom_seo_title'] ?? null,
+            'bottom_seo_description' => $data['bottom_seo_description'] ?? null,
         ]);
 
         $hasSubCategories = (!empty($request->get('has_sub')) and $request->get('has_sub') == 'on');
         $this->setSubCategory($category, $request->get('sub_categories'), $hasSubCategories, $data['locale']);
 
-        cache()->forget(ProductCategory::$cacheKey);
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl().'/store/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.category_created_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/store/categories/{$category->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function edit(Request $request, $id)
@@ -82,7 +90,7 @@ class CategoryController extends Controller
         storeContentLocale($locale, $category->getTable(), $category->id);
 
         $data = [
-            'pageTitle' => trans('admin/pages/categories.edit_page_title'),
+            'pageTitle' => trans('categories.edit_category'),
             'category' => $category,
             'subCategories' => $subCategories
         ];
@@ -95,7 +103,8 @@ class CategoryController extends Controller
         $this->authorize('admin_store_categories_edit');
 
         $this->validate($request, [
-            'title' => 'required|min:3|max:128',
+            'title' => 'required|min:3|max:255',
+            'subtitle' => 'required|min:3',
             'icon' => 'required',
         ]);
 
@@ -111,15 +120,22 @@ class CategoryController extends Controller
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => $data['subtitle'],
+            'bottom_seo_title' => $data['bottom_seo_title'] ?? null,
+            'bottom_seo_description' => $data['bottom_seo_description'] ?? null,
         ]);
 
         $hasSubCategories = (!empty($request->get('has_sub')) and $request->get('has_sub') == 'on');
         $this->setSubCategory($category, $request->get('sub_categories'), $hasSubCategories, $data['locale']);
 
-        cache()->forget(ProductCategory::$cacheKey);
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl().'/store/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.category_updated_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/store/categories/{$category->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function destroy(Request $request, $id)
@@ -135,9 +151,12 @@ class CategoryController extends Controller
             $category->delete();
         }
 
-        cache()->forget(ProductCategory::$cacheKey);
-
-        return redirect(getAdminPanelUrl().'/store/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.category_deleted_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/store/categories"))->with(['toast' => $toastData]);
     }
 
     public function search(Request $request)
@@ -190,6 +209,9 @@ class CategoryController extends Controller
                             'locale' => mb_strtolower($locale),
                         ], [
                             'title' => $subCategory['title'],
+                            'subtitle' => $subCategory['subtitle'],
+                            'bottom_seo_title' => $subCategory['bottom_seo_title'] ?? null,
+                            'bottom_seo_description' => $subCategory['bottom_seo_description'] ?? null,
                         ]);
                     } else {
                         $new = ProductCategory::create([
@@ -202,6 +224,9 @@ class CategoryController extends Controller
                             'locale' => mb_strtolower($locale),
                         ], [
                             'title' => $subCategory['title'],
+                            'subtitle' => $subCategory['subtitle'],
+                            'bottom_seo_title' => $subCategory['bottom_seo_title'] ?? null,
+                            'bottom_seo_description' => $subCategory['bottom_seo_description'] ?? null,
                         ]);
 
                         $oldIds[] = $new->id;

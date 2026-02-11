@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mixins\Geo\Geo;
 use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,10 +55,6 @@ class RegionController extends Controller
             $countries = Region::select(DB::raw('*, ST_AsText(geo_center) as geo_center'))
                 ->where('type', Region::$country)
                 ->get();
-
-            foreach ($countries as $country) {
-                $country->geo_center = \Geo::get_geo_array($country->geo_center);
-            }
         }
 
 
@@ -120,8 +117,6 @@ class RegionController extends Controller
             ->first();
 
         if ($region) {
-            $region->geo_center = \Geo::get_geo_array($region->geo_center);
-
             $latitude = $region->geo_center[0];
             $longitude = $region->geo_center[1];
             $countries = null;
@@ -132,10 +127,6 @@ class RegionController extends Controller
                 $countries = Region::select(DB::raw('*, ST_AsText(geo_center) as geo_center'))
                     ->where('type', Region::$country)
                     ->get();
-
-                foreach ($countries as $country) {
-                    $country->geo_center = \Geo::get_geo_array($country->geo_center);
-                }
             }
 
             if ($region->type !== Region::$country and $region->type !== Region::$province) {
@@ -143,10 +134,6 @@ class RegionController extends Controller
                     ->where('type', Region::$province)
                     ->where('country_id', $region->country_id)
                     ->get();
-
-                foreach ($provinces as $province) {
-                    $province->geo_center = \Geo::get_geo_array($province->geo_center);
-                }
             }
 
             if ($region->type == Region::$district) {
@@ -154,10 +141,6 @@ class RegionController extends Controller
                     ->where('type', Region::$city)
                     ->where('country_id', $region->country_id)
                     ->get();
-
-                foreach ($cities as $city) {
-                    $city->geo_center = \Geo::get_geo_array($city->geo_center);
-                }
             }
 
 
@@ -238,12 +221,6 @@ class RegionController extends Controller
             ->where('country_id', $countryId)
             ->get();
 
-        if (!empty($provinces)) {
-            foreach ($provinces as $province) {
-                $province->geo_center = \Geo::get_geo_array($province->geo_center);
-            }
-        }
-
         return response()->json([
             'code' => 200,
             'provinces' => $provinces
@@ -258,12 +235,6 @@ class RegionController extends Controller
             ->where('type', Region::$city)
             ->where('province_id', $provinceId)
             ->get();
-
-        if (!empty($cities)) {
-            foreach ($cities as $city) {
-                $city->geo_center = \Geo::get_geo_array($city->geo_center);
-            }
-        }
 
         return response()->json([
             'code' => 200,

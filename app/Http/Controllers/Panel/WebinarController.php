@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Panel;
 
+use App\Enums\UploadSource;
 use App\Exports\WebinarStudents;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Panel\Traits\VideoDemoTrait;
-use App\Imports\Instructor_Organization_Dashboard\Webinar\WebinarsImport;
 use App\Mixins\RegistrationPackage\UserPackage;
 use App\Models\BundleWebinar;
 use App\Models\Category;
@@ -32,228 +32,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Validator;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class WebinarController extends Controller
 {
     use VideoDemoTrait;
 
-    public function index(Request $request)
-    {
-        $this->authorize("panel_webinars_lists");
-
-        $user = auth()->user();
-
-        if ($user->isUser()) {
-            abort(404);
-        }
-
-        $query = Webinar::where(function ($query) use ($user) {
-            if ($user->isTeacher()) {
-                $query->where('teacher_id', $user->id);
-            } elseif ($user->isOrganization()) {
-                $query->where('creator_id', $user->id);
-            }
-        });
-
-        $data = $this->makeMyClassAndInvitationsData($query, $user, $request);
-        $data['pageTitle'] = trans('webinars.webinars_list_page_title');
-
-        return view(getTemplate() . '.panel.webinar.index', $data);
-    }
-
-
-    public function invitations(Request $request)
-    {
-        $this->authorize("panel_webinars_invited_lists");
-
-        $user = auth()->user();
-
-        $invitedWebinarIds = WebinarPartnerTeacher::where('teacher_id', $user->id)->pluck('webinar_id')->toArray();
-
-        $query = Webinar::query();
-
-        if ($user->isUser()) {
-            abort(404);
-        }
-
-        $query->whereIn('id', $invitedWebinarIds);
-
-        $data = $this->makeMyClassAndInvitationsData($query, $user, $request);
-        $data['pageTitle'] = trans('panel.invited_classes');
-
-        return view(getTemplate() . '.panel.webinar.index', $data);
-    }
-
-    public function organizationClasses(Request $request)
-    {
-        $this->authorize("panel_webinars_organization_classes");
-
-        $user = auth()->user();
-
-        if (!empty($user->organ_id)) {
-            $query = Webinar::where('creator_id', $user->organ_id)
-                ->where('status', 'active');
-
-            $query = $this->organizationClassesFilters($query, $request);
-
-            $webinars = $query
-                ->orderBy('created_at', 'desc')
-                ->orderBy('updated_at', 'desc')
-                ->paginate(10);
-
-            $data = [
-                'pageTitle' => trans('panel.organization_classes'),
-                'webinars' => $webinars,
-            ];
-
-            return view(getTemplate() . '.panel.webinar.organization_classes', $data);
-        }
-
-        abort(404);
-    }
-
-    private function organizationClassesFilters($query, $request)
-    {
-        $from = $request->get('from', null);
-        $to = $request->get('to', null);
-        $type = $request->get('type', null);
-        $sort = $request->get('sort', null);
-        $free = $request->get('free', null);
-
-        $query = fromAndToDateFilter($from, $to, $query, 'start_date');
-
-        if (!empty($type) and $type != 'all') {
-            $query->where('type', $type);
-        }
-
-        if (!empty($sort) and $sort != 'all') {
-            if ($sort == 'expensive') {
-                $query->orderBy('price', 'desc');
-            }
-
-            if ($sort == 'inexpensive') {
-                $query->orderBy('price', 'asc');
-            }
-
-            if ($sort == 'bestsellers') {
-                $query->whereHas('sales')
-                    ->with('sales')
-                    ->get()
-                    ->sortBy(function ($qu) {
-                        return $qu->sales->count();
-                    });
-            }
-
-            if ($sort == 'best_rates') {
-                $query->with([
-                    'reviews' => function ($query) {
-                        $query->where('status', 'active');
-                    }
-                ])->get()
-                    ->sortBy(function ($qu) {
-                        return $qu->reviews->avg('rates');
-                    });
-            }
-        }
-
-        if (!empty($free) and $free == 'on') {
-            $query->where(function ($qu) {
-                $qu->whereNull('price')
-                    ->orWhere('price', '<', '0');
-            });
-        }
-
-        return $query;
-    }
-
-    private function makeMyClassAndInvitationsData($query, $user, $request)
-    {
-        $webinarHours = deepClone($query)->sum('duration');
-
-        $onlyNotConducted = $request->get('not_conducted');
-        if (!empty($onlyNotConducted)) {
-            $query->where('status', 'active')
-                ->where('start_date', '>', time());
-        }
-
-        $query->with([
-            'reviews' => function ($query) {
-                $query->where('status', 'active');
-            },
-            'category',
-            'teacher'
-        ])->orderBy('updated_at', 'desc');
-
-        $webinarsCount = $query->count();
-
-        $webinars = $query->paginate(10);
-
-        $webinarSales = Sale::where('seller_id', $user->id)
-            ->where('type', 'webinar')
-            ->whereNotNull('webinar_id')
-            ->whereNull('refund_at')
-            ->with('webinar')
-            ->get();
-
-        $webinarSalesAmount = 0;
-        $courseSalesAmount = 0;
-        foreach ($webinarSales as $webinarSale) {
-            if (!empty($webinarSale->webinar) and $webinarSale->webinar->type == 'webinar') {
-                $webinarSalesAmount += $webinarSale->amount;
-            } else {
-                $courseSalesAmount += $webinarSale->amount;
-            }
-        }
-
-        foreach ($webinars as $webinar) {
-            $giftsIds = Gift::query()->where('webinar_id', $webinar->id)
-                ->where('status', 'active')
-                ->where(function ($query) {
-                    $query->whereNull('date');
-                    $query->orWhere('date', '<', time());
-                })
-                ->whereHas('sale')
-                ->pluck('id')
-                ->toArray();
-
-            $sales = Sale::query()
-                ->where(function ($query) use ($webinar, $giftsIds) {
-                    $query->where('webinar_id', $webinar->id);
-                    $query->orWhereIn('gift_id', $giftsIds);
-                })
-                ->whereNull('refund_at')
-                ->get();
-
-            $webinar->sales = $sales;
-        }
-
-        return [
-            'webinars' => $webinars,
-            'webinarsCount' => $webinarsCount,
-            'webinarSalesAmount' => $webinarSalesAmount,
-            'courseSalesAmount' => $courseSalesAmount,
-            'webinarHours' => $webinarHours,
-        ];
-    }
-
-    function array_replace_key($search, $replace, array $subject)
-    {
-        $updatedArray = [];
-
-        foreach ($subject as $key => $value) {
-            if (!is_array($value) && $key == $search) {
-                $updatedArray = array_merge($updatedArray, [$replace => $value]);
-
-                continue;
-            }
-
-            $updatedArray = array_merge($updatedArray, [$key => $value]);
-        }
-
-        return $updatedArray;
-    }
 
     public function create(Request $request)
     {
@@ -298,7 +81,7 @@ class WebinarController extends Controller
             'userLanguages' => getUserLanguagesLists(),
         ];
 
-        return view(getTemplate() . '.panel.webinar.create', $data);
+        return view('design_1.panel.webinars.create.index', $data);
     }
 
     public function store(Request $request)
@@ -327,13 +110,13 @@ class WebinarController extends Controller
             'title' => 'required|max:255',
             'thumbnail' => 'required',
             'image_cover' => 'required',
+            'summary' => 'required',
             'description' => 'required',
         ];
 
         $this->validate($request, $rules);
 
         $data = $request->all();
-        $data = $this->handleVideoDemoData($request, $user->id, $data, "course_demo_" . time());
 
         $webinar = Webinar::create([
             'teacher_id' => $user->isTeacher() ? $user->id : (!empty($data['teacher_id']) ? $data['teacher_id'] : $user->id),
@@ -341,20 +124,20 @@ class WebinarController extends Controller
             'slug' => Webinar::makeSlug($data['title']),
             'type' => $data['type'],
             'private' => (!empty($data['private']) and $data['private'] == 'on') ? true : false,
-            'thumbnail' => $data['thumbnail'],
-            'image_cover' => $data['image_cover'],
-            'video_demo' => $data['video_demo'],
-            'video_demo_source' => $data['video_demo'] ? $data['video_demo_source'] : null,
             'status' => ((!empty($data['draft']) and $data['draft'] == 1) or (!empty($data['get_next']) and $data['get_next'] == 1)) ? Webinar::$isDraft : Webinar::$pending,
             'created_at' => time(),
         ]);
 
         if ($webinar) {
+            // Handle Image and Video
+            $this->storeWebinarMedia($request, $webinar);
+
             WebinarTranslation::updateOrCreate([
                 'webinar_id' => $webinar->id,
                 'locale' => mb_strtolower($data['locale']),
             ], [
                 'title' => $data['title'],
+                'summary' => $data['summary'] ?? null,
                 'description' => $data['description'],
                 'seo_description' => $data['seo_description'],
             ]);
@@ -368,9 +151,9 @@ class WebinarController extends Controller
         ];
         sendNotification("new_item_created", $notifyOptions, 1);
 
-        $url = '/panel/webinars';
+        $url = '/panel/courses';
         if ($data['get_next'] == 1) {
-            $url = '/panel/webinars/' . $webinar->id . '/step/2';
+            $url = '/panel/courses/' . $webinar->id . '/step/2';
         }
 
         return redirect($url);
@@ -389,6 +172,10 @@ class WebinarController extends Controller
         $locale = $request->get('locale', app()->getLocale());
 
         $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_courses')) ? 8 : 7;
+
+        if ($step > $stepCount) {
+            return redirect("/panel/courses/{$id}/step/{$stepCount}");
+        }
 
         $data = [
             'pageTitle' => trans('webinars.new_page_title_step', ['step' => $step]),
@@ -537,7 +324,7 @@ class WebinarController extends Controller
         }
 
 
-        return view(getTemplate() . '.panel.webinar.create', $data);
+        return view('design_1.panel.webinars.create.index', $data);
     }
 
     public function update(Request $request, $id)
@@ -577,8 +364,7 @@ class WebinarController extends Controller
             $rules = [
                 'type' => 'required|in:webinar,course,text_lesson',
                 'title' => 'required|max:255',
-                'thumbnail' => 'required',
-                'image_cover' => 'required',
+                'summary' => 'required',
                 'description' => 'required',
             ];
         }
@@ -623,8 +409,17 @@ class WebinarController extends Controller
         if ($currentStep == 1) {
             $data['private'] = (!empty($data['private']) and $data['private'] == 'on');
 
-            // Video Demo
-            $data = $this->handleVideoDemoData($request, $webinar->creator_id, $data, "course_demo_" . time());
+            // Handle Image and Video
+            $webinar = $this->storeWebinarMedia($request, $webinar);
+
+            unset(
+                $data['thumbnail'],
+                $data['image_cover'],
+                $data['icon'],
+                $data['video_demo_source'],
+                $data['demo_video_path'],
+                $data['demo_video_local'],
+            );
         }
 
         if ($currentStep == 2) {
@@ -672,6 +467,11 @@ class WebinarController extends Controller
             $data['organization_price'] = !empty($data['organization_price']) ? convertPriceToDefaultCurrency($data['organization_price']) : null;
         }
 
+        if ($currentStep == 6) {
+            $webinarExtraDescriptionController = (new WebinarExtraDescriptionController());
+            $webinarExtraDescriptionController->storeCompanyLogos($request, 'webinar_id', $webinar->id, 'webinars');
+        }
+
         $filters = $request->get('filters', null);
         if (!empty($filters) and is_array($filters)) {
             WebinarFilterOption::where('webinar_id', $webinar->id)->delete();
@@ -712,6 +512,7 @@ class WebinarController extends Controller
                 'locale' => mb_strtolower($data['locale']),
             ], [
                 'title' => $data['title'],
+                'summary' => $data['summary'] ?? null,
                 'description' => $data['description'],
                 'seo_description' => $data['seo_description'],
             ]);
@@ -728,6 +529,7 @@ class WebinarController extends Controller
             $data['title'],
             $data['description'],
             $data['seo_description'],
+            $data['companyLogos'],
         );
 
         if (empty($data['teacher_id']) and $user->isOrganization() and $webinar->creator_id == $user->id) {
@@ -738,15 +540,15 @@ class WebinarController extends Controller
 
         $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_courses')) ? 8 : 7;
 
-        $url = '/panel/webinars';
+        $url = '/panel/courses';
         if ($getNextStep) {
             $nextStep = (!empty($getStep) and $getStep > 0) ? $getStep : $currentStep + 1;
 
-            $url = '/panel/webinars/' . $webinar->id . '/step/' . (($nextStep <= $stepCount) ? $nextStep : $stepCount);
+            $url = '/panel/courses/' . $webinar->id . '/step/' . (($nextStep <= $stepCount) ? $nextStep : $stepCount);
         }
 
         if ($webinarRulesRequired) {
-            $url = '/panel/webinars/' . $webinar->id . '/step/8';
+            $url = '/panel/courses/' . $webinar->id . '/step/8';
 
             return redirect($url)->withErrors(['rules' => trans('validation.required', ['attribute' => 'rules'])]);
         }
@@ -805,6 +607,55 @@ class WebinarController extends Controller
         ], 200);
     }
 
+
+    protected function storeWebinarMedia(Request $request, $webinar)
+    {
+        $thumbnail = $webinar->thumbnail ?? null;
+        $imageCover = $webinar->image_cover ?? null;
+        $icon = $webinar->icon ?? null;
+        $videoDemoSource = $webinar->video_demo_source ?? null;
+        $videoDemo = $webinar->video_demo ?? null;
+
+
+        if (!empty($request->file('thumbnail'))) {
+            $thumbnail = $this->uploadFile($request->file('thumbnail'), "webinars/{$webinar->id}", 'thumbnail', $webinar->creator_id);
+        }
+
+        if (!empty($request->file('image_cover'))) {
+            $imageCover = $this->uploadFile($request->file('image_cover'), "webinars/{$webinar->id}", 'image_cover', $webinar->creator_id);
+        }
+
+        if (!empty($request->file('icon'))) {
+            $icon = $this->uploadFile($request->file('icon'), "webinars/{$webinar->id}", 'icon', $webinar->creator_id);
+        }
+
+
+        if (in_array($request->get('video_demo_source'), UploadSource::urlPathItems) and !empty($request->get('demo_video_path'))) {
+            $videoDemoSource = $request->get('video_demo_source');
+            $videoDemo = $request->get('demo_video_path');
+        } elseif ($request->get('video_demo_source') == UploadSource::UPLOAD and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::UPLOAD;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "webinars/{$webinar->id}", 'video', $webinar->creator_id);
+        } elseif ($request->get('video_demo_source') == UploadSource::S3 and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::S3;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "webinars/{$webinar->id}", 'video', $webinar->creator_id, 'minio');
+        } elseif ($request->get('video_demo_source') == UploadSource::SECURE_HOST and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::SECURE_HOST;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "webinars/{$webinar->id}", "course_{$webinar->id}_video_demo", $webinar->creator_id, 'bunny');
+        }
+
+        $webinar->update([
+            'thumbnail' => $thumbnail,
+            'image_cover' => $imageCover,
+            'video_demo_source' => $videoDemoSource,
+            'video_demo' => $videoDemo,
+            'icon' => $icon,
+        ]);
+
+        return $webinar;
+    }
+
+
     public function duplicate($id)
     {
         $this->authorize("panel_webinars_duplicate");
@@ -859,7 +710,7 @@ class WebinarController extends Controller
             ]);
 
 
-            return redirect('/panel/webinars/' . $newWebinar->id . '/edit');
+            return redirect('/panel/courses/' . $newWebinar->id . '/edit');
         }
 
         abort(404);
@@ -1083,202 +934,6 @@ class WebinarController extends Controller
         abort(404);
     }
 
-    public function purchases(Request $request)
-    {
-        $this->authorize("panel_webinars_my_purchases");
-
-        $user = auth()->user();
-
-        $giftsIds = Gift::query()->where('email', $user->email)
-            ->where('status', 'active')
-            ->whereNull('product_id')
-            ->where(function ($query) {
-                $query->whereNull('date');
-                $query->orWhere('date', '<', time());
-            })
-            ->whereHas('sale')
-            ->pluck('id')
-            ->toArray();
-
-        $query = Sale::query()
-            ->where(function ($query) use ($user, $giftsIds) {
-                $query->where('sales.buyer_id', $user->id);
-                $query->orWhereIn('sales.gift_id', $giftsIds);
-            })
-            ->whereNull('sales.refund_at')
-            ->where('access_to_purchased_item', true)
-            ->where(function ($query) {
-                $query->where(function ($query) {
-                    $query->whereNotNull('sales.webinar_id')
-                        ->where('sales.type', 'webinar')
-                        ->whereHas('webinar', function ($query) {
-                            $query->where('status', 'active');
-                        });
-                });
-                $query->orWhere(function ($query) {
-                    $query->whereNotNull('sales.bundle_id')
-                        ->where('sales.type', 'bundle')
-                        ->whereHas('bundle', function ($query) {
-                            $query->where('status', 'active');
-                        });
-                });
-                $query->orWhere(function ($query) {
-                    $query->whereNotNull('gift_id');
-                    $query->whereHas('gift');
-                });
-            });
-
-
-        $sales = deepClone($query)
-            ->with([
-                'webinar' => function ($query) {
-                    $query->with([
-                        'files',
-                        'reviews' => function ($query) {
-                            $query->where('status', 'active');
-                        },
-                        'category',
-                        'teacher' => function ($query) {
-                            $query->select('id', 'full_name');
-                        },
-                    ]);
-                    $query->withCount([
-                        'sales' => function ($query) {
-                            $query->whereNull('refund_at');
-                        }
-                    ]);
-                },
-                'bundle' => function ($query) {
-                    $query->with([
-                        'reviews' => function ($query) {
-                            $query->where('status', 'active');
-                        },
-                        'category',
-                        'teacher' => function ($query) {
-                            $query->select('id', 'full_name');
-                        },
-                    ]);
-                }
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        $time = time();
-
-        $giftDurations = 0;
-        $giftUpcoming = 0;
-        $giftPurchasedCount = 0;
-
-        foreach ($sales as $sale) {
-            if (!empty($sale->gift_id)) {
-                $gift = $sale->gift;
-
-                $sale->webinar_id = $gift->webinar_id;
-                $sale->bundle_id = $gift->bundle_id;
-
-                $sale->webinar = !empty($gift->webinar_id) ? $gift->webinar : null;
-                $sale->bundle = !empty($gift->bundle_id) ? $gift->bundle : null;
-
-                $sale->gift_recipient = !empty($gift->receipt) ? $gift->receipt->full_name : $gift->name;
-                $sale->gift_sender = $sale->buyer->full_name;
-                $sale->gift_date = $gift->date;;
-
-                $giftPurchasedCount += 1;
-
-                if (!empty($sale->webinar)) {
-                    $giftDurations += $sale->webinar->duration;
-
-                    if ($sale->webinar->start_date > $time) {
-                        $giftUpcoming += 1;
-                    }
-                }
-
-                if (!empty($sale->bundle)) {
-                    $bundleWebinars = $sale->bundle->bundleWebinars;
-
-                    foreach ($bundleWebinars as $bundleWebinar) {
-                        $giftDurations += $bundleWebinar->webinar->duration;
-                    }
-                }
-            }
-        }
-
-        $purchasedCount = deepClone($query)
-            ->where(function ($query) {
-                $query->whereHas('webinar');
-                $query->orWhereHas('bundle');
-            })
-            ->count();
-
-        $webinarsHours = deepClone($query)->join('webinars', 'webinars.id', 'sales.webinar_id')
-            ->select(DB::raw('sum(webinars.duration) as duration'))
-            ->sum('duration');
-        $bundlesHours = deepClone($query)->join('bundle_webinars', 'bundle_webinars.bundle_id', 'sales.bundle_id')
-            ->join('webinars', 'webinars.id', 'bundle_webinars.webinar_id')
-            ->select(DB::raw('sum(webinars.duration) as duration'))
-            ->sum('duration');
-
-        $hours = $webinarsHours + $bundlesHours + $giftDurations;
-
-        $upComing = deepClone($query)->join('webinars', 'webinars.id', 'sales.webinar_id')
-            ->where('webinars.start_date', '>', $time)
-            ->count();
-
-        $data = [
-            'pageTitle' => trans('webinars.webinars_purchases_page_title'),
-            'sales' => $sales,
-            'purchasedCount' => $purchasedCount + $giftPurchasedCount,
-            'hours' => $hours,
-            'upComing' => $upComing + $giftUpcoming
-        ];
-
-        return view(getTemplate() . '.panel.webinar.purchases', $data);
-    }
-
-    public function getJoinInfo(Request $request)
-    {
-        $data = $request->all();
-        if (!empty($data['webinar_id'])) {
-            $user = auth()->user();
-
-            $checkSale = Sale::where('buyer_id', $user->id)
-                ->where('webinar_id', $data['webinar_id'])
-                ->where('type', 'webinar')
-                ->whereNull('refund_at')
-                ->first();
-
-            if (!empty($checkSale)) {
-                $webinar = Webinar::where('status', 'active')
-                    ->where('id', $data['webinar_id'])
-                    ->first();
-
-                if (!empty($webinar)) {
-                    $session = Session::select('id', 'creator_id', 'date', 'link', 'zoom_start_link', 'session_api', 'api_secret')
-                        ->where('webinar_id', $webinar->id)
-                        ->where('date', '>=', time())
-                        ->orderBy('date', 'asc')
-                        ->whereDoesntHave('agoraHistory', function ($query) {
-                            $query->whereNotNull('end_at');
-                        })
-                        ->first();
-
-                    if (!empty($session)) {
-                        $session->date = dateTimeFormat($session->date, 'Y-m-d H:i', false);
-
-                        $session->link = $session->getJoinLink(true);
-
-                        return response()->json([
-                            'code' => 200,
-                            'session' => $session
-                        ], 200);
-                    }
-                }
-            }
-        }
-
-        return response()->json([], 422);
-    }
-
     public function getNextSessionInfo($id)
     {
         $user = auth()->user();
@@ -1306,7 +961,6 @@ class WebinarController extends Controller
                 ->first();
 
             if (!empty($session) and $session->title) {
-                $session->date = dateTimeFormat($session->date, 'Y-m-d H:i', false);
 
                 $session->link = $session->getJoinLink(true);
 
@@ -1315,18 +969,18 @@ class WebinarController extends Controller
                 }
             }
 
-            $chapters = WebinarChapter::query()
-                ->where('user_id', $user->id)
-                ->where('webinar_id', $webinar->id)
-                ->orderBy('order', 'asc')
-                ->get();
+            $data = [
+                'session' => $session,
+                'course' => $webinar
+            ];
+
+            $html = (string)view()->make("design_1.panel.webinars.modals.join_next_session_modal", $data);
 
             return response()->json([
                 'code' => 200,
-                'session' => $session,
-                'webinar_id' => $webinar->id,
-                'chapters' => $chapters
-            ], 200);
+                'html' => $html,
+                'join_url' => !empty($session) ? $session->link : '',
+            ]);
         }
 
         return response()->json([], 422);
@@ -1517,109 +1171,4 @@ class WebinarController extends Controller
 
         abort(403);
     }
-   // ++++++++++++++++++++++ importExcel() : import excel ++++++++++++++++++++++
-   public function importExcel(Request $request)
-   {
-       // dd($request);
-       $request->validate([
-           'excel_file' => 'required|file|mimes:xlsx,xls',
-       ]);
-       try
-       {
-           Excel::import(new WebinarsImport, $request->file('excel_file'));
-           return redirect()->back()->with('success', 'Webinars imported successfully');
-       }
-       catch (\Exception $e)
-       {
-           return redirect()->back()->withErrors(['import_error' => $e->getMessage()]);
-       }
-   }
-   // ++++++++++++++++++++++ downloadTemplate() : download excel template ++++++++++++++++++++++
-   public function downloadTemplate()
-   {
-       return Excel::download(new class implements FromArray, WithHeadings {
-           public function headings(): array
-           {
-               return [
-                   'type',
-                   'locale',
-                   'title',
-                   'slug',
-                   'thumbnail',
-                   'image_cover',
-                   'description',
-                   'teacher_id',
-                   'category_id',
-                   'duration',
-                   'start_date',
-                   'timezone',
-                   'capacity',
-                   'price',
-                   'organization_price',
-                   'video_demo',
-                   'video_demo_source',
-                   'sales_count_number',
-                   'support',
-                   'certificate',
-                   'downloadable',
-                   'partner_instructor',
-                   'subscribe',
-                   'private',
-                   'forum',
-                   'enable_waitlist',
-                   'access_days',
-                   'points',
-                   'message_for_reviewer',
-                   'seo_description',
-                   'filters',
-                   'tags',
-                   'partners',
-               ];
-           }
-
-           public function array(): array
-           {
-               // ------------- Optional: Include a sample row to guide users -------------
-            //    return [
-            //        [
-            //            'webinar',                          // type
-            //            'en,ar',                           // locale
-            //            'Intro to Coding|مقدمة في البرمجة', // title
-            //            'intro-to-coding',                 // slug
-            //            '/uploads/thumb1.jpg',             // thumbnail
-            //            '/uploads/cover1.jpg',             // image_cover
-            //            'Learn basic coding|تعلم البرمجة الأساسية', // description
-            //            '3',                               // teacher_id
-            //            '520',                             // category_id
-            //            '120',                             // duration
-            //            '06/15/2025 02:30:00 PM',          // start_date
-            //            'Europe/Saratov',                  // timezone
-            //            '50',                              // capacity
-            //            '99.99',                           // price
-            //            '89.99',                           // organization_price
-            //            '/uploads/demo1.mp4',              // video_demo
-            //            'upload',                          // video_demo_source
-            //            '10',                              // sales_count_number
-            //            '1',                               // support
-            //            '1',                               // certificate
-            //            '0',                               // downloadable
-            //            '1',                               // partner_instructor
-            //            '1',                               // subscribe
-            //            '0',                               // private
-            //            '1',                               // forum
-            //            '0',                               // enable_waitlist
-            //            '30',                              // access_days
-            //            '50',                              // points
-            //            'Please review soon',              // message_for_reviewer
-            //            'Learn coding in 30 days|تعلم البرمجة في 30 يومًا', // seo_description
-            //            '[9120,9166,9240]',                // filters
-            //            'Installment,Guitar',              // tags
-            //            '[1015,1016]',                     // partners
-            //        ],
-            //    ];
-               // ------------- If you prefer an empty template, return []; -------------
-               return [];
-           }
-       }, 'webinar_template.xlsx');
-   }
 }

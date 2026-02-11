@@ -47,7 +47,8 @@ class SubscribesController extends Controller
         $this->authorize('admin_subscribe_create');
 
         $this->validate($request, [
-            'title' => 'required|string',
+            'title' => 'required|string|max:255',
+            'subtitle' => 'required|string|max:255',
             'usable_count' => 'required|numeric',
             'days' => 'required|numeric',
             'price' => 'required|numeric',
@@ -72,11 +73,12 @@ class SubscribesController extends Controller
                 'locale' => mb_strtolower($data['locale']),
             ], [
                 'title' => $data['title'],
+                'subtitle' => !empty($data['subtitle']) ? $data['subtitle'] : null,
                 'description' => !empty($data['description']) ? $data['description'] : null,
             ]);
         }
 
-        return redirect(getAdminPanelUrl().'/financial/subscribes');
+        return redirect(getAdminPanelUrl() . '/financial/subscribes');
     }
 
     public function edit(Request $request, $id)
@@ -101,7 +103,8 @@ class SubscribesController extends Controller
         $this->authorize('admin_subscribe_edit');
 
         $this->validate($request, [
-            'title' => 'required|string',
+            'title' => 'required|string|max:255',
+            'subtitle' => 'required|string|max:255',
             'usable_count' => 'required|numeric',
             'days' => 'required|numeric',
             'price' => 'required|numeric',
@@ -126,12 +129,19 @@ class SubscribesController extends Controller
             'locale' => mb_strtolower($data['locale']),
         ], [
             'title' => $data['title'],
+            'subtitle' => !empty($data['subtitle']) ? $data['subtitle'] : null,
             'description' => !empty($data['description']) ? $data['description'] : null,
         ]);
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl().'/financial/subscribes');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.plan_updated_successful'),
+            'status' => 'success'
+        ];
+
+        return redirect(getAdminPanelUrl("/financial/subscribes/{$subscribe->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function delete($id)
@@ -142,6 +152,6 @@ class SubscribesController extends Controller
 
         $promotion->delete();
 
-        return redirect(getAdminPanelUrl().'/financial/subscribes');
+        return redirect(getAdminPanelUrl() . '/financial/subscribes');
     }
 }

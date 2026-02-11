@@ -190,6 +190,10 @@ class FileController extends Controller
                 }
             }
 
+            $webinar->update([
+                'updated_at' => time()
+            ]);
+
             return response()->json([
                 'code' => 200,
             ], 200);
@@ -246,6 +250,10 @@ class FileController extends Controller
             $data['storage'] = 'upload';
         }
 
+        if (empty($data['secure_host_upload_type'])) {
+            $data['secure_host_upload_type'] = "manual";
+        }
+
         if (!empty($data['file_path']) and is_array($data['file_path'])) {
             $data['file_path'] = $data['file_path'][0];
         }
@@ -279,7 +287,7 @@ class FileController extends Controller
             $rules['file_path'] = 'nullable';
             $rules['s3_file'] = 'nullable';
 
-            if ($data['secure_host_upload_type'] == "manual") {
+            if (!empty($data['secure_host_upload_type']) and $data['secure_host_upload_type'] == "manual") {
                 $rules['secure_host_file_path'] = 'required';
                 $rules['volume'] = 'required';
             }
@@ -337,24 +345,39 @@ class FileController extends Controller
                 $uploadFile = $this->fileInfo($data['file_path']);
                 $volume = convertToMB($uploadFile['size'] ?? 0);
             } elseif (in_array($data['storage'], ['s3', 'secure_host'])) {
+                $result = [];
+
                 if ($data['storage'] == 's3') {
-                    $data['volume'] = $request->file('s3_file')->getSize();
-                    $result = $this->uploadFileToS3($data['s3_file'], $file->creator_id);
+                    $fileS3 = $request->file('s3_file');
+
+                    if (!empty($fileS3)) {
+                        $data['volume'] = $fileS3->getSize();
+                        $result = $this->uploadFileToS3($data['s3_file'], $file->creator_id);
+                    }
                 } else {
                     if ($data['secure_host_upload_type'] == "direct") {
-                        $data['volume'] = $request->file('s3_file')->getSize();
-                        $result = $this->uploadFileToBunny($webinar, $data['s3_file']);
+                        $fileS3 = $request->file('s3_file');
+
+                        if (!empty($fileS3)) {
+                            $data['volume'] = $fileS3->getSize();
+                            $result = $this->uploadFileToBunny($webinar, $data['s3_file']);
+                        }
                     } else {
                         $result['status'] = true;
                         $result['path'] = $data['secure_host_file_path'];
                     }
                 }
 
-                if (!$result['status']) {
-                    return $result['path'];
+                $data['file_path'] = $file->file;
+
+                if (!empty($result)) {
+                    if (!$result['status']) {
+                        return $result['path'];
+                    }
+
+                    $data['file_path'] = $result['path'];
                 }
 
-                $data['file_path'] = $result['path'];
                 $fileInfos['extension'] = $data['file_type'];
                 $fileInfos['size'] = $data['volume'];
 
@@ -410,6 +433,10 @@ class FileController extends Controller
             if (!empty($file->chapter_id) and empty($checkWebinarChapterItem)) {
                 WebinarChapterItem::makeItem($file->creator_id, $file->chapter_id, $file->id, WebinarChapterItem::$chapterFile);
             }
+
+            $webinar->update([
+                'updated_at' => time()
+            ]);
 
             removeContentLocale();
 

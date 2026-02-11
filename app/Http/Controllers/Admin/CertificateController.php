@@ -24,19 +24,19 @@ class CertificateController extends Controller
     {
         $this->authorize('admin_certificate_list');
 
-        $query = Certificate::whereNull('webinar_id');
+        $query = Certificate::whereNotNull('quiz_id');
 
         $query = $this->filters($query, $request);
 
-        $certificates = $query->with(
-            [
+        $certificates = $query
+            ->whereHas('quiz')
+            ->with([
                 'quiz' => function ($query) {
                     $query->with('webinar');
                 },
                 'student',
                 'quizzesResult'
-            ]
-        )->orderBy('created_at', 'desc')
+            ])->orderBy('created_at', 'desc')
             ->paginate(10);
 
 

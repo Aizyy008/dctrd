@@ -24,22 +24,27 @@ class TagsController extends Controller
         $pageDescription = !empty($seoSettings['description']) ? $seoSettings['description'] : trans('update.tags_page_title');
         $pageRobot = getPageRobot('tags');
 
+
+        $webinars = $this->getCoursesByTag($tag);
+        $bundles = $this->getBundlesByTag($tag);
+        $upcomingCourses = $this->getUpcomingCourseByTag($tag);
+
         $data = [
             'pageTitle' => $pageTitle,
             'pageDescription' => $pageDescription,
             'pageRobot' => $pageRobot,
             'tag' => $tag,
+            'resultCount' => count($webinars) + count($bundles) + count($upcomingCourses),
+            'webinars' => $webinars,
+            'bundles' => $bundles,
+            'products' => null,
+            'upcomingCourses' => $upcomingCourses,
+            'posts' => null,
+            'instructors' => null,
+            'organizations' => null,
         ];
 
-        if ($type == "courses") {
-            $data['webinars'] = $this->getCoursesByTag($tag);
-        } else if ($type == "bundles") {
-            $data['bundles'] = $this->getBundlesByTag($tag);
-        } else if ($type == "upcoming-courses") {
-            $data['upcomingCourses'] = $this->getUpcomingCourseByTag($tag);
-        }
-
-        return view('web.default.pages.tags', $data);
+        return view('design_1.web.search.index', $data);
     }
 
 
@@ -59,6 +64,8 @@ class TagsController extends Controller
                 },
                 'reviews'
             ])
+            ->inRandomOrder()
+            ->limit(20)
             ->get();
     }
 
@@ -77,6 +84,8 @@ class TagsController extends Controller
                 },
                 'reviews'
             ])
+            ->inRandomOrder()
+            ->limit(20)
             ->get();
     }
 
@@ -94,6 +103,8 @@ class TagsController extends Controller
                     $query->select('id', 'full_name', 'avatar', 'avatar_settings');
                 }
             ])
+            ->inRandomOrder()
+            ->limit(20)
             ->get();
     }
 

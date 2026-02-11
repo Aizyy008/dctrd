@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Instructor;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\WebinarResource;
 use App\Models\Quiz;
 use App\Models\Role;

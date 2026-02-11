@@ -9,6 +9,7 @@ use App\Models\Comment;
 use App\Models\Reward;
 use App\Models\RewardAccounting;
 use App\Models\Translation\BlogTranslation;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +22,7 @@ class BlogPostsController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize("panel_blog_my_articles");
 
@@ -29,30 +30,72 @@ class BlogPostsController extends Controller
 
         $this->handleAuthorize($user);
 
-        $query = Blog::where('author_id', $user->id);
+        $query = Blog::query()->where('author_id', $user->id);
 
-        $posts = deepClone($query)
-            ->withCount([
-                'comments'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $copyQuery = deepClone($query);
+        $getListData = $this->getListsData($request, $query);
 
-        $blogIds = deepClone($query)->pluck('id')->toArray();
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
+        $blogIds = deepClone($copyQuery)->pluck('id')->toArray();
 
         $postsCount = count($blogIds);
         $commentsCount = Comment::whereIn('blog_id', $blogIds)->count();
-        $pendingPublishCount = deepClone($query)->where('status', 'pending')->count();
+        $pendingPublishCount = deepClone($copyQuery)->where('status', 'pending')->count();
+
 
         $data = [
             'pageTitle' => trans('site.posts'),
-            'posts' => $posts,
             'postsCount' => $postsCount,
             'commentsCount' => $commentsCount,
             'pendingPublishCount' => $pendingPublishCount,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view('web.default.panel.blog.posts.lists', $data);
+        return view('design_1.panel.blog.posts.lists.index', $data);
+    }
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $posts = $query
+            ->withCount([
+                'comments'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $posts, $total, $count);
+        }
+
+        return [
+            'posts' => $posts,
+            'pagination' => $this->makePagination($request, $posts, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $posts, $total, $count)
+    {
+        $html = "";
+
+        foreach ($posts as $postRow) {
+            $html .= (string)view()->make('design_1.panel.blog.posts.lists.table_items', ['post' => $postRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $posts, $total, $count, true)
+        ]);
     }
 
     public function create()
@@ -70,7 +113,7 @@ class BlogPostsController extends Controller
             'blogCategories' => $blogCategories
         ];
 
-        return view('web.default.panel.blog.posts.create', $data);
+        return view('design_1.panel.blog.posts.create.index', $data);
     }
 
     public function store(Request $request)
@@ -84,41 +127,20 @@ class BlogPostsController extends Controller
         $this->validate($request, [
             'locale' => 'required',
             'title' => 'required|string|max:255',
+            'subtitle' => 'required|string',
             'category_id' => 'required|numeric',
-            'image' => 'required|string',
+            'image' => 'required|file',
             'description' => 'required|string',
             'content' => 'required|string',
+            'study_time' => 'nullable|numeric',
         ]);
 
-        $data = $request->all();
+        $storeData = $this->makeStoreData($request, $user);
+        $blog = Blog::create($storeData);
+
+        $this->handleStoreExtraData($request, $user, $blog);
 
         $directPublicationOfBlog = !empty(getGeneralOptionsSettings('direct_publication_of_blog'));
-
-        $blog = Blog::create([
-            'slug' => Blog::makeSlug($data['title']),
-            'category_id' => $data['category_id'],
-            'author_id' => $user->id,
-            'image' => $data['image'],
-            'enable_comment' => true,
-            'status' => $directPublicationOfBlog ? 'publish' : 'pending',
-            'created_at' => time(),
-            'updated_at' => time(),
-        ]);
-
-        if (empty($blog)) {
-            abort(500);
-        }
-
-        BlogTranslation::updateOrCreate([
-            'blog_id' => $blog->id,
-            'locale' => mb_strtolower($data['locale']),
-        ], [
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'meta_description' => strip_tags($data['description']),
-            'content' => $data['content'],
-        ]);
-
         if ($directPublicationOfBlog) {
             $createPostReward = RewardAccounting::calculateScore(Reward::CREATE_BLOG_BY_INSTRUCTOR);
             RewardAccounting::makeRewardAccounting($user->id, $createPostReward, Reward::CREATE_BLOG_BY_INSTRUCTOR, $blog->id, true);
@@ -130,7 +152,12 @@ class BlogPostsController extends Controller
         ];
         sendNotification("new_user_blog_post", $notifyOptions, 1);
 
-        return redirect('/panel/blog/posts');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.blog_created_success'),
+            'status' => 'success'
+        ];
+        return redirect("/panel/blog/{$blog->id}/edit")->with(['toast' => $toastData]);
     }
 
     public function edit(Request $request, $post_id)
@@ -149,16 +176,23 @@ class BlogPostsController extends Controller
             $locale = $request->get('locale', app()->getLocale());
 
             $blogCategories = BlogCategory::all();
+            $otherPosts = Blog::query()->where('id', '!=', $post->id)
+                ->with([
+                    'author'
+                ])->get();
 
             $data = [
                 'pageTitle' => trans('public.edit') . ' | ' . $post->title,
                 'blogCategories' => $blogCategories,
                 'locale' => mb_strtolower($locale),
                 'post' => $post,
+                'otherPosts' => $otherPosts,
             ];
 
-            return view('web.default.panel.blog.posts.create', $data);
+            return view('design_1.panel.blog.posts.create.index', $data);
         }
+
+        abort(404);
     }
 
     public function update(Request $request, $post_id)
@@ -171,40 +205,30 @@ class BlogPostsController extends Controller
 
         $this->validate($request, [
             'title' => 'required|string|max:255',
+            'subtitle' => 'required|string',
             'category_id' => 'required|numeric',
-            'image' => 'required|string',
+            'image' => 'nullable|file',
             'description' => 'required|string',
             'content' => 'required|string',
+            'study_time' => 'nullable|numeric',
         ]);
 
-        $post = Blog::where('id', $post_id)
+        $blog = Blog::query()->where('id', $post_id)
             ->where('author_id', $user->id)
             ->first();
 
-        if (!empty($post)) {
-            $data = $request->all();
+        if (!empty($blog)) {
+            $storeData = $this->makeStoreData($request, $user);
+            $blog->update($storeData);
 
-            $directPublicationOfBlog = !empty(getGeneralOptionsSettings('direct_publication_of_blog'));
+            $this->handleStoreExtraData($request, $user, $blog);
 
-            $post->update([
-                'category_id' => $data['category_id'],
-                'image' => $data['image'],
-                'status' => $directPublicationOfBlog ? 'publish' : 'pending',
-                'updated_at' => time(),
-            ]);
-
-
-            BlogTranslation::updateOrCreate([
-                'blog_id' => $post->id,
-                'locale' => mb_strtolower($data['locale']),
-            ], [
-                'title' => $data['title'],
-                'description' => $data['description'],
-                'meta_description' => strip_tags($data['description']),
-                'content' => $data['content'],
-            ]);
-
-            return redirect('/panel/blog/posts');
+            $toastData = [
+                'title' => trans('public.request_success'),
+                'msg' => trans('update.blog_updated_success'),
+                'status' => 'success'
+            ];
+            return redirect("/panel/blog/{$blog->id}/edit")->with(['toast' => $toastData]);
         }
 
         abort(404);
@@ -241,6 +265,49 @@ class BlogPostsController extends Controller
 
         return response()->json([
             'code' => 200,
+        ]);
+    }
+
+    private function makeStoreData(Request $request, $user, $blog = null)
+    {
+        $data = $request->all();
+        $directPublicationOfBlog = !empty(getGeneralOptionsSettings('direct_publication_of_blog'));
+
+        return [
+            'slug' => !empty($blog) ? $blog->slug : Blog::makeSlug($data['title']),
+            'category_id' => $data['category_id'],
+            'author_id' => $user->id,
+            'enable_comment' => true,
+            'study_time' => $data['study_time'] ?? null,
+            'status' => $directPublicationOfBlog ? 'publish' : 'pending',
+            'created_at' => time(),
+            'updated_at' => time(),
+        ];
+    }
+
+    private function handleStoreExtraData(Request $request, $user, $blog)
+    {
+        $data = $request->all();
+
+        BlogTranslation::updateOrCreate([
+            'blog_id' => $blog->id,
+            'locale' => mb_strtolower($data['locale']),
+        ], [
+            'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
+            'description' => $data['description'],
+            'meta_description' => strip_tags($data['description']),
+            'content' => $data['content'],
+        ]);
+
+        $imagePath = $blog->image ?? null;
+
+        if (!empty($request->file('image'))) {
+            $imagePath = $this->uploadFile($request->file('image'), "blog/{$blog->id}", 'image', $user->id);
+        }
+
+        $blog->update([
+            'image' => $imagePath
         ]);
     }
 }

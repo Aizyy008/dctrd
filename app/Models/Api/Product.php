@@ -100,21 +100,27 @@ class Product extends Model
             $query->whereIn('type', $type);
         }
 
-        if (!empty($options) and count($options)) {
-            if (in_array('only_available', $options)) {
-                $query->where(function ($query) {
-                    $query->where('unlimited_inventory', true)
-                        ->orWhereHas('productOrders', function ($query) {
-                            $query->havingRaw('products.inventory > sum(quantity)')
-                                ->whereNotNull('sale_id')
-                                ->whereNotIn('status', [ProductOrder::$canceled, ProductOrder::$pending])
-                                ->groupBy('product_id');
-                        });
-                });
+        if (!empty($options)) {
+            if (is_string($options)) {
+                $options = explode('|', $options);
             }
 
-            if (in_array('with_point', $options)) {
-                $query->whereNotNull('point');
+            if (is_array($options) and count($options)) {
+                if (in_array('only_available', $options)) {
+                    $query->where(function ($query) {
+                        $query->where('unlimited_inventory', true)
+                            ->orWhereHas('productOrders', function ($query) {
+                                $query->havingRaw('products.inventory > sum(quantity)')
+                                    ->whereNotNull('sale_id')
+                                    ->whereNotIn('status', [ProductOrder::$canceled, ProductOrder::$pending])
+                                    ->groupBy('product_id');
+                            });
+                    });
+                }
+
+                if (in_array('with_point', $options)) {
+                    $query->whereNotNull('point');
+                }
             }
         }
 

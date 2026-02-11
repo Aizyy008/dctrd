@@ -78,7 +78,7 @@ class ContentDeleteRequestController extends Controller
     private function getItem($itemId, $itemType)
     {
         $itemRow = null;
-        $user = apiAuth();
+        $user = auth()->user();
 
         if ($itemType == "course") {
             $itemRow = Webinar::where('id', $itemId)

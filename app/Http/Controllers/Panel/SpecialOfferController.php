@@ -5,152 +5,137 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Discount;
 use App\Models\DiscountUser;
-use App\Models\Product;
 use App\Models\SpecialOffer;
 use App\Models\Webinar;
 use App\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class SpecialOfferController extends Controller
 {
-    // +++++++++++++++++++ store() +++++++++++++++++++
     public function index(Request $request)
     {
         $this->authorize("panel_marketing_special_offers");
 
         $user = auth()->user();
-        // ========== Webinars ==========
-        $webinars = Webinar::select('id')
+        $webinarsQuery = Webinar::query()->select('id')
             ->where(function ($qu) use ($user) {
                 $qu->where('creator_id', $user->id)
                     ->orWhere('teacher_id', $user->id);
             })
-            ->where('status', 'active')
-            ->get();
-        // ========== Products ==========
-        $products = Product::with('translations')
-                                ->select('id')
-                                ->where(function ($qu) use ($user) 
-                                {
-                                    $qu->where('creator_id', $user->id);
-                                })
-                                ->where('status', 'active')
-                                ->get()
-                                ->map(function ($product) 
-                                {
-                                    $locale = app()->getLocale(); // Get current locale
-                                    $title = optional($product->translate($locale))->title 
-                                        ?? optional($product->translate('en'))->title 
-                                        ?? 'Untitled'; // Default if no translation exists
+            ->where('status', 'active');
 
-                                    return [
-                                        'id' => $product->id,
-                                        'title' => $title,
-                                    ];
-                                });
-        // ====== webinarIds ======
-        $webinarIds = $webinars->pluck('id');
-        // ====== productIds ======
-        $productIds = $products->pluck('id');
-        // ====== Query both webinars and products ======
-        $query = SpecialOffer::where(function ($q) use ($webinarIds, $productIds) 
-        {
-            $q->whereIn('webinar_id', $webinarIds)
-              ->orWhereIn('product_id', $productIds);
-        });
+        $webinarIds = $webinarsQuery->pluck('id')->toArray();
 
-        if ($request->get('active_discounts', '') == 'on') 
-        {
-            $query->where('status', 'active');
+        $query = SpecialOffer::query()->whereIn('webinar_id', $webinarIds);
+
+        $getListData = $this->getListsData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
         }
 
-        $specialOffers = $query
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $webinars = $webinarsQuery->get();
 
         $data = [
             'pageTitle' => trans('panel.special_offers'),
-            'specialOffers' => $specialOffers,
             'webinars' => $webinars,
-            'products' => $products,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view(getTemplate() . '.panel.marketing.special_offers', $data);
+        return view('design_1.panel.marketing.special_offers.index', $data);
     }
-    // +++++++++++++++++++ store() +++++++++++++++++++
+
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $specialOffers = $query
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $specialOffers, $total, $count);
+        }
+
+        return [
+            'specialOffers' => $specialOffers,
+            'pagination' => $this->makePagination($request, $specialOffers, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $specialOffers, $total, $count)
+    {
+        $html = "";
+
+        foreach($specialOffers as $specialOfferRow) {
+            $html .= (string)view()->make('design_1.panel.marketing.special_offers.table_items', ['specialOffer' => $specialOfferRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $specialOffers, $total, $count, true)
+        ]);
+    }
+
     public function store(Request $request)
     {
         $this->authorize("panel_marketing_special_offers");
+
         $data = $request->all();
-        // Ensure 'item_id' is provided
-        if (!isset($data['item_id'])) {
-            return response([
-                'code' => 422,
-                'errors' => ['item_id' => trans('validation.required')],
-            ], 422);
-        }
-        // extract "item" and "type"
-        [$discountType, $itemId] = explode('_', $data['item_id']);
-        // Validation rules
+
         $validator = Validator::make($data, [
-            'name'      => 'required|string|max:255',
-            'percent'   => 'required|numeric|min:0|max:100',
-            'from_date' => 'required|date',
-            'to_date'   => 'required|date|after_or_equal:from_date',
-            'item_id'   => 'required|string',
+            'title' => 'required',
+            'webinar_id' => 'required|exists:webinars,id',
+            'percent' => 'required|numeric',
+            'date_range' => 'required',
         ]);
+
         if ($validator->fails()) {
             return response([
                 'code' => 422,
                 'errors' => $validator->errors(),
             ], 422);
         }
-        // Check if there's an active special offer
-        $activeSpecialOffer = null;
-        if ($discountType === 'course') 
-        {
-            $activeSpecialOffer = Webinar::findOrFail($itemId)->activeSpecialOffer();
-        } 
-        elseif ($discountType === 'product') 
-        {
-            $activeSpecialOffer = SpecialOffer::where('product_id', $itemId)
-                ->where('status', SpecialOffer::$active)
-                ->where('from_date', '<=', now())
-                ->where('to_date', '>=', now())
-                ->exists();
+
+        $activeSpecialOfferForWebinar = Webinar::findOrFail($data["webinar_id"])->activeSpecialOffer();
+
+        if ($activeSpecialOfferForWebinar) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg' => trans('update.this_course_has_active_special_offer'),
+                'status' => 'error'
+            ];
+            return back()->with(['toast' => $toastData]);
         }
-        if ($activeSpecialOffer) {
-            return back()->with([
-                'toast' => [
-                    'title' => trans('public.request_failed'),
-                    'msg'   => trans('update.this_item_has_active_special_offer'),
-                    'status' => 'error'
-                ]
-            ]);
-        }
-        // Convert Dates to Unix Timestamps
-        $fromDate = convertTimeToUTCzone($data['from_date'], getTimezone());
-        $toDate = convertTimeToUTCzone($data['to_date'], getTimezone());
-        // Store Special Offer
+
+        $dateRange = explode('-', $data['date_range']);
+        $fromDate = convertTimeToUTCzone($dateRange[0])->getTimestamp();
+        $toDate = convertTimeToUTCzone($dateRange[1])->getTimestamp();
+
         SpecialOffer::create([
-            'creator_id'    => auth()->id(),
-            'name'          => $data["name"],
-            'discount_type' => $discountType,
-            'webinar_id'    => $discountType === 'course' ? $itemId : null,
-            'product_id'    => $discountType === 'product' ? $itemId : null,
-            'percent'       => $data["percent"],
-            'status'        => SpecialOffer::$active,
-            'created_at'    => time(), 
-            'from_date'     => $fromDate->getTimestamp(),
-            'to_date'       => $toDate->getTimestamp(),
+            'creator_id' => auth()->id(),
+            'name' => $data["title"],
+            'webinar_id' => $data["webinar_id"],
+            'percent' => $data["percent"],
+            'status' => SpecialOffer::$active,
+            'created_at' => time(),
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
         ]);
-    
+
         return response()->json([
             'code' => 200
         ], 200);
     }
-    
 
     public function disable(Request $request, $id)
     {

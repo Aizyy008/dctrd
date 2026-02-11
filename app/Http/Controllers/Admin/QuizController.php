@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Exports\QuizResultsExport;
+
 use App\Exports\QuizzesAdminExport;
 use App\Http\Controllers\Controller;
 use App\Models\Quiz;
@@ -211,6 +211,7 @@ class QuizController extends Controller
                 'attempt' => $data['attempt'] ?? null,
                 'pass_mark' => $data['pass_mark'],
                 'time' => $data['time'] ?? null,
+                'icon' => $data['icon'] ?? null,
                 'status' => (!empty($data['status']) and $data['status'] == 'on') ? Quiz::ACTIVE : Quiz::INACTIVE,
                 'certificate' => (!empty($data['certificate']) and $data['certificate'] == 'on'),
                 'display_questions_randomly' => (!empty($data['display_questions_randomly']) and $data['display_questions_randomly'] == 'on'),
@@ -223,6 +224,7 @@ class QuizController extends Controller
                 'locale' => mb_strtolower($locale),
             ], [
                 'title' => $data['title'],
+                'description' => $data['description'] ?? null,
             ]);
 
             if (!empty($quiz->chapter_id)) {
@@ -231,6 +233,13 @@ class QuizController extends Controller
 
             // Send Notification To All Students
             $webinar->sendNotificationToAllStudentsForNewQuizPublished($quiz);
+
+            $this->handleIcon($request, $quiz);
+
+            unset($webinar->title, $webinar->locale);
+            $webinar->update([
+                'updated_at' => time()
+            ]);
 
             if ($request->ajax()) {
 
@@ -352,6 +361,7 @@ class QuizController extends Controller
             'attempt' => $data['attempt'] ?? null,
             'pass_mark' => $data['pass_mark'],
             'time' => $data['time'] ?? null,
+            'icon' => $data['icon'] ?? null,
             'status' => (!empty($data['status']) and $data['status'] == 'on') ? Quiz::ACTIVE : Quiz::INACTIVE,
             'certificate' => (!empty($data['certificate']) and $data['certificate'] == 'on'),
             'display_limited_questions' => (!empty($data['display_limited_questions']) and $data['display_limited_questions'] == 'on'),
@@ -367,6 +377,7 @@ class QuizController extends Controller
                 'locale' => mb_strtolower($locale),
             ], [
                 'title' => $data['title'],
+                'description' => $data['description'] ?? null,
             ]);
 
             $checkChapterItem = WebinarChapterItem::where('user_id', $user->id)
@@ -385,6 +396,15 @@ class QuizController extends Controller
             } else if (!empty($checkChapterItem)) {
                 $checkChapterItem->delete();
             }
+
+            $this->handleIcon($request, $quiz);
+        }
+
+        if (!empty($webinar)) {
+            unset($webinar->title, $webinar->locale);
+            $webinar->update([
+                'updated_at' => time()
+            ]);
         }
 
         removeContentLocale();
@@ -396,6 +416,25 @@ class QuizController extends Controller
         } else {
             return redirect()->back();
         }
+    }
+
+    private function handleIcon(Request $request, $quiz)
+    {
+        $iconPath = $quiz->icon ?? null;
+
+        if (!empty($request->file('icon'))) {
+            if (!empty($iconPath)) {
+                $this->removeFile($iconPath);
+            }
+
+            $iconPath = $this->uploadFile($request->file('icon'), "quizzes/{$quiz->id}", 'icon', $quiz->creator_id);
+        }
+
+        $quiz->update([
+            'icon' => $iconPath
+        ]);
+
+        return $quiz;
     }
 
     public function delete(Request $request, $id)
@@ -418,61 +457,6 @@ class QuizController extends Controller
             return response()->json([
                 'code' => 200
             ], 200);
-        }
-
-        return redirect()->back();
-    }
-
-    public function results($id)
-    {
-        $this->authorize('admin_quizzes_results');
-
-        $quizzesResults = QuizzesResult::where('quiz_id', $id)
-            ->with([
-                'quiz' => function ($query) {
-                    $query->with(['teacher']);
-                },
-                'user'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        $data = [
-            'pageTitle' => trans('admin/pages/quizResults.quiz_result_list_page_title'),
-            'quizzesResults' => $quizzesResults,
-            'quiz_id' => $id
-        ];
-
-        return view('admin.quizzes.results', $data);
-    }
-
-    public function resultsExportExcel($id)
-    {
-        $this->authorize('admin_quiz_result_export_excel');
-
-        $quizzesResults = QuizzesResult::where('quiz_id', $id)
-            ->with([
-                'quiz' => function ($query) {
-                    $query->with(['teacher']);
-                },
-                'user'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $export = new QuizResultsExport($quizzesResults);
-
-        return Excel::download($export, 'quiz_result.xlsx');
-    }
-
-    public function resultDelete($result_id)
-    {
-        $this->authorize('admin_quizzes_results_delete');
-
-        $quizzesResults = QuizzesResult::where('id', $result_id)->first();
-
-        if (!empty($quizzesResults)) {
-            $quizzesResults->delete();
         }
 
         return redirect()->back();

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Web;
 
 use App\Http\Controllers\Api\Objects\UserObj;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Api\Blog;
 use Illuminate\Http\Request;
 

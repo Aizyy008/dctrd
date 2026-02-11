@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\CartResource;
 use App\Mixins\Cashback\CashbackRules;
+use App\Mixins\Logs\UserLoginHistoryMixin;
 use App\Models\Product;
 use App\Models\ProductOrder;
 use App\User;
@@ -174,7 +175,7 @@ class CartController extends Controller
             }
         }
 
-
+        return apiResponse2(0, 'invalid', trans('api.cart.is_empty'));
     }
 
     public function createOrderAndOrderItems($carts, $calculate, $user, $discountCoupon = null)
@@ -280,7 +281,10 @@ class CartController extends Controller
     public function webCheckoutRender(Request $request, User $user)
     {
         $discount_id = $request->input('discount_id');
-        Auth::login($user);
+        Auth::login($user, true);
+
+        $userLoginHistoryMixin = new UserLoginHistoryMixin();
+        $userLoginHistoryMixin->storeUserLoginHistory($user);
 
         return view('api.checkout', compact('discount_id'));
     }
@@ -460,17 +464,69 @@ class CartController extends Controller
         return $user;
     }
 
+    /**
+     * @param $sources => \App\Models\UserCommission::$sources
+     * @param $itemPrice
+     * @param null $seller
+     * */
+    private function getCommissionPrice($source, $itemPrice, $seller = null)
+    {
+        $hasSellerSpecificCommission = false;
+        $commissionPrice = 0;
+
+        if (!empty($seller)) {
+            $userCommission = $seller->commissions()->where('source', $source)->first();
+
+            if (!empty($userCommission)) {
+                $hasSellerSpecificCommission = true;
+                $commissionPrice = $userCommission->calculatePrice($itemPrice);
+            } else {
+                $userGroup = $seller->getUserGroup();
+
+                if (!empty($userGroup)) {
+                    $groupCommission = $userGroup->commissions()->where('source', $source)->first();
+
+                    if (!empty($groupCommission)) {
+                        $hasSellerSpecificCommission = true;
+                        $commissionPrice = $groupCommission->calculatePrice($itemPrice);
+                    }
+                }
+            }
+        }
+
+        if (!$hasSellerSpecificCommission) {
+            // Get System Default Commission
+
+            $commissionSettings = getCommissionSettings();
+
+            if (!empty($commissionSettings) and !empty($commissionSettings[$source]) and !empty($commissionSettings[$source]['type']) and !empty($commissionSettings[$source]['value'])) {
+                $type = $commissionSettings[$source]['type'];
+                $value = $commissionSettings[$source]['value'];
+
+                if ($type == "percent") {
+                    $commissionPrice = $itemPrice > 0 ? (($itemPrice * $value) / 100) : 0;
+                } else {
+                    $commissionPrice = $value;
+                }
+            }
+        }
+
+        return $commissionPrice;
+    }
+
+
     private function handleOrderPrices($cart, $user, $taxIsDifferent = false)
     {
-        $financialSettings = getFinancialSettings();
         $seller = $this->getSeller($cart);
+        $financialSettings = getFinancialSettings();
 
         $subTotal = 0;
         $totalDiscount = 0;
         $tax = (!empty($financialSettings['tax']) and $financialSettings['tax'] > 0) ? $financialSettings['tax'] : 0;
         $taxPrice = 0;
         $commissionPrice = 0;
-        $commission = $seller->getCommission();
+        $priceWithoutDiscount = 0;
+
 
         if (!empty($cart->webinar_id) or !empty($cart->bundle_id)) {
             $item = !empty($cart->webinar_id) ? $cart->webinar : $cart->bundle;
@@ -483,9 +539,8 @@ class CartController extends Controller
                 $taxPrice += $priceWithoutDiscount * $tax / 100;
             }
 
-            if (!empty($commission) and $commission > 0) {
-                $commissionPrice += $priceWithoutDiscount > 0 ? $priceWithoutDiscount * $commission / 100 : 0;
-            }
+            $source = !empty($cart->webinar_id) ? 'courses' : 'bundles';
+            $commissionPrice += $this->getCommissionPrice($source, $priceWithoutDiscount, $seller);
 
             $totalDiscount += $discount;
             $subTotal += $price;
@@ -499,9 +554,7 @@ class CartController extends Controller
                 $taxPrice += $priceWithoutDiscount * $tax / 100;
             }
 
-            if (!empty($commission) and $commission > 0) {
-                $commissionPrice += $priceWithoutDiscount > 0 ? $priceWithoutDiscount * $commission / 100 : 0;
-            }
+            $commissionPrice += $this->getCommissionPrice('meetings', $priceWithoutDiscount, $seller);
 
             $totalDiscount += $discount;
             $subTotal += $price;
@@ -509,34 +562,82 @@ class CartController extends Controller
             $product = $cart->productOrder->product;
 
             if (!empty($product)) {
-                $price = ($product->price * $cart->productOrder->quantity);
-                $discount = $product->getDiscountPrice();
+                $productQuantity = $cart->productOrder->quantity;
+                $price = ($product->price * $productQuantity);
+                $discount = $product->getDiscountPrice() * $productQuantity;
 
-                $commission = $product->getCommission();
                 $productTax = $product->getTax();
 
                 $priceWithoutDiscount = $price - $discount;
 
-                $taxIsDifferent = ($taxIsDifferent and $tax != $productTax);
+                $taxIsDifferent = ($tax != $productTax);
 
                 $tax = $productTax;
                 if ($productTax > 0 and $priceWithoutDiscount > 0) {
                     $taxPrice += $priceWithoutDiscount * $productTax / 100;
                 }
 
-                if ($commission > 0) {
-                    $commissionPrice += $priceWithoutDiscount > 0 ? $priceWithoutDiscount * $commission / 100 : 0;
+                // Product Commission
+                if (isset($product->commission)) {
+                    if ($product->commission_type == "percent") {
+                        $commissionPrice += ($priceWithoutDiscount > 0 and $product->commission > 0) ? (($priceWithoutDiscount * $product->commission) / 100) : 0;
+                    } else {
+                        $commissionPrice += $product->commission;
+                    }
+                } else {
+                    $source = ($product->type == Product::$physical) ? 'physical_products' : 'virtual_products';
+                    $commissionPrice += $this->getCommissionPrice($source, $priceWithoutDiscount, $seller);
                 }
 
                 $totalDiscount += $discount;
                 $subTotal += $price;
             }
+        } elseif (!empty($cart->installment_payment_id)) {
+            $price = $cart->installmentPayment->amount;
+            $discount = 0;
+
+            $priceWithoutDiscount = $price - $discount;
+
+            if ($tax > 0 and $priceWithoutDiscount > 0) {
+                $taxPrice += $priceWithoutDiscount * $tax / 100;
+            }
+
+            // Commission
+            $installmentOrder = $cart->installmentPayment->installmentOrder;
+
+            if (!empty($installmentOrder)) {
+                $source = null;
+
+                if (!empty($installmentOrder->webinar_id)) {
+                    $source = "courses";
+                } elseif (!empty($installmentOrder->bundle_id)) {
+                    $source = "bundles";
+                } elseif (!empty($installmentOrder->product_id) and !empty($installmentOrder->product)) {
+                    if ($installmentOrder->product->type == Product::$physical) {
+                        $source = "physical_products";
+                    } else {
+                        $source = "virtual_products";
+                    }
+                }
+
+                if (!empty($source)) {
+                    $commissionPrice += $this->getCommissionPrice($source, $priceWithoutDiscount, $seller);
+                }
+            }
+
+            $totalDiscount += $discount;
+            $subTotal += $price;
+        }
+
+        if (!empty($discountCoupon)) {
+            $totalDiscount += $this->getCouponDiscountByCartItem($discountCoupon, $cart, $user);
         }
 
         if ($totalDiscount > $subTotal) {
             $totalDiscount = $subTotal;
         }
 
+        $commission = ($commissionPrice > 0 and $priceWithoutDiscount > 0) ? (($commissionPrice / $priceWithoutDiscount) * 100) : 0;
 
         return [
             'sub_total' => round($subTotal, 2),
@@ -655,6 +756,126 @@ class CartController extends Controller
 
         return $amount;
     }
+
+    private function getCouponDiscountByCartItem($couponDiscount, $cart, $user)
+    {
+        $applyDiscount = false;
+        $percent = $couponDiscount->percent ?? 1;
+        //$otherDiscounts = 0;
+        $totalCouponDiscount = 0;
+        $totalItemAmount = 0;
+
+        if ($couponDiscount->source == Discount::$discountSourceCourse) {
+            $discountWebinarsIds = $couponDiscount->discountCourses()->pluck('course_id')->toArray();
+            $webinar = $cart->webinar;
+            if (!empty($webinar) and (in_array($webinar->id, $discountWebinarsIds) or count($discountWebinarsIds) < 1)) {
+                $totalItemAmount += $webinar->price;
+                //$otherDiscounts += $webinar->getDiscount($cart->ticket, $user);
+
+                $applyDiscount = true;
+            }
+        } elseif ($couponDiscount->source == Discount::$discountSourceBundle) {
+            $discountBundlesIds = $couponDiscount->discountBundles()->pluck('bundle_id')->toArray();
+            $bundle = $cart->bundle;
+            if (!empty($bundle) and (in_array($bundle->id, $discountBundlesIds) or count($discountBundlesIds) < 1)) {
+                $totalItemAmount += $bundle->price;
+                //$otherDiscounts += $bundle->getDiscount($cart->ticket, $user);
+
+                $applyDiscount = true;
+            }
+        } elseif ($couponDiscount->source == Discount::$discountSourceProduct) {
+            if (!empty($cart->productOrder)) {
+                $product = $cart->productOrder->product;
+
+                if (!empty($product) and ($couponDiscount->product_type == 'all' or $couponDiscount->product_type == $product->type)) {
+                    $productQuantity = $cart->productOrder->quantity;
+                    $totalItemAmount += ($product->price * $productQuantity);
+                    //$otherDiscounts += $product->getDiscountPrice() * $productQuantity;
+
+                    $applyDiscount = true;
+                }
+            }
+        } elseif ($couponDiscount->source == Discount::$discountSourceMeeting) {
+            $reserveMeeting = $cart->reserveMeeting;
+            if (!empty($reserveMeeting)) {
+                $totalItemAmount += $reserveMeeting->paid_amount;
+                //$otherDiscounts += $reserveMeeting->getDiscountPrice($user);
+
+                $applyDiscount = true;
+            }
+        } elseif ($couponDiscount->source == Discount::$discountSourceCategory) {
+            $webinar = $cart->webinar;
+            $categoriesIds = ($couponDiscount->discountCategories) ? $couponDiscount->discountCategories()->pluck('category_id')->toArray() : [];
+            if (!empty($webinar) and in_array($webinar->category_id, $categoriesIds)) {
+                $totalItemAmount += $webinar->price;
+                //$otherDiscounts += $webinar->getDiscount($cart->ticket, $user);
+
+                $applyDiscount = true;
+            }
+        } else {
+            // All Source
+            $webinar = $cart->webinar;
+            $bundle = $cart->bundle;
+            $reserveMeeting = $cart->reserveMeeting;
+
+            if (!empty($webinar)) {
+                $totalItemAmount += $webinar->price;
+                //$otherDiscounts += $webinar->getDiscount($cart->ticket, $user);
+
+                $applyDiscount = true;
+            }
+
+            if (!empty($reserveMeeting)) {
+                $totalItemAmount += $reserveMeeting->paid_amount;
+                //$otherDiscounts += $reserveMeeting->getDiscountPrice($user);
+
+                $applyDiscount = true;
+            }
+
+            if (!empty($bundle)) {
+                $totalItemAmount += $bundle->price;
+                //$otherDiscounts += $bundle->getDiscount($cart->ticket, $user);
+
+                $applyDiscount = true;
+            }
+
+            if (!empty($cart->productOrder)) {
+                $product = $cart->productOrder->product;
+
+                if (!empty($product)) {
+                    $totalItemAmount += ($product->price * $cart->productOrder->quantity);
+                    //$otherDiscounts += $product->getDiscountPrice();
+
+                    $applyDiscount = true;
+                }
+            }
+        }
+
+        if ($applyDiscount) {
+            if ($couponDiscount->discount_type == Discount::$discountTypeFixedAmount) {
+                $totalCouponDiscount = ($totalItemAmount > $couponDiscount->amount) ? $couponDiscount->amount : $totalItemAmount;
+            } else {
+                $totalCouponDiscount = ($totalItemAmount > 0) ? $totalItemAmount * $percent / 100 : 0;
+            }
+
+            if ($couponDiscount->discount_type != Discount::$discountTypeFixedAmount and !empty($couponDiscount->max_amount) and $totalCouponDiscount > $couponDiscount->max_amount) {
+                $totalCouponDiscount = $couponDiscount->max_amount;
+            }
+        }
+
+        return $totalCouponDiscount;
+    }
+
+    private function taxIsDifferent($carts)
+    {
+        $cartHasWebinar = array_filter($carts->pluck('webinar_id')->toArray());
+        $cartHasBundle = array_filter($carts->pluck('bundle_id')->toArray());
+        $cartHasMeeting = array_filter($carts->pluck('reserve_meeting_id')->toArray());
+        $cartHasInstallmentPayment = array_filter($carts->pluck('installment_payment_id')->toArray());
+
+        return (count($cartHasWebinar) or count($cartHasBundle) or count($cartHasMeeting) or count($cartHasInstallmentPayment));
+    }
+
     private function handleDiscountPrice($discount, $carts, $subTotal)
     {
         $user = apiAuth();

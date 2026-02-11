@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Panel;
 
+use App\Enums\UploadSource;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Panel\Traits\VideoDemoTrait;
 use App\Models\Category;
 use App\Models\Faq;
 use App\Models\Tag;
@@ -13,12 +13,12 @@ use App\Models\UpcomingCourseFilterOption;
 use App\Models\UpcomingCourseFollower;
 use App\Models\Webinar;
 use App\Models\WebinarExtraDescription;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class UpcomingCoursesController extends Controller
 {
-    use VideoDemoTrait;
 
     public function __construct()
     {
@@ -39,22 +39,18 @@ class UpcomingCoursesController extends Controller
                     ->orWhere('teacher_id', $user->id);
             });
 
-        $totalCourses = deepClone($query)->count();
-        $releasedCourses = deepClone($query)->whereNotNull('webinar_id')->count();
-        $notReleased = deepClone($query)->whereNull('webinar_id')->count();
-        $ids = deepClone($query)->pluck('id')->toArray();
-        $followers = UpcomingCourseFollower::query()->whereIn('upcoming_course_id', $ids)->count();
+        $copyQuery = deepClone($query);
+        $getListData = $this->getListsData($request, $query);
 
-        $onlyNotReleasedCourses = $request->get('only_not_released_courses');
-        if (!empty($onlyNotReleasedCourses)) {
-            $query->whereNull('webinar_id');
+        if ($request->ajax()) {
+            return $getListData;
         }
 
-        $upcomingCourses = $query
-            ->withCount([
-                'followers'
-            ])
-            ->paginate(10);
+        $totalCourses = deepClone($copyQuery)->count();
+        $releasedCourses = deepClone($copyQuery)->whereNotNull('webinar_id')->count();
+        $notReleased = deepClone($copyQuery)->whereNull('webinar_id')->count();
+        $ids = deepClone($copyQuery)->pluck('id')->toArray();
+        $followers = UpcomingCourseFollower::query()->whereIn('upcoming_course_id', $ids)->count();
 
         $data = [
             'pageTitle' => trans('update.my_upcoming_courses'),
@@ -62,10 +58,53 @@ class UpcomingCoursesController extends Controller
             'releasedCourses' => $releasedCourses,
             'notReleased' => $notReleased,
             'followers' => $followers,
-            'upcomingCourses' => $upcomingCourses
         ];
+        $data = array_merge($data, $getListData);
 
-        return view(getTemplate() . '.panel.upcoming_courses.lists', $data);
+        return view('design_1.panel.upcoming_courses.my_courses.index', $data);
+    }
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $upcomingCourses = $query
+            ->withCount([
+                'followers'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $upcomingCourses, $total, $count);
+        }
+
+        return [
+            'upcomingCourses' => $upcomingCourses,
+            'pagination' => $this->makePagination($request, $upcomingCourses, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $upcomingCourses, $total, $count)
+    {
+        $html = "";
+
+        foreach ($upcomingCourses as $upcomingCourseRow) {
+            $html .= '<div class="col-12 col-md-6 col-lg-3 mt-20">';
+            $html .= (string)view()->make("design_1.panel.upcoming_courses.my_courses.grid_card", ['upcomingCourse' => $upcomingCourseRow]);
+            $html .= '</div>';
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $upcomingCourses, $total, $count, true)
+        ]);
     }
 
     public function create()
@@ -80,15 +119,19 @@ class UpcomingCoursesController extends Controller
             $teachers = $user->getOrganizationTeachers()->get();
         }
 
+        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? 4 : 3;
+
         $data = [
             'pageTitle' => trans('update.new_upcoming_course'),
             'currentStep' => 1,
+            'stepCount' => 4,
             'userLanguages' => getUserLanguagesLists(),
             'isOrganization' => $isOrganization,
             'teachers' => $teachers,
+            'stepCount' => $stepCount,
         ];
 
-        return view(getTemplate() . '.panel.upcoming_courses.create', $data);
+        return view('design_1.panel.upcoming_courses.create.index', $data);
     }
 
     public function store(Request $request)
@@ -108,22 +151,20 @@ class UpcomingCoursesController extends Controller
         $this->validate($request, $rules);
 
         $data = $request->all();
-        $data = $this->handleVideoDemoData($request, $user->id, $data, "upcoming_course_demo_" . time());
 
         $upcomingCourse = UpcomingCourse::query()->create([
             'creator_id' => $user->id,
             'teacher_id' => $user->isTeacher() ? $user->id : (!empty($data['teacher_id']) ? $data['teacher_id'] : $user->id),
             'slug' => UpcomingCourse::makeSlug($data['title']),
             'type' => $data['type'],
-            'thumbnail' => $data['thumbnail'],
-            'image_cover' => $data['image_cover'],
-            'video_demo' => $data['video_demo'],
-            'video_demo_source' => $data['video_demo'] ? $data['video_demo_source'] : null,
             'status' => ((!empty($data['draft']) and $data['draft'] == 1) or (!empty($data['get_next']) and $data['get_next'] == 1)) ? UpcomingCourse::$isDraft : UpcomingCourse::$pending,
             'created_at' => time(),
         ]);
 
         if (!empty($upcomingCourse)) {
+            // Handle Image and Video
+            $upcomingCourse = $this->storeWebinarMedia($request, $upcomingCourse);
+
             UpcomingCourseTranslation::query()->updateOrCreate([
                 'upcoming_course_id' => $upcomingCourse->id,
                 'locale' => mb_strtolower($data['locale']),
@@ -131,6 +172,7 @@ class UpcomingCoursesController extends Controller
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'seo_description' => $data['seo_description'],
+                'summary' => $data['summary'],
             ]);
 
             $notifyOptions = [
@@ -155,18 +197,28 @@ class UpcomingCoursesController extends Controller
     public function edit(Request $request, $id, $step = 1)
     {
         $this->authorize("panel_upcoming_courses_create");
+        $stepCount = 4;
+
+        if ($step > $stepCount) {
+            return redirect("/panel/upcoming_courses/{$id}/step/{$stepCount}");
+        }
+
 
         $user = auth()->user();
 
         $isOrganization = $user->isOrganization();
         $locale = $request->get('locale', app()->getLocale());
 
+        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? 4 : 3;
+
         $data = [
             'currentStep' => $step,
+            'stepCount' => $stepCount,
             'isOrganization' => $isOrganization,
             'userLanguages' => getUserLanguagesLists(),
             'locale' => mb_strtolower($locale),
             'defaultLocale' => getDefaultLocale(),
+            'stepCount' => $stepCount,
         ];
 
         $query = UpcomingCourse::query()->where('id', $id)
@@ -235,7 +287,7 @@ class UpcomingCoursesController extends Controller
             $data['upcomingCourseCategoryFilters'] = $upcomingCourseCategoryFilters;
         }
 
-        return view(getTemplate() . '.panel.upcoming_courses.create', $data);
+        return view('design_1.panel.upcoming_courses.create.index', $data);
     }
 
     public function update(Request $request, $id)
@@ -266,8 +318,6 @@ class UpcomingCoursesController extends Controller
             $rules = [
                 'type' => 'required|in:webinar,course,text_lesson',
                 'title' => 'required|max:255',
-                'thumbnail' => 'required',
-                'image_cover' => 'required',
                 'description' => 'required',
             ];
         } else if ($currentStep == 2) {
@@ -285,12 +335,20 @@ class UpcomingCoursesController extends Controller
 
         $this->validate($request, $rules);
 
+        $directPublication = !empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses'));
         $upcomingCourseRulesRequired = false;
-        if (($currentStep == 4 and !$getNextStep and !$isDraft) or (!$getNextStep and !$isDraft)) {
+
+        if (!$directPublication and (($currentStep == 4 and !$getNextStep and !$isDraft) or (!$getNextStep and !$isDraft))) {
             $upcomingCourseRulesRequired = empty($data['rules']);
         }
 
-        $data['status'] = ($isDraft or $upcomingCourseRulesRequired) ? UpcomingCourse::$isDraft : UpcomingCourse::$pending;
+        $status = ($isDraft or $upcomingCourseRulesRequired) ? UpcomingCourse::$isDraft : UpcomingCourse::$pending;
+
+        if ($directPublication and !$getNextStep and !$isDraft) {
+            $status = UpcomingCourse::$active;
+        }
+
+        $data['status'] = $status;
 
         if ($currentStep == 2) {
             $startDate = convertTimeToUTCzone($data['publish_date'], $data['timezone']);
@@ -301,6 +359,7 @@ class UpcomingCoursesController extends Controller
             $data['include_quizzes'] = (!empty($data['include_quizzes']) and $data['include_quizzes'] == "on");
             $data['downloadable'] = (!empty($data['downloadable']) and $data['downloadable'] == "on");
             $data['forum'] = (!empty($data['forum']) and $data['forum'] == "on");
+            $data['assignments'] = (!empty($data['assignments']) and $data['assignments'] == "on");
             $data['price'] = !empty($data['price']) ? convertPriceToDefaultCurrency($data['price']) : null;
 
 
@@ -330,7 +389,6 @@ class UpcomingCoursesController extends Controller
         } // .\ if $currentStep == 2
 
         if ($currentStep == 1) {
-            $data = $this->handleVideoDemoData($request, $upcomingCourse->creator_id, $data, "upcoming_course_demo_" . time());
 
             UpcomingCourseTranslation::query()->updateOrCreate([
                 'upcoming_course_id' => $upcomingCourse->id,
@@ -339,7 +397,13 @@ class UpcomingCoursesController extends Controller
                 'title' => $data['title'],
                 'description' => $data['description'],
                 'seo_description' => $data['seo_description'],
+                'summary' => $data['summary'],
             ]);
+        }
+
+        if ($currentStep == 3) {
+            $webinarExtraDescriptionController = (new WebinarExtraDescriptionController());
+            $webinarExtraDescriptionController->storeCompanyLogos($request, 'upcoming_course_id', $upcomingCourse->id, 'upcoming_courses');
         }
 
         unset($data['_token'],
@@ -354,6 +418,8 @@ class UpcomingCoursesController extends Controller
             $data['title'],
             $data['description'],
             $data['seo_description'],
+            $data['summary'],
+            $data['companyLogos'],
         );
 
         if (empty($data['teacher_id']) and $user->isOrganization() and $upcomingCourse->creator_id == $user->id) {
@@ -362,11 +428,13 @@ class UpcomingCoursesController extends Controller
 
         $upcomingCourse->update($data);
 
+        $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_upcoming_courses')) ? 4 : 3;
         $url = '/panel/upcoming_courses';
+
         if ($getNextStep) {
             $nextStep = (!empty($getStep) and $getStep > 0) ? $getStep : $currentStep + 1;
 
-            $url = '/panel/upcoming_courses/' . $upcomingCourse->id . '/step/' . (($nextStep <= 4) ? $nextStep : 4);
+            $url = '/panel/upcoming_courses/' . $upcomingCourse->id . '/step/' . (($nextStep <= $stepCount) ? $nextStep : $stepCount);
         }
 
         if ($upcomingCourseRulesRequired) {
@@ -398,6 +466,47 @@ class UpcomingCoursesController extends Controller
             'code' => 200,
             'redirect_to' => $request->get('redirect_to')
         ], 200);
+    }
+
+    protected function storeWebinarMedia(Request $request, $upcomingCourse)
+    {
+        $thumbnail = $upcomingCourse->thumbnail ?? null;
+        $imageCover = $upcomingCourse->image_cover ?? null;
+        $videoDemoSource = $upcomingCourse->video_demo_source ?? null;
+        $videoDemo = $upcomingCourse->video_demo ?? null;
+
+
+        if (!empty($request->file('thumbnail'))) {
+            $thumbnail = $this->uploadFile($request->file('thumbnail'), "upcoming_courses/{$upcomingCourse->id}", 'thumbnail', $upcomingCourse->creator_id);
+        }
+
+        if (!empty($request->file('image_cover'))) {
+            $imageCover = $this->uploadFile($request->file('image_cover'), "upcoming_courses/{$upcomingCourse->id}", 'image_cover', $upcomingCourse->creator_id);
+        }
+
+
+        if (in_array($request->get('video_demo_source'), UploadSource::urlPathItems) and !empty($request->get('demo_video_path'))) {
+            $videoDemoSource = $request->get('video_demo_source');
+            $videoDemo = $request->get('demo_video_path');
+        } elseif ($request->get('video_demo_source') == UploadSource::UPLOAD and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::UPLOAD;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "upcoming_courses/{$upcomingCourse->id}", 'video', $upcomingCourse->creator_id);
+        } elseif ($request->get('video_demo_source') == UploadSource::S3 and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::S3;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "upcoming_courses/{$upcomingCourse->id}", 'video', $upcomingCourse->creator_id, 'minio');
+        } elseif ($request->get('video_demo_source') == UploadSource::SECURE_HOST and !empty($request->file('demo_video_local'))) {
+            $videoDemoSource = UploadSource::SECURE_HOST;
+            $videoDemo = $this->uploadFile($request->file('demo_video_local'), "upcoming_courses/{$upcomingCourse->id}", "upcoming_course_{$upcomingCourse->id}_video_demo", $upcomingCourse->creator_id, 'bunny');
+        }
+
+        $upcomingCourse->update([
+            'thumbnail' => $thumbnail,
+            'image_cover' => $imageCover,
+            'video_demo_source' => $videoDemoSource,
+            'video_demo' => $videoDemo,
+        ]);
+
+        return $upcomingCourse;
     }
 
     public function orderItems(Request $request)
@@ -469,42 +578,6 @@ class UpcomingCoursesController extends Controller
         ]);
     }
 
-    public function followers($id)
-    {
-        $this->authorize("panel_upcoming_courses_followers");
-
-        $user = auth()->user();
-
-        $upcomingCourse = UpcomingCourse::query()
-            ->where('id', $id)
-            ->where(function ($query) use ($user) {
-                $query->where('creator_id', $user->id)
-                    ->orWhere('teacher_id', $user->id);
-            })->first();
-
-        if (!empty($upcomingCourse)) {
-
-            $followers = UpcomingCourseFollower::query()->where('upcoming_course_id', $upcomingCourse->id)
-                ->orderBy('created_at', 'asc')
-                ->with([
-                    'user' => function ($query) {
-                        $query->select('id', 'full_name', 'avatar', 'avatar_settings', 'role_id', 'role_name');
-                    }
-                ])
-                ->get();
-
-            $data = [
-                'pageTitle' => trans('update.course_followers'),
-                'upcomingCourse' => $upcomingCourse,
-                'followers' => $followers,
-            ];
-
-            return view('web.default.panel.upcoming_courses.followers', $data);
-        }
-
-        abort(404);
-    }
-
     public function assignCourseModal($id)
     {
         $user = auth()->user();
@@ -530,7 +603,7 @@ class UpcomingCoursesController extends Controller
                 'webinars' => $webinars,
             ];
 
-            $html = (string)view()->make('web.default.panel.upcoming_courses.assign_course_modal', $data);
+            $html = (string)view()->make('design_1.panel.upcoming_courses.my_courses.modals.assign_course_modal', $data);
 
             return response()->json([
                 'code' => 200,
@@ -608,25 +681,57 @@ class UpcomingCoursesController extends Controller
         abort(404);
     }
 
-    public function followings()
+    public function getContentItemByLocale(Request $request, $id)
     {
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'item_id' => 'required',
+            'locale' => 'required',
+            'relation' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response([
+                'code' => 422,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
         $user = auth()->user();
 
-        $upcomingIds = UpcomingCourseFollower::query()->where('user_id', $user->id)
-            ->pluck('upcoming_course_id')
-            ->toArray();
+        $upcomingCourse = UpcomingCourse::query()->where('id', $id)
+            ->where(function ($query) use ($user) {
+                $query->where('creator_id', $user->id)
+                    ->orWhere('teacher_id', $user->id);
+            })->first();
 
-        $upcomingCourses = UpcomingCourse::query()
-            ->whereIn('id', $upcomingIds)
-            ->where('status', 'active')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        if (!empty($upcomingCourse)) {
 
-        $data = [
-            'pageTitle' => trans('update.following_courses'),
-            'upcomingCourses' => $upcomingCourses
-        ];
+            $itemId = $data['item_id'];
+            $locale = $data['locale'];
+            $relation = $data['relation'];
 
-        return view('web.default.panel.upcoming_courses.followings', $data);
+            if (!empty($upcomingCourse->$relation)) {
+                $item = $upcomingCourse->$relation->where('id', $itemId)->first();
+
+                if (!empty($item)) {
+                    foreach ($item->translatedAttributes as $attribute) {
+                        try {
+                            $item->$attribute = $item->translate(mb_strtolower($locale))->$attribute;
+                        } catch (\Exception $e) {
+                            $item->$attribute = null;
+                        }
+                    }
+
+                    return response()->json([
+                        'item' => $item
+                    ], 200);
+                }
+            }
+        }
+
+        abort(403);
     }
+
 }

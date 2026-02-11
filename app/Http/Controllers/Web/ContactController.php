@@ -25,7 +25,7 @@ class ContactController extends Controller
             'contactSettings' => $contactSettings
         ];
 
-        return view('web.default.pages.contact', $data);
+        return view('design_1.web.contactus.index', $data);
     }
 
     public function store(Request $request)
@@ -56,6 +56,11 @@ class ContactController extends Controller
 
         sendNotificationToEmail('contact_message_submission', $notifyOptions, $data['email']);
 
-        return back()->with(['msg' => trans('site.contact_store_success')]);
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('site.contact_store_success'),
+            'status' => 'success'
+        ];
+        return back()->with(['toast' => $toastData]);
     }
 }

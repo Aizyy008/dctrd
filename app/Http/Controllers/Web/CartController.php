@@ -8,16 +8,12 @@ use App\Mixins\Cashback\CashbackRules;
 use App\Models\Cart;
 use App\Models\CartDiscount;
 use App\Models\Discount;
-use App\Models\DiscountCourse;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentChannel;
 use App\Models\Product;
 use App\Models\ProductOrder;
-use App\Models\SpecialOffer;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class CartController extends Controller
@@ -26,7 +22,6 @@ class CartController extends Controller
 
     public function index()
     {
-
         $user = auth()->user();
         $carts = Cart::where('creator_id', $user->id)
             ->with([
@@ -47,9 +42,7 @@ class CartController extends Controller
             ])
             ->get();
 
-            // dd($carts);
-        if (!empty($carts) and !$carts->isEmpty()) 
-        {
+        if (!empty($carts) and !$carts->isEmpty()) {
             $calculate = $this->calculatePrice($carts, $user);
 
             $hasPhysicalProduct = $carts->where('productOrder.product.type', Product::$physical);
@@ -82,13 +75,7 @@ class CartController extends Controller
                     'pageTitle' => trans('public.cart_page_title'),
                     'user' => $user,
                     'carts' => $carts,
-                    'subTotal' => $calculate["sub_total"],
-                    'totalDiscount' => $calculate["total_discount"],
-                    'tax' => $calculate["tax"],
-                    'taxPrice' => $calculate["tax_price"],
-                    'total' => $calculate["total"],
-                    'productDeliveryFee' => $calculate["product_delivery_fee"],
-                    'taxIsDifferent' => $calculate["tax_is_different"],
+                    'calculatePrices' => $calculate,
                     'userGroup' => !empty($user->userGroup) ? $user->userGroup->group : null,
                     'hasPhysicalProduct' => (count($hasPhysicalProduct) > 0),
                     'deliveryEstimateTime' => $deliveryEstimateTime,
@@ -98,7 +85,7 @@ class CartController extends Controller
 
                 $data = array_merge($data, $this->getLocationsData($user));
 
-                return view('web.default.cart.cart', $data);
+                return view('design_1.web.cart.overview.index', $data);
             }
         } else {
             $cartDiscount = CartDiscount::query()->where('enable', true)->first();
@@ -109,7 +96,7 @@ class CartController extends Controller
                     'cartDiscount' => $cartDiscount,
                 ];
 
-                return view('web.default.cart.empty_cart', $data);
+                return view('design_1.web.cart.empty.index', $data);
             }
         }
 
@@ -118,73 +105,54 @@ class CartController extends Controller
 
     public function couponValidate(Request $request)
     {
-        // dd($request);
         $user = auth()->user();
         $coupon = $request->get('coupon');
 
-        $discountCoupon = Discount::where('code', $coupon)->first();
+        $discountCoupon = Discount::where('code', $coupon)
+            ->first();
 
         if (!empty($discountCoupon)) {
             $checkDiscount = $discountCoupon->checkValidDiscount();
-
             if ($checkDiscount != 'ok') {
                 return response()->json([
-                    'status' => 422,
-                    'msg' => $checkDiscount
-                ]);
+                    'error' => [
+                        'title' => trans('public.request_failed'),
+                        'msg' => $checkDiscount
+                    ],
+                ], 422);
             }
 
-            // Get product IDs eligible for this discount
-            $validProductIds = DB::table('discount_coupon_product')
-                ->where('discount_id', $discountCoupon->id)
-                ->pluck('product_id')
-                ->toArray();
+            $carts = Cart::where('creator_id', $user->id)
+                ->get();
 
-            // Get user's cart items
-            $carts = Cart::where('creator_id', $user->id)->get();
-
-            if (!empty($carts) && !$carts->isEmpty()) {
-                foreach ($carts as $cart) {
-                    if (!empty($cart->product_order_id) && !empty($cart->productOrder)) {
-                        $product = $cart->productOrder->product;
-
-                        if (!empty($product)) {
-                            // Check if product is in the discount_coupon_product table
-                            if (in_array($product->id, $validProductIds)) {
-                                // Apply discount by storing the discount ID
-                                $cart->update(['product_discount_id' => $discountCoupon->id]);
-                            } else {
-                                // If the product is NOT eligible, set product_discount_id to NULL
-                                $cart->update(['product_discount_id' => null]);
-                            }
-                        }
-                    }
-                }
-
-                // Recalculate price after updating discount status
+            if (!empty($carts) and !$carts->isEmpty()) {
                 $calculate = $this->calculatePrice($carts, $user, $discountCoupon);
 
-                return response()->json([
-                    'status' => 200,
-                    'discount_id' => $discountCoupon->id,
-                    'total_discount' => handlePrice($calculate["total_discount"]),
-                    'total_tax' => handlePrice($calculate["tax_price"]),
-                    'total_amount' => handlePrice($calculate["total"]),
-                ], 200);
+                if (!empty($calculate)) {
+                    $calculate['discountCoupon'] = $discountCoupon;
+
+                    $data = [
+                        'calculatePrices' => $calculate
+                    ];
+
+                    $html = (string)view()->make("design_1.web.cart.overview.includes.summary", $data);
+
+                    return response()->json([
+                        'code' => 200,
+                        'html' => $html,
+                    ]);
+                }
             }
         }
 
+
         return response()->json([
-            'status' => 422,
-            'msg' => trans('cart.coupon_invalid')
-        ]);
+            'error' => [
+                'title' => trans('public.request_failed'),
+                'msg' => trans('cart.coupon_invalid')
+            ],
+        ], 422);
     }
-
-
-
-
-
-
 
     private function productDeliveryFeeBySeller($carts)
     {
@@ -254,19 +222,20 @@ class CartController extends Controller
         $commissionPrice = 0;
         $commission = 0;
 
-        $taxIsDifferent = $this->taxIsDifferent($carts);
+        $taxIsDifferent = false;
 
-        foreach ($carts as $cart)
-        {
+        foreach ($carts as $cart) {
             $orderPrices = $this->handleOrderPrices($cart, $user, $taxIsDifferent, $discountCoupon);
-            // dd($orderPrices);
             $subTotal += $orderPrices['sub_total'];
             $totalDiscount += $orderPrices['total_discount'];
             $tax = $orderPrices['tax'];
             $taxPrice += $orderPrices['tax_price'];
             $commission += $orderPrices['commission'];
             $commissionPrice += $orderPrices['commission_price'];
-            $taxIsDifferent = $orderPrices['tax_is_different'];
+
+            if (!$taxIsDifferent) {
+                $taxIsDifferent = $orderPrices['tax_is_different'];
+            }
         }
 
         if ($totalDiscount > $subTotal) {
@@ -285,7 +254,7 @@ class CartController extends Controller
         return [
             'sub_total' => round($subTotal, 2),
             'total_discount' => round($totalDiscount, 2),
-            'tax' => round($tax,2),
+            'tax' => $tax,
             'tax_price' => round($taxPrice, 2),
             'commission' => $commission,
             'commission_price' => round($commissionPrice, 2),
@@ -354,11 +323,7 @@ class CartController extends Controller
                     'pageTitle' => trans('public.checkout_page_title'),
                     'paymentChannels' => $paymentChannels,
                     'carts' => $carts,
-                    'subTotal' => $calculate["sub_total"],
-                    'totalDiscount' => $calculate["total_discount"],
-                    'tax' => $calculate["tax"],
-                    'taxPrice' => $calculate["tax_price"],
-                    'total' => $calculate["total"],
+                    'calculatePrices' => $calculate,
                     'userGroup' => $user->userGroup ? $user->userGroup->group : null,
                     'order' => $order,
                     'count' => $carts->count(),
@@ -368,7 +333,7 @@ class CartController extends Controller
                     'previousUrl' => url()->previous(),
                 ];
 
-                return view(getTemplate() . '.cart.payment', $data);
+                return view('design_1.web.cart.payment.index', $data);
             } else {
                 return $this->handlePaymentOrderWithZeroTotalAmount($order);
             }
@@ -409,6 +374,9 @@ class CartController extends Controller
             $orderTotalDiscount = $calculate["sub_total"];
         }
 
+        // Remove User Pending Orders
+        $this->handleRemoveUserPendingOrders($user);
+
         $order = Order::create([
             'user_id' => $user->id,
             'status' => Order::$pending,
@@ -422,7 +390,7 @@ class CartController extends Controller
 
         $productsFee = $this->productDeliveryFeeBySeller($carts);
         $sellersProductsCount = $this->physicalProductCountBySeller($carts);
-        $taxIsDifferent = $this->taxIsDifferent($carts);
+        $taxIsDifferent = false;
 
         foreach ($carts as $cart) {
 
@@ -494,6 +462,20 @@ class CartController extends Controller
         return $order;
     }
 
+    private function handleRemoveUserPendingOrders($user)
+    {
+        $userPendingOrderIds = Order::query()->where('user_id', $user->id)
+            ->where('status', Order::$pending)
+            ->pluck('id')
+            ->toArray();
+        OrderItem::query()->whereIn('order_id', $userPendingOrderIds)
+            ->where('user_id', $user->id)
+            ->delete();
+        Order::query()->where('user_id', $user->id)
+            ->where('status', Order::$pending)
+            ->delete();
+    }
+
     private function getSeller($cart)
     {
         $user = null;
@@ -502,7 +484,7 @@ class CartController extends Controller
             $user = $cart->webinar_id ? $cart->webinar->creator : $cart->bundle->creator;
         } elseif (!empty($cart->reserve_meeting_id)) {
             $user = $cart->reserveMeeting->meeting->creator;
-        } elseif (!empty($cart->product_order_id)) {
+        } elseif (!empty($cart->product_order_id) and !empty($cart->productOrder)) {
             $user = $cart->productOrder->seller;
         }
 
@@ -558,110 +540,74 @@ class CartController extends Controller
 
         return $commissionPrice;
     }
-    // +++++++++++++++++ handleOrderPrices() +++++++++++++++++
+
+
     public function handleOrderPrices($cart, $user, $taxIsDifferent = false, $discountCoupon = null)
     {
-        // dd($cart);
-        Log::info('Starting handleOrderPrices', ['cart_id' => $cart->id, 'user_id' => $user->id]);
-
         $seller = $this->getSeller($cart);
         $financialSettings = getFinancialSettings();
 
         $subTotal = 0;
         $totalDiscount = 0;
-        $tax = (!empty($financialSettings['tax']) && $financialSettings['tax'] > 0) ? $financialSettings['tax'] : 0;
+        $tax = (!empty($financialSettings['tax']) and $financialSettings['tax'] > 0) ? $financialSettings['tax'] : 0;
         $taxPrice = 0;
         $commissionPrice = 0;
         $priceWithoutDiscount = 0;
-        // ++++++++++++++++ product : product_order_id ++++++++++++++++
-        if (!empty($cart->product_order_id))
-        {
+
+
+        if (!empty($cart->webinar_id) or !empty($cart->bundle_id)) {
+            $item = !empty($cart->webinar_id) ? $cart->webinar : $cart->bundle;
+            $price = $item->price;
+            $discount = $item->getDiscount($cart->ticket, $user);
+
+            $priceWithoutDiscount = $price - $discount;
+
+            if ($tax > 0 and $priceWithoutDiscount > 0) {
+                $taxPrice += $priceWithoutDiscount * $tax / 100;
+            }
+
+            $source = !empty($cart->webinar_id) ? 'courses' : 'bundles';
+            $commissionPrice += $this->getCommissionPrice($source, $priceWithoutDiscount, $seller);
+
+            $totalDiscount += $discount;
+            $subTotal += $price;
+        } elseif (!empty($cart->reserve_meeting_id)) {
+            $price = $cart->reserveMeeting->paid_amount;
+            $discount = $cart->reserveMeeting->getDiscountPrice($user);
+
+            $priceWithoutDiscount = $price - $discount;
+
+            if ($tax > 0 and $priceWithoutDiscount > 0) {
+                $taxPrice += $priceWithoutDiscount * $tax / 100;
+            }
+
+            $commissionPrice += $this->getCommissionPrice('meetings', $priceWithoutDiscount, $seller);
+
+            $totalDiscount += $discount;
+            $subTotal += $price;
+        } elseif (!empty($cart->product_order_id)) {
             $product = $cart->productOrder->product;
-            if (!empty($product))
-            {
+
+            if (!empty($product)) {
                 $productQuantity = $cart->productOrder->quantity;
                 $price = ($product->price * $productQuantity);
-
-                // Log before fetching discount
-                Log::info('Fetching product discount', [
-                    'product_id' => $product->id,
-                    'quantity' => $productQuantity,
-                    'price' => $price
-                ]);
-
-                // Initialize discount
-                $discount = 0;
-                // +++++++++++++++++++ Get Discount +++++++++++++++++++
-                // Fetch discount manually if it exists in the cart
-                if (!empty($cart->product_discount_id))
-                {
-                    $discount = 0; // Default discount value
-                    // ++++++++++ First: Search in Discount Table ++++++++++
-                    $discountData = Discount::where('id', $cart->product_discount_id)
-                        ->where('status', 1)
-                        ->where('expired_at', '>', now()->timestamp)
-                        ->first();
-
-                    if ($discountData)
-                    {
-                        if ($discountData->discount_type === 'percentage')
-                        {
-                            $discount = ($price * $discountData->percent) / 100;
-                        } elseif ($discountData->discount_type === 'fixed')
-                        {
-                            $discount = $discountData->amount;
-                        }
-                    }
-                    else
-                    {
-                        // ++++++++++ Second: Search in SpecialOffer Table ++++++++++
-                        $discountData = SpecialOffer::where('id', $cart->product_discount_id)
-                            ->where('status', "active")
-                            ->where('from_date', '<', time())
-                            ->where('to_date', '>', time())
-                            ->first();
-
-                        if ($discountData) {
-                            $discount = ($price * $discountData->percent) / 100;
-                        }
-                    }
-                }
-                // Multiply discount by quantity
-                $discount *= $productQuantity;
-
-                // Log after fetching discount
-                Log::info('Fetched product discount', [
-                    'product_id' => $product->id,
-                    'discount_id' => $cart->product_discount_id ?? 'none',
-                    'discount_type' => $discountData->discount_type ?? 'none',
-                    'discount_percent' => $discountData->percent ?? 0,
-                    'discount_amount' => $discountData->amount ?? 0,
-                    'final_discount' => $discount
-                ]);
+                $discount = $product->getDiscountPrice() * $productQuantity;
 
                 $productTax = $product->getTax();
+
                 $priceWithoutDiscount = $price - $discount;
 
-                Log::info('Product order calculation', [
-                    'product_id' => $product->id,
-                    'quantity' => $productQuantity,
-                    'price' => $price,
-                    'discount' => $discount,
-                    'price_without_discount' => $priceWithoutDiscount,
-                    'product_tax' => $productTax
-                ]);
+                $taxIsDifferent = ($tax != $productTax);
 
-                $taxIsDifferent = ($taxIsDifferent && $tax != $productTax);
                 $tax = $productTax;
-                if ($productTax > 0 && $priceWithoutDiscount > 0) {
+                if ($productTax > 0 and $priceWithoutDiscount > 0) {
                     $taxPrice += $priceWithoutDiscount * $productTax / 100;
                 }
 
+                // Product Commission
                 if (isset($product->commission)) {
                     if ($product->commission_type == "percent") {
-                        $commissionPrice += ($priceWithoutDiscount > 0 && $product->commission > 0)
-                            ? (($priceWithoutDiscount * $product->commission) / 100)
-                            : 0;
+                        $commissionPrice += ($priceWithoutDiscount > 0 and $product->commission > 0) ? (($priceWithoutDiscount * $product->commission) / 100) : 0;
                     } else {
                         $commissionPrice += $product->commission;
                     }
@@ -673,134 +619,64 @@ class CartController extends Controller
                 $totalDiscount += $discount;
                 $subTotal += $price;
             }
-        }
-        // ++++++++++++++++ course : webinar_id ++++++++++++++++
-        else if (!empty($cart->webinar_id))
-        {     
-            $webinar = $cart->webinar;
-            if (!empty($webinar))
-            {
-                $webinarQuantity = 1;
-                $price = ($webinar->price * $webinarQuantity);
-        
-                // Log before fetching discount
-                Log::info('Fetching webinar discount', [
-                    'webinar_id' => $webinar->id,
-                    'quantity' => $webinarQuantity,
-                    'price' => $price
-                ]);
-        
-                // Initialize discount
-                $discount = 0;
-        
-                // Check if this course has a coupon discount assigned
-                if ($discountCoupon)
-                {
-                    $isCourseEligible = DB::table('discount_courses')
-                        ->where('discount_id', $discountCoupon->id)
-                        ->where('course_id', $webinar->id)
-                        ->exists();
-        
-                    if ($isCourseEligible) {
-                        $discountData = Discount::where('id', $discountCoupon->id)
-                            ->where('status', 1)
-                            ->where('expired_at', '>', now()->timestamp)
-                            ->first();
-        
-                        if ($discountData) {
-                            if ($discountData->discount_type === 'percentage') {
-                                $discount = ($price * $discountData->percent) / 100;
-                            } elseif ($discountData->discount_type === 'fixed') {
-                                $discount = $discountData->amount;
-                            }
-                        }
-                    } else {
-                        $discount = 0; // Coupon does not apply to this course
-                    }
-                }
-        
-                // Check if this course has a special offer
-                if (!empty($cart->special_offer_id))
-                {
-                    $specialOfferData = SpecialOffer::where('id', $cart->special_offer_id)
-                        ->where('status', "active")
-                        ->where('from_date', '<', time())
-                        ->where('to_date', '>', time())
-                        ->first();
-        
-                    if ($specialOfferData)
-                    {
-                        // If a discount coupon is applied, compare with the special offer and take the higher discount
-                        $specialOfferDiscount = ($price * $specialOfferData->percent) / 100;
-                        // Apply the highest discount between coupon discount and special offer
-                        $discount = max($discount, $specialOfferDiscount);
-                    }
-                }
-        
-                // Multiply discount by quantity
-                $discount *= $webinarQuantity;
-        
-                // Log after fetching discount
-                Log::info('Final discount for course', [
-                    'webinar_id' => $webinar->id,
-                    'special_offer_id' => $cart->special_offer_id ?? 'none',
-                    'applied_discount' => $discount
-                ]);
-        
-                $priceWithoutDiscount = $price - $discount;
-        
-                Log::info('Product order calculation', [
-                    'webinar_id' => $webinar->id,
-                    'quantity' => $webinarQuantity,
-                    'price' => $price,
-                    'discount' => $discount,
-                    'price_without_discount' => $priceWithoutDiscount,
-                ]);
-        
-                // Calculate commission if applicable
-                if (isset($product->commission)) 
-                {
-                    if ($product->commission_type == "percent") 
-                    {
-                        $commissionPrice += ($priceWithoutDiscount > 0 && $product->commission > 0)
-                            ? (($priceWithoutDiscount * $product->commission) / 100)
-                            : 0;
-                    } 
-                    else 
-                    {
-                        $commissionPrice += $product->commission;
-                    }
-                } 
-        
-                $totalDiscount += $discount;
-                $subTotal += $price;
-            }
-        }
-            
+        } elseif (!empty($cart->installment_payment_id)) {
+            $price = $cart->installmentPayment->amount;
+            $discount = 0;
 
-        if ($totalDiscount > $subTotal)
-        {
+            $priceWithoutDiscount = $price - $discount;
+
+            if ($tax > 0 and $priceWithoutDiscount > 0) {
+                $taxPrice += $priceWithoutDiscount * $tax / 100;
+            }
+
+            // Commission
+            $installmentOrder = $cart->installmentPayment->installmentOrder;
+
+            if (!empty($installmentOrder)) {
+                $source = null;
+
+                if (!empty($installmentOrder->webinar_id)) {
+                    $source = "courses";
+                } elseif (!empty($installmentOrder->bundle_id)) {
+                    $source = "bundles";
+                } elseif (!empty($installmentOrder->product_id) and !empty($installmentOrder->product)) {
+                    if ($installmentOrder->product->type == Product::$physical) {
+                        $source = "physical_products";
+                    } else {
+                        $source = "virtual_products";
+                    }
+                }
+
+                if (!empty($source)) {
+                    $commissionPrice += $this->getCommissionPrice($source, $priceWithoutDiscount, $seller);
+                }
+            }
+
+            $totalDiscount += $discount;
+            $subTotal += $price;
+        }
+
+        if (!empty($discountCoupon)) {
+            $totalDiscount += $this->getCouponDiscountByCartItem($discountCoupon, $cart, $user);
+        }
+
+        if ($totalDiscount > $subTotal) {
             $totalDiscount = $subTotal;
         }
 
-        $commission = ($commissionPrice > 0 && $priceWithoutDiscount > 0) ? (($commissionPrice / $priceWithoutDiscount) * 100) : 0;
+        $commission = ($commissionPrice > 0 and $priceWithoutDiscount > 0) ? (($commissionPrice / $priceWithoutDiscount) * 100) : 0;
 
-        $finalPrices = [
+        return [
             'sub_total' => round($subTotal, 2),
             'total_discount' => round($totalDiscount, 2),
-            'tax' => round($tax,2),
+            'tax' => $tax,
             'tax_price' => round($taxPrice, 2),
             'commission' => $commission,
             'commission_price' => round($commissionPrice, 2),
+            //'product_delivery_fee' => round($productDeliveryFee, 2),
             'tax_is_different' => $taxIsDifferent
         ];
-
-        Log::info('Final Order Prices', $finalPrices);
-
-        return $finalPrices;
     }
-
-
 
     private function handlePaymentOrderWithZeroTotalAmount($order)
     {
@@ -816,7 +692,7 @@ class CartController extends Controller
             'status' => Order::$paid
         ]);
 
-        return redirect('/payments/status?order_id=' . $order->id);
+        return redirect('/payments/status?t=' . $order->id);
     }
 
 
@@ -824,8 +700,7 @@ class CartController extends Controller
     {
         $amount = 0;
 
-        if (getFeaturesSettings('cashback_active') and (empty($user) or !$user->disable_cashback))
-        {
+        if (getFeaturesSettings('cashback_active') and (empty($user) or !$user->disable_cashback)) {
             $cashbackRulesMixin = new CashbackRules($user);
             $applyPerItemRules = [];
 
@@ -843,7 +718,6 @@ class CartController extends Controller
                                 }
                             } else if ($rule->amount_type == "percent") {
                                 $itemOrder = $this->handleOrderPrices($cart, $user);
-                                // dd($itemOrder);
                                 $itemPrice = $itemOrder['sub_total'];
 
                                 if (!empty($itemOrder['total_discount'])) {
@@ -876,8 +750,6 @@ class CartController extends Controller
 
     private function handleDiscountPrice($discount, $carts, $subTotal)
     {
-        // dd($discount);
-
         $user = auth()->user();
         $totalDiscount = 0;
 
@@ -900,8 +772,7 @@ class CartController extends Controller
         $totalCouponDiscount = 0;
         $totalItemAmount = 0;
 
-        if ($couponDiscount->source == Discount::$discountSourceCourse)
-        {
+        if ($couponDiscount->source == Discount::$discountSourceCourse) {
             $discountWebinarsIds = $couponDiscount->discountCourses()->pluck('course_id')->toArray();
             $webinar = $cart->webinar;
             if (!empty($webinar) and (in_array($webinar->id, $discountWebinarsIds) or count($discountWebinarsIds) < 1)) {
@@ -919,14 +790,11 @@ class CartController extends Controller
 
                 $applyDiscount = true;
             }
-        }
-        elseif ($couponDiscount->source == Discount::$discountSourceProduct)
-        {
-            if (!empty($cart->productOrder))
-            {
+        } elseif ($couponDiscount->source == Discount::$discountSourceProduct) {
+            if (!empty($cart->productOrder)) {
                 $product = $cart->productOrder->product;
-                if (!empty($product) and ($couponDiscount->product_type == 'all' or $couponDiscount->product_type == $product->type))
-                {
+
+                if (!empty($product) and ($couponDiscount->product_type == 'all' or $couponDiscount->product_type == $product->type)) {
                     $productQuantity = $cart->productOrder->quantity;
                     $totalItemAmount += ($product->price * $productQuantity);
                     //$otherDiscounts += $product->getDiscountPrice() * $productQuantity;

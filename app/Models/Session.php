@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\SequenceContent;
+use App\User;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\CalendarLinks\Link;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
@@ -40,7 +41,7 @@ class Session extends Model implements TranslatableContract
 
     public function creator()
     {
-        return $this->hasOne('App\User', 'user_id', 'id');
+        return $this->belongsTo(User::class, 'creator_id', 'id');
     }
 
     public function webinar()

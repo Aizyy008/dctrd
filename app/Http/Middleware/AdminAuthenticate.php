@@ -29,9 +29,9 @@ class AdminAuthenticate
                 $adminUser = User::getMainAdmin();
 
                 if (!empty($adminUser)) {
-                    $unreadNotifications = $adminUser->getUnReadNotifications();
+                    $unReadNotifications = $adminUser->getUnReadNotifications();
 
-                    view()->share('unreadNotifications', $unreadNotifications);
+                    view()->share('unReadNotifications', $unReadNotifications);
                 }
             }
 
@@ -78,6 +78,8 @@ class AdminAuthenticate
             $aiContentTemplates = AiContentTemplate::query()->where('enable', true)->get();
             view()->share('aiContentTemplates', $aiContentTemplates);
 
+            // Theme Color Mode
+            view()->share('userThemeColorMode', getUserThemeColorMode());
 
             // locale config
             if (!Session::has('locale')) {

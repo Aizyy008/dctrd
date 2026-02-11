@@ -58,7 +58,7 @@ class GiftController extends Controller
                 'item' => $item
             ];
 
-            return view('web.default.gift.index', $data);
+            return view('design_1.web.gift.index', $data);
         }
 
         abort(404);
@@ -124,7 +124,13 @@ class GiftController extends Controller
                 'created_at' => time()
             ]);
 
-            return redirect('/cart');
+            return response()->json([
+                'code' => 200,
+                'title' => trans('public.request_success'),
+                'msg' => trans('cart.cart_add_success_msg'),
+                'redirect_to' => "/cart",
+                'redirect_timeout' => 1300,
+            ]);
         }
 
         abort(404);

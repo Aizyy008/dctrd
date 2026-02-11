@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Web;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Models\Api\TrendCategory;
 use App\Models\Api\Webinar;
 use Illuminate\Http\Request;

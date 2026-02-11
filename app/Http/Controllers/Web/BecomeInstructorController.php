@@ -51,6 +51,7 @@ class BecomeInstructorController extends Controller
 
             $formFields = $this->getFormFieldsByUserType($request, 'become_instructor', true, null, $lastRequest);
 
+
             $data = [
                 'pageTitle' => trans('site.become_instructor'),
                 'user' => $user,
@@ -60,10 +61,11 @@ class BecomeInstructorController extends Controller
                 'isOrganizationRole' => $isOrganizationRole,
                 'isInstructorRole' => $isInstructorRole,
                 'userBanks' => $userBanks,
-                'formFields' => $formFields
+                'formFields' => $formFields,
+                'becomeInstructorSettings' => getBecomeInstructorSettings(),
             ];
 
-            return view('web.default.user.become_instructor.index', $data);
+            return view('design_1.web.become_instructor.wizard.index', $data);
         }
 
         abort(404);
@@ -231,7 +233,7 @@ class BecomeInstructorController extends Controller
                 'selectedRole' => $role
             ];
 
-            return view('web.default.user.become_instructor.packages', $data);
+            return view('design_1.web.become_instructor.packages.index', $data);
         }
 
         abort(404);

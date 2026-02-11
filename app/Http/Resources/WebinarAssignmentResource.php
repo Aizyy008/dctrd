@@ -16,6 +16,7 @@ class WebinarAssignmentResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'content_type' => 'assignment',
             'title' => $this->title,
             'can_view_error' => $this->canViewError(),
             'description' => $this->description,

@@ -39,6 +39,7 @@ class CartItemInfo
         $info['profileUrl'] = $webinar->teacher->getProfileUrl();
         $info['teacherName'] = $webinar->teacher->full_name;
         $info['rate'] = $webinar->getRate();
+        $info['rateCount'] = $webinar->reviews()->pluck('creator_id')->count();
         $info['price'] = $webinar->price;
         $info['discountPrice'] = $webinar->getDiscount($cart->ticket) ? ($webinar->price - $webinar->getDiscount($cart->ticket)) : null;
 
@@ -55,6 +56,7 @@ class CartItemInfo
         $info['profileUrl'] = $bundle->teacher->getProfileUrl();
         $info['teacherName'] = $bundle->teacher->full_name;
         $info['rate'] = $bundle->getRate();
+        $info['rateCount'] = $bundle->reviews()->pluck('creator_id')->count();
         $info['price'] = $bundle->price;
         $info['discountPrice'] = $bundle->getDiscount($cart->ticket) ? ($bundle->price - $bundle->getDiscount($cart->ticket)) : null;
 
@@ -66,12 +68,15 @@ class CartItemInfo
         $info = [];
 
         $info['isProduct'] = true;
+        $info['productType'] = $product->type;
+        $info['productAvailabilityCount'] = $product->getAvailability();
         $info['imgPath'] = $product->thumbnail;
         $info['itemUrl'] = $product->getUrl();
         $info['title'] = $product->title;
         $info['profileUrl'] = $product->creator->getProfileUrl();
         $info['teacherName'] = $product->creator->full_name;
         $info['rate'] = $product->getRate();
+        $info['rateCount'] = $product->reviews()->pluck('creator_id')->count();
         $info['quantity'] = $cart->productOrder ? $cart->productOrder->quantity : 1;
         $info['price'] = $product->price;
         $info['discountPrice'] = ($product->getPriceWithActiveDiscountPrice() < $product->price) ? $product->getPriceWithActiveDiscountPrice() : null;
@@ -81,6 +86,7 @@ class CartItemInfo
 
     private function getReserveMeetingInfo($cart, $creator)
     {
+        $rates = $creator->rates(true);
         $info = [];
 
         $info['imgPath'] = $creator->getAvatar(150);
@@ -88,7 +94,8 @@ class CartItemInfo
         $info['title'] = trans('meeting.reservation_appointment') . ' ' . ((!empty($cart->reserveMeeting->student_count) and $cart->reserveMeeting->student_count > 1) ? '(' . trans('update.reservation_appointment_student_count', ['count' => $cart->reserveMeeting->student_count]) . ')' : '');
         $info['profileUrl'] = $creator->getProfileUrl();
         $info['teacherName'] = $creator->full_name;
-        $info['rate'] = $creator->rates();
+        $info['rate'] = $rates['rate'];
+        $info['rateCount'] = $rates['count'];
         $info['price'] = $cart->reserveMeeting->paid_amount;
 
         return $info;
@@ -105,6 +112,7 @@ class CartItemInfo
         $info['teacherName'] = null;
         $info['extraHint'] = trans('public.subscribe');
         $info['rate'] = null;
+        $info['rateCount'] = null;
         $info['quantity'] = null;
         $info['price'] = $subscribe->price;
         $info['discountPrice'] = null;
@@ -123,6 +131,7 @@ class CartItemInfo
         $info['teacherName'] = null;
         $info['extraHint'] = trans('update.registration_package');
         $info['rate'] = null;
+        $info['rateCount'] = null;
         $info['quantity'] = null;
         $info['price'] = $registrationPackage->price;
         $info['discountPrice'] = null;

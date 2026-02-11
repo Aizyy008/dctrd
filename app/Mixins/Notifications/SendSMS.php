@@ -179,13 +179,15 @@ class SendSMS
             \config()->set('services.msg91.key', $key);
 
             try {
+                $msg = "Your verification code: {$this->content}" . PHP_EOL;
+                $msg .= "Please use this code to complete your request. Do not share it with anyone." . PHP_EOL;
+                $msg .= "Request ID ##OTP##";
 
                 $res = Msg91::otp($this->content)
                     ->to(str_replace('+', '', $this->to))
-                    ->message("Your OTP is: {$this->content}")
+                    ->message($msg)
                     ->send();
 
-                dd($res);
             } catch (\Exception $e) {
                 dd($e);
             }

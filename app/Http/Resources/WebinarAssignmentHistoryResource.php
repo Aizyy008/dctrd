@@ -20,7 +20,8 @@ class WebinarAssignmentHistoryResource extends JsonResource
         $sale = $this->assignment->getSale($this->student);
 
         return [
-            'id' => $this->assignment->id,
+            'id' => $this->id,
+            'assignment_id' => $this->assignment->id,
             'title' => $this->assignment->title,
             'deadline' => $this->deadlineDays(),
             $this->mergeWhen($this->student_details, [

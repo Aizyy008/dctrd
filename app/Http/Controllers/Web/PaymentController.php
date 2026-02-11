@@ -182,21 +182,8 @@ class PaymentController extends Controller
             $cashbackAccounting->rechargeWallet($order);
         } else {
             foreach ($order->orderItems as $orderItem) {
-                $sale = Sale::createSales($orderItem, $order->payment_method);
-
-                if (!empty($orderItem->reserve_meeting_id)) {
-                    $reserveMeeting = ReserveMeeting::where('id', $orderItem->reserve_meeting_id)->first();
-                    $reserveMeeting->update([
-                        'sale_id' => $sale->id,
-                        'reserved_at' => time()
-                    ]);
-
-                    $reserver = $reserveMeeting->user;
-
-                    if ($reserver) {
-                        $this->handleMeetingReserveReward($reserver);
-                    }
-                }
+                $updateInstallmentOrderAfterSale = false;
+                $updateProductOrderAfterSale = false;
 
                 if (!empty($orderItem->gift_id)) {
                     $gift = $orderItem->gift;
@@ -224,7 +211,7 @@ class PaymentController extends Controller
                 } elseif (!empty($orderItem->installment_payment_id)) {
                     Accounting::createAccountingForInstallmentPayment($orderItem, $type);
 
-                    $this->updateInstallmentOrder($orderItem, $sale);
+                    $updateInstallmentOrderAfterSale = true;
                 } else {
                     // webinar and meeting and product and bundle
 
@@ -232,8 +219,33 @@ class PaymentController extends Controller
                     TicketUser::useTicket($orderItem);
 
                     if (!empty($orderItem->product_id)) {
-                        $this->updateProductOrder($sale, $orderItem);
+                        $updateProductOrderAfterSale = true;
                     }
+                }
+
+                // Set Sale After All Accounting
+                $sale = Sale::createSales($orderItem, $order->payment_method);
+
+                if (!empty($orderItem->reserve_meeting_id)) {
+                    $reserveMeeting = ReserveMeeting::where('id', $orderItem->reserve_meeting_id)->first();
+                    $reserveMeeting->update([
+                        'sale_id' => $sale->id,
+                        'reserved_at' => time()
+                    ]);
+
+                    $reserver = $reserveMeeting->user;
+
+                    if ($reserver) {
+                        $this->handleMeetingReserveReward($reserver);
+                    }
+                }
+
+                if ($updateInstallmentOrderAfterSale) {
+                    $this->updateInstallmentOrder($orderItem, $sale);
+                }
+
+                if ($updateProductOrderAfterSale) {
+                    $this->updateProductOrder($sale, $orderItem);
                 }
             }
 
@@ -265,7 +277,7 @@ class PaymentController extends Controller
                 'order' => $order,
             ];
 
-            return view('web.default.cart.status_pay', $data);
+            return view('design_1.web.cart.payment.status.index', $data);
         }
 
         return redirect('/panel');

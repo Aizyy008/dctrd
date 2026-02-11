@@ -108,8 +108,15 @@ class File extends WebFile
 
     public function getFileWebViewUrl()
     {
+        $user = apiAuth();
+        //Return an empty string if the user is not authenticated
+        if (empty($user)) {
+            return '';
+        }
+
+        // Generate the signed URL for authenticated users
         return URL::signedRoute('my_api.web.courses_learning_file', [
-            'user' => apiAuth()->id,
+            'user' => $user->id,
             'slug' => $this->webinar->slug,
             'file' => $this->id,
         ]);

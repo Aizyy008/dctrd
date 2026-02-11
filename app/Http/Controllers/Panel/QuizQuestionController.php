@@ -14,17 +14,43 @@ use Illuminate\Support\Facades\Validator;
 
 class QuizQuestionController extends Controller
 {
+
+    public function getForm(Request $request)
+    {
+        $user = auth()->user();
+        $quizId = $request->get('quiz');
+
+        $quiz = Quiz::where('id', $quizId)->first();
+
+        if (!empty($quiz) and $quiz->canAccessToEdit($user)) {
+            $data = [
+                'quiz' => $quiz
+            ];
+
+            if ($request->get('type') == 'multiple') {
+                $html = (string)view()->make('design_1.panel.quizzes.create.modals.multiple_question', $data);
+            } else {
+                $html = (string)view()->make('design_1.panel.quizzes.create.modals.descriptive_question', $data);
+            }
+
+            return response()->json([
+                'html' => $html
+            ], 200);
+        }
+
+        return response()->json([], 422);
+    }
+
     public function store(Request $request)
     {
         $data = $request->get('ajax');
+        $locale = $request->get('locale');
 
         $rules = [
             'quiz_id' => 'required|exists:quizzes,id',
             'title' => 'required',
             'grade' => 'required|integer',
             'type' => 'required',
-            'image' => 'nullable|max:255',
-            'video' => 'nullable|max:255',
         ];
 
         $validate = Validator::make($data, $rules);
@@ -46,7 +72,6 @@ class QuizQuestionController extends Controller
                 ]
             ], 422);
         }
-
 
         $user = auth()->user();
 
@@ -80,8 +105,6 @@ class QuizQuestionController extends Controller
                 'creator_id' => $user->id,
                 'grade' => $data['grade'],
                 'type' => $data['type'],
-                'image' => $data['image'] ?? null,
-                'video' => $data['video'] ?? null,
                 'order' => $order,
                 'created_at' => time()
             ]);
@@ -89,23 +112,26 @@ class QuizQuestionController extends Controller
             if (!empty($quizQuestion)) {
                 QuizzesQuestionTranslation::updateOrCreate([
                     'quizzes_question_id' => $quizQuestion->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                     'correct' => $data['correct'] ?? null,
                 ]);
+
+                $this->handleUploadForQuestion($request, $quizQuestion);
             }
 
             $quiz->increaseTotalMark($quizQuestion->grade);
 
             if ($quizQuestion->type == QuizzesQuestion::$multiple and !empty($data['answers'])) {
 
-                foreach ($answers as $answer) {
-                    if (!empty($answer['title']) or !empty($answer['file'])) {
+                foreach ($answers as $key => $answer) {
+                    $file = !empty($request->file("ajax.answers.{$key}.file")) ? $request->file("ajax.answers.{$key}.file") : null;
+
+                    if (!empty($answer['title']) or !empty($file)) {
                         $questionAnswer = QuizzesQuestionsAnswer::create([
                             'question_id' => $quizQuestion->id,
                             'creator_id' => $user->id,
-                            'image' => $answer['file'] ?? null,
                             'correct' => isset($answer['correct']) ? true : false,
                             'created_at' => time()
                         ]);
@@ -113,17 +139,21 @@ class QuizQuestionController extends Controller
                         if (!empty($questionAnswer)) {
                             QuizzesQuestionsAnswerTranslation::updateOrCreate([
                                 'quizzes_questions_answer_id' => $questionAnswer->id,
-                                'locale' => mb_strtolower($data['locale']),
+                                'locale' => mb_strtolower($locale),
                             ], [
                                 'title' => $answer['title'],
                             ]);
+
+                            $this->handleUploadForAnswer($questionAnswer, $file);
                         }
                     }
                 }
             }
 
             return response()->json([
-                'code' => 200
+                'code' => 200,
+                'title' => trans('public.request_success'),
+                'msg' => trans('webinars.success_store'),
             ], 200);
         }
 
@@ -155,9 +185,9 @@ class QuizQuestionController extends Controller
                 ];
 
                 if ($question->type == 'multiple') {
-                    $html = (string)\View::make(getTemplate() . '.panel.quizzes.modals.multiple_question', $data);
+                    $html = (string)view()->make('design_1.panel.quizzes.create.modals.multiple_question', $data);
                 } else {
-                    $html = (string)\View::make(getTemplate() . '.panel.quizzes.modals.descriptive_question', $data);
+                    $html = (string)view()->make('design_1.panel.quizzes.create.modals.descriptive_question', $data);
                 }
 
                 return response()->json([
@@ -217,14 +247,13 @@ class QuizQuestionController extends Controller
     public function update(Request $request, $id)
     {
         $data = $request->get('ajax');
+        $locale = $request->get('locale');
 
         $rules = [
             'quiz_id' => 'required|exists:quizzes,id',
             'title' => 'required',
             'grade' => 'required',
             'type' => 'required',
-            'image' => 'nullable|max:255',
-            'video' => 'nullable|max:255',
         ];
 
         $validate = Validator::make($data, $rules);
@@ -283,18 +312,19 @@ class QuizQuestionController extends Controller
                     'quiz_id' => $data['quiz_id'],
                     'grade' => $data['grade'],
                     'type' => $data['type'],
-                    'image' => $data['image'] ?? null,
-                    'video' => $data['video'] ?? null,
                     'updated_at' => time()
                 ]);
 
                 QuizzesQuestionTranslation::updateOrCreate([
                     'quizzes_question_id' => $quizQuestion->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                     'correct' => $data['correct'] ?? null,
                 ]);
+
+                // Upload image or Video
+                $this->handleUploadForQuestion($request, $quizQuestion);
 
                 $quiz_total_grade = ($quiz_total_grade > 0 ? $quiz_total_grade : 0) + $data['grade'];
                 $quiz->update(['total_mark' => $quiz_total_grade]);;
@@ -306,7 +336,9 @@ class QuizQuestionController extends Controller
                         $oldAnswerIds = QuizzesQuestionsAnswer::where('question_id', $quizQuestion->id)->pluck('id')->toArray();
 
                         foreach ($answers as $key => $answer) {
-                            if (!empty($answer['title']) or !empty($answer['file'])) {
+                            $file = !empty($request->file("ajax.answers.{$key}.file")) ? $request->file("ajax.answers.{$key}.file") : null;
+
+                            if (!empty($answer['title']) or !empty($file)) {
 
                                 if (count($oldAnswerIds)) {
                                     $oldAnswerIds = array_filter($oldAnswerIds, function ($item) use ($key) {
@@ -320,7 +352,6 @@ class QuizQuestionController extends Controller
                                     $quizQuestionsAnswer->update([
                                         'question_id' => $quizQuestion->id,
                                         'creator_id' => $user->id,
-                                        'image' => $answer['file'],
                                         'correct' => isset($answer['correct']) ? true : false,
                                         'created_at' => time()
                                     ]);
@@ -328,7 +359,6 @@ class QuizQuestionController extends Controller
                                     $quizQuestionsAnswer = QuizzesQuestionsAnswer::create([
                                         'question_id' => $quizQuestion->id,
                                         'creator_id' => $user->id,
-                                        'image' => $answer['file'],
                                         'correct' => isset($answer['correct']) ? true : false,
                                         'created_at' => time()
                                     ]);
@@ -337,10 +367,12 @@ class QuizQuestionController extends Controller
                                 if ($quizQuestionsAnswer) {
                                     QuizzesQuestionsAnswerTranslation::updateOrCreate([
                                         'quizzes_questions_answer_id' => $quizQuestionsAnswer->id,
-                                        'locale' => mb_strtolower($data['locale']),
+                                        'locale' => mb_strtolower($locale),
                                     ], [
                                         'title' => $answer['title'],
                                     ]);
+
+                                    $this->handleUploadForAnswer($quizQuestionsAnswer, $file);
                                 }
                             }
                         }
@@ -352,7 +384,9 @@ class QuizQuestionController extends Controller
                 }
 
                 return response()->json([
-                    'code' => 200
+                    'code' => 200,
+                    'title' => trans('public.request_success'),
+                    'msg' => trans('update.question_updated_successful'),
                 ], 200);
             }
         }
@@ -378,6 +412,53 @@ class QuizQuestionController extends Controller
         }
 
         return response()->json([], 422);
+    }
+
+    private function handleUploadForQuestion(Request $request, $question)
+    {
+        $destination = "quizzes/questions/{$question->id}";
+        $imagePath = !empty($question->image) ? $question->image : null;
+        $videoPath = !empty($question->video) ? $question->video : null;
+
+        if (!empty($request->file('ajax.image'))) {
+            if (!empty($imagePath)) {
+                $this->removeFile($imagePath);
+            }
+
+            $imagePath = $this->uploadFile($request->file('ajax.image'), $destination, "question-image-{$question->id}", auth()->id());
+        }
+
+        if (!empty($request->file('ajax.video'))) {
+            if (!empty($videoPath)) {
+                $this->removeFile($videoPath);
+            }
+
+            $videoPath = $this->uploadFile($request->file('ajax.video'), $destination, "question-video-{$question->id}", auth()->id());
+        }
+
+        $question->update([
+            'image' => $imagePath,
+            'video' => $videoPath,
+        ]);
+
+    }
+
+    private function handleUploadForAnswer($answer, $file = null)
+    {
+        $destination = "quizzes/questions/{$answer->question_id}";
+        $imagePath = !empty($answer->image) ? $answer->image : null;
+
+        if (!empty($file)) {
+            if (!empty($imagePath)) {
+                $this->removeFile($imagePath);
+            }
+
+            $imagePath = $this->uploadFile($file, $destination, "answer-image-{$answer->id}", auth()->id());
+        }
+
+        $answer->update([
+            'image' => $imagePath
+        ]);
     }
 
 }

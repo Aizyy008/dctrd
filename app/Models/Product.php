@@ -23,7 +23,7 @@ class Product extends Model implements TranslatableContract
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 
-    public $morphsFunctions = ['productBadgeContent', 'relatedCourses', 'deleteRequest'];
+    public $morphsFunctions = ['productBadgeContents', 'relatedCourses', 'deleteRequest'];
 
     static $productTypes = ['virtual', 'physical'];
     static $productStatus = ['active', 'pending', 'draft', 'inactive'];
@@ -99,12 +99,6 @@ class Product extends Model implements TranslatableContract
     /*
      * Relations
      * */
-
-    public function variants()
-    {
-        return $this->hasMany('App\Models\ProductVariant', 'product_id', 'id');
-    }
-
     public function creator()
     {
         return $this->belongsTo('App\User', 'creator_id', 'id');
@@ -160,7 +154,7 @@ class Product extends Model implements TranslatableContract
         return $this->hasMany('App\Models\ProductOrder', 'product_id', 'id');
     }
 
-    public function productBadgeContent()
+    public function productBadgeContents()
     {
         return $this->morphMany(ProductBadgeContent::class, 'targetable');
     }
@@ -170,30 +164,39 @@ class Product extends Model implements TranslatableContract
         return $this->morphMany('App\Models\RelatedCourse', 'targetable');
     }
 
+    public function relatedProducts()
+    {
+        return $this->morphMany(RelatedProduct::class, 'targetable');
+    }
+
     public function deleteRequest()
     {
         return $this->morphOne(ContentDeleteRequest::class, 'targetable');
     }
 
-
-
-    public function sales($withoutRefunds = true)
+    public function visits()
     {
-        if (empty($this->salesCache)) {
-            $ordersIds = $this->productOrders->pluck('id')->toArray();
+        return $this->morphMany(VisitLog::class, 'targetable');
+    }
 
-            $query = Sale::whereIn('product_order_id', $ordersIds);
 
-            if ($withoutRefunds) {
-                $query->whereNull('refund_at');
-            }
+    public function sales($withoutRefunds = true, $getQuery = false)
+    {
+        $ordersIds = $this->productOrders->pluck('id')->toArray();
 
-            $query->orderBy('created_at', 'desc');
+        $query = Sale::query()->whereIn('product_order_id', $ordersIds);
 
-            $this->salesCache = $query->get();
+        if ($withoutRefunds) {
+            $query->whereNull('refund_at');
         }
 
-        return $this->salesCache;
+        $query->orderBy('created_at', 'desc');
+
+        if ($getQuery) {
+            return $query;
+        }
+
+        return $query->get();
     }
 
     public function salesCount($inventoryUpdatedAt = false)
@@ -229,31 +232,14 @@ class Product extends Model implements TranslatableContract
     {
         return ($this->type == self::$physical);
     }
-    // =============== coupon_discounts() ===============
-    // public function coupon_discounts()
-    // {
-    //     return $this->belongsToMany(Discount::class, 'discount_coupon_product', 
-    //                                                                 'product_id', 
-    //                                                                 'discount_id');
-    // }
-    // ++++++++++++++++++++++ getActiveDiscount ++++++++++++++++++++++++++++++
+
     public function getActiveDiscount()
     {
-        // ========== First: Search in ProductDiscount ==========
         $activeDiscount = ProductDiscount::where('product_id', $this->id)
             ->where('status', 'active')
             ->where('start_date', '<', time())
             ->where('end_date', '>', time())
             ->first();
-
-        // ========== Second: If No ProductDiscount Found, Search in SpecialOffer ==========
-        if (!$activeDiscount) {
-            $activeDiscount = SpecialOffer::where('product_id', $this->id)
-                ->where('status', 'active')
-                ->where('from_date', '<', time())
-                ->where('to_date', '>', time())
-                ->first();
-        }
 
         if (!empty($activeDiscount) and !empty($activeDiscount->count)) {
             $usedCount = ProductOrder::where('product_id', $this->id)
@@ -267,29 +253,9 @@ class Product extends Model implements TranslatableContract
                 return false;
             }
         }
+
         return $activeDiscount ?? false;
     }
-    // ++++++++++++++++++++++ new ++++++++++++++++++++++++
-    // public function getActiveDiscount()
-    // {
-    //     $activeDiscount = $this->coupon_discounts()
-    //                             ->where('expired_at', '>', now()) // Ensure the discount is not expired
-    //                             ->first(); // Get the first active discount
-    //     // dd($activeDiscount);
-    //     if ($activeDiscount) 
-    //     {
-    //         // Count how many times the discount has been used
-    //         $usedCount = ProductOrder::where('product_id', $this->id)
-    //             ->where('discount_id', $activeDiscount->id)
-    //             ->whereHas('sale', function ($query) {
-    //                 $query->whereNull('refund_at'); // Only count non-refunded sales
-    //             })
-    //             ->count();
-    //         return ($usedCount < $activeDiscount->count) ? $activeDiscount : false;
-    //     }
-    //     return false;
-    // }
-
 
     public function getPriceWithActiveDiscountPrice()
     {
@@ -309,7 +275,7 @@ class Product extends Model implements TranslatableContract
         $price = 0;
 
         $activeDiscount = $this->getActiveDiscount();
-        // dd($activeDiscount);
+
         if (!empty($activeDiscount)) {
             $price = $this->price * $activeDiscount->percent / 100;
         }
@@ -355,6 +321,7 @@ class Product extends Model implements TranslatableContract
             ->twitter()
             ->whatsapp()
             ->telegram()
+            ->linkedin()
             ->getRawLinks();
 
         return !empty($link[$social]) ? $link[$social] : '';
@@ -377,6 +344,13 @@ class Product extends Model implements TranslatableContract
         }
 
         return $rate > 0 ? number_format($rate, 2) : 0;
+    }
+
+    public function getRateCount()
+    {
+        return $this->reviews()
+            ->where('status', 'active')
+            ->count();
     }
 
     public function getCommission()
@@ -464,14 +438,33 @@ class Product extends Model implements TranslatableContract
         return $hasBought;
     }
 
-    // Cross Selling
-    public function crossSellings()
+    public function isFeatured()
     {
-        return $this->morphMany(CrossSellingRelation::class, 'source');
+        $settings = getStoreFeaturedProductsSettings();
+        $featuredProductsIds = (!empty($settings) and !empty($settings['featured_products'])) ? $settings['featured_products'] : [];
+
+        return in_array($this->id, $featuredProductsIds);
     }
 
-    public function recommendedFor()
+    public function allBadges()
     {
-        return $this->morphMany(CrossSellingRelation::class, 'target');
+        $badges = collect();
+
+        $productBadgeContents = $this->productBadgeContents()
+            ->whereHas('badge', function ($query) {
+                $query->where('enable', true);
+            })
+            ->get();
+
+        foreach ($productBadgeContents as $productBadgeContent) {
+            $badge = $productBadgeContent->badge;
+
+            if ($badge->isActive()) {
+                $badges->push($productBadgeContent->badge);
+            }
+        }
+
+        return $badges;
     }
+
 }

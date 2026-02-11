@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Web;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\ProductCategoryResource;
 use App\Models\ProductCategory;
 use Illuminate\Http\Request;

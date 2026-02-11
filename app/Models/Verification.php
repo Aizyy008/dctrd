@@ -25,11 +25,17 @@ class Verification extends Model
 
     public function sendEmailCode()
     {
-        $this->notify(new SendVerificationEmailCode($this));
+        if (app()->environment('production')) {
+            $this->notify(new SendVerificationEmailCode($this));
+        }
+
+        return true;
     }
 
     public function sendSMSCode()
     {
-        $this->notify(new SendVerificationSMSCode($this));
+        if (app()->environment('production')) {
+            $this->notify(new SendVerificationSMSCode($this));
+        }
     }
 }

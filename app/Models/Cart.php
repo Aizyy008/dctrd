@@ -69,6 +69,11 @@ class Cart extends Model
         Cart::where('creator_id', $userId)->delete();
     }
 
+    public function getId()
+    {
+        return (!empty($this->id) ? $this->id : $this->uid);
+    }
+
     public static function getCartsTotalPrice($carts)
     {
         $totalPrice = 0;

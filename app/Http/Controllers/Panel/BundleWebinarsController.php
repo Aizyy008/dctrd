@@ -32,6 +32,7 @@ class BundleWebinarsController extends Controller
 
         if (!empty($bundle) and $bundle->canAccess()) {
             $check = BundleWebinar::where('creator_id', $user->id)
+                ->where('bundle_id', $bundle->id)
                 ->where('webinar_id', $data['webinar_id'])
                 ->first();
 
@@ -80,6 +81,7 @@ class BundleWebinarsController extends Controller
         if (!empty($bundle) and $bundle->canAccess($user)) {
             $check = BundleWebinar::where('creator_id', $user->id)
                 ->where('id', '!=', $id)
+                ->where('bundle_id', $bundle->id)
                 ->where('webinar_id', $data['webinar_id'])
                 ->first();
 

@@ -37,10 +37,14 @@ class QuizQuestionController extends Controller
 
         if (!empty($data['image']) and !empty($data['video'])) {
 
-            return back()->withErrors([
-                'image' => [trans('update.quiz_question_image_validation_by_video')],
-                'video' => [trans('update.quiz_question_image_validation_by_video')],
-            ]);
+            return response()->json([
+                'code' => 422,
+                'errors' => [
+                    'image' => [trans('update.quiz_question_image_validation_by_video')],
+                    'video' => [trans('update.quiz_question_image_validation_by_video')],
+                ]
+            ], 422);
+
         }
 
         if ($data['type'] == QuizzesQuestion::$multiple and !empty($data['answers'])) {
@@ -221,11 +225,13 @@ class QuizQuestionController extends Controller
         }
 
         if (!empty($data['image']) and !empty($data['video'])) {
-
-            return back()->withErrors([
-                'image' => [trans('update.quiz_question_image_validation_by_video')],
-                'video' => [trans('update.quiz_question_image_validation_by_video')],
-            ]);
+            return response()->json([
+                'code' => 422,
+                'errors' => [
+                    'image' => [trans('update.quiz_question_image_validation_by_video')],
+                    'video' => [trans('update.quiz_question_image_validation_by_video')],
+                ]
+            ], 422);
         }
 
         if ($data['type'] == QuizzesQuestion::$multiple and !empty($data['answers'])) {

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Panel;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\WebinarAssignmentHistoryMessageResource;
 use App\Models\Api\WebinarAssignment;
 use App\Models\Api\WebinarAssignmentHistory;
@@ -21,10 +21,11 @@ class AssignmentHistoryMessageController extends Controller
 
         if (!empty($webinar) and $webinar->checkUserHasBought($user)) {
             // $studentId = $request->get('student_id');
-            $user_id = \request()->input('student_id');
-            $assignmentHistory = $this->getAssignmentHistory($webinar, $assignment, $user, $user_id);
+            $studentId = $request->get('student_id');
 
-            abort_unless($assignmentHistory,404);
+            $assignmentHistory = $this->getAssignmentHistory($webinar, $assignment, $user, $studentId);
+
+            abort_unless($assignmentHistory, 404);
 
             if (!empty($assignmentHistory)) {
 
@@ -43,23 +44,23 @@ class AssignmentHistoryMessageController extends Controller
                 }
 
                 $data = $request->all();
-                validateParam($request->all(), [
+                validateParam($data, [
                     'message' => 'required',
                     'file_title' => 'nullable|max:255',
                     'file_path' => 'nullable',
                 ]);
-                $ee = [
+
+                $webinarAssignmentHistoryMessage = WebinarAssignmentHistoryMessage::create([
                     'assignment_history_id' => $assignmentHistory->id,
                     'sender_id' => $user->id,
                     'message' => $data['message'],
                     'file_title' => $data['file_title'] ?? null,
-                    'file_path' => $data['file_path'] ?? null,
+                    'file_path' => null,
                     'created_at' => time(),
-                ];
-                if (isset($data['file_path'])) {
-                    $ee['file_path'] = $data['file_path'];
-                }
-                WebinarAssignmentHistoryMessage::create($ee);
+                ]);
+
+                // Attachment
+                $this->handleUploadAttachment($request, $webinarAssignmentHistoryMessage, $user);
 
                 if ($assignmentHistory->status == WebinarAssignmentHistory::$notSubmitted) {
                     $assignmentHistory->update([
@@ -80,18 +81,35 @@ class AssignmentHistoryMessageController extends Controller
                     sendNotification('student_send_message', $notifyOptions, $assignmentHistory->instructor_id);
                 }
 
-                return apiResponse2(1, 'stored', trans('api.public.stored'),$ee);
+                return apiResponse2(1, 'stored', trans('api.public.stored'), $webinarAssignmentHistoryMessage);
             }
         }
-        return apiResponse2(0, 'UserNotBought',"");
+
+        return apiResponse2(0, 'UserNotBought', "");
     }
 
-    public function index($assignment_id)
+    private function handleUploadAttachment(Request $request, &$webinarAssignmentHistoryMessage, $user)
+    {
+        $path = $webinarAssignmentHistoryMessage->file_path ?? null;
+
+        $file = $request->file('attachment');
+
+        if (!empty($file)) {
+            $destination = "webinars/assignment_his_msg/{$webinarAssignmentHistoryMessage->id}";
+            $path = $this->uploadFile($file, $destination, 'attachment', $user->id);
+        }
+
+        $webinarAssignmentHistoryMessage->update([
+            'file_path' => $path
+        ]);
+    }
+
+    public function index(Request $request, $assignment_id)
     {
         $assignment = WebinarAssignment::find($assignment_id);
-        $user_id = \request()->input('student_id');
+        $studentId = $request->get('student_id');
 
-        $rr = $this->getAssignmentHistory($assignment->webinar, $assignment, apiAuth(), $user_id);
+        $rr = $this->getAssignmentHistory($assignment->webinar, $assignment, apiAuth(), $studentId);
 
         $resource = ($rr) ? WebinarAssignmentHistoryMessageResource::collection($rr->messages) : [];
         return apiResponse2(1, 'retrieved', trans('api.public.retrieved'), $resource);

@@ -32,11 +32,16 @@ class UpcomingCourse extends Model implements TranslatableContract
     static $course = 'course';
     static $textLesson = 'text_lesson';
 
-    public $translatedAttributes = ['title', 'description', 'seo_description'];
+    public $translatedAttributes = ['title', 'description', 'seo_description', 'summary'];
 
     public function getTitleAttribute()
     {
         return getTranslateAttributeValue($this, 'title');
+    }
+
+    public function getSummaryAttribute()
+    {
+        return getTranslateAttributeValue($this, 'summary');
     }
 
     public function getDescriptionAttribute()
@@ -114,6 +119,11 @@ class UpcomingCourse extends Model implements TranslatableContract
         return $this->morphMany(ProductBadgeContent::class, 'targetable');
     }
 
+    public function visits()
+    {
+        return $this->morphMany(VisitLog::class, 'targetable');
+    }
+
     /**
      * Return the sluggable configuration array for this model.
      *
@@ -178,6 +188,7 @@ class UpcomingCourse extends Model implements TranslatableContract
             ->twitter()
             ->whatsapp()
             ->telegram()
+            ->linkedin()
             ->getRawLinks();
 
         return !empty($link[$social]) ? $link[$social] : '';

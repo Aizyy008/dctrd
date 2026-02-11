@@ -19,6 +19,7 @@ class UserPackage
     public $title;
     public $activation_date;
     public $days_remained;
+    public $expire_at;
 
     private $user;
 
@@ -51,12 +52,16 @@ class UserPackage
             $package->meeting_count = (!empty($data) and isset($data->meeting_count)) ? $data->meeting_count : null;
             $package->product_count = (!empty($data) and isset($data->product_count)) ? $data->product_count : null;
             $package->ai_content_access = !!(!empty($data) and !empty($data->ai_content_access) and $data->ai_content_access);
+            $package->icon = (!empty($data) and !empty($data->icon)) ?  $data->icon : '';
 
             if ($type == 'package') {
                 $package->package_id = $data->id;
                 $package->title = $data->title;
                 $package->activation_date = $data->activation_date;
                 $package->days_remained = $data->days_remained;
+                $package->remained_days_percent = $data->remained_days_percent ?? 0;
+                $package->days = $data->days;
+                $package->expire_at = $data->expire_at ?? null;
             }
         }
 
@@ -106,18 +111,26 @@ class UserPackage
             $registrationPackage = $lastSalePackage->registrationPackage;
 
             $countDayOfSale = (int)diffTimestampDay(time(), $lastSalePackage->created_at);
+            $registrationPackage->expire_at = $lastSalePackage->created_at + ($registrationPackage->days * 24 * 60 * 60);
 
             if ($registrationPackage->days >= $countDayOfSale) {
+                $remainedDays = $registrationPackage->days - $countDayOfSale;
+
+                $remainedDaysPercent = 0;
+
+                if ($remainedDays > 0 and $registrationPackage->days > 0) {
+                    $remainedDaysPercent = ($remainedDays / $registrationPackage->days) * 100;
+                }
+
                 $registrationPackage->activation_date = $lastSalePackage->created_at;
                 $registrationPackage->days_remained = $registrationPackage->days - $countDayOfSale;
+                $registrationPackage->remained_days_percent = $remainedDaysPercent;
 
                 $package = $registrationPackage;
             } else {
-                $registrationPackageExpire = $lastSalePackage->created_at + ($registrationPackage->days * 24 * 60 * 60);
-
                 $notifyOptions = [
                     '[item_title]' => $registrationPackage->title,
-                    '[time.date]' => dateTimeFormat($registrationPackageExpire, 'j M Y')
+                    '[time.date]' => dateTimeFormat($registrationPackage->expire_at, 'j M Y')
                 ];
                 sendNotification("registration_package_expired", $notifyOptions, $user->id);
             }
@@ -208,13 +221,13 @@ class UserPackage
                     break;
             }
 
-            if ((is_null($usedCount) and !empty($package->{$type})) or ($usedCount > $package->{$type})) {
+            if ($usedCount >= $package->{$type}) {
                 $resultData = [
                     'type' => $type,
                     'currentCount' => $package->{$type}
                 ];
 
-                $result = (string)view()->make('web.default.panel.financial.package_limitation_modal', $resultData);
+                $result = (string)view()->make('design_1.panel.financial.registration_packages.package_limitation_modal', $resultData);
                 $result = str_replace(array("\r\n", "\n", "  "), '', $result);
             }
         }

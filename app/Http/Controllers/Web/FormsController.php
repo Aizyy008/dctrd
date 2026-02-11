@@ -36,21 +36,21 @@ class FormsController extends Controller
             ];
 
             if (!empty($form->start_date) and $form->start_date > time()) {
-                return view('web.default.forms.not_start', $data);
+                return view('design_1.web.forms.pages.not_start', $data);
             }
 
             if (!empty($form->end_date) and $form->end_date < time()) {
-                return view('web.default.forms.expired', $data);
+                return view('design_1.web.forms.pages.expired', $data);
             }
 
             if ($form->enable_login and empty($user)) { // if enable login and user not login
-                return view('web.default.forms.please_login', $data);
+                return view('design_1.web.forms.pages.please_login', $data);
             }
 
 
             $checkAccess = $this->checkAccess($form, $user);
             if (!$checkAccess) {
-                return view('web.default.forms.access_denied', $data);
+                return view('design_1.web.forms.pages.access_denied', $data);
             }
 
             $showWelcome = false;
@@ -74,18 +74,18 @@ class FormsController extends Controller
             }
 
             if ($showWelcome) {
-                return view('web.default.forms.welcome', $data);
+                return view('design_1.web.forms.pages.welcome', $data);
             }
 
             if ($showTanks) {
-                return view('web.default.forms.tanks', $data);
+                return view('design_1.web.forms.pages.tanks', $data);
             }
 
             if ($hasSubmission) {
-                return view('web.default.forms.already_submitted', $data);
+                return view('design_1.web.forms.pages.already_submitted', $data);
             }
 
-            return view('web.default.forms.fields', $data);
+            return view('design_1.web.forms.pages.fields', $data);
         }
 
         abort(404);
@@ -112,7 +112,6 @@ class FormsController extends Controller
             $user = auth()->user();
 
 
-
             $checkAccess = $this->checkAccess($form, $user);
 
             if ($checkAccess) {
@@ -122,13 +121,14 @@ class FormsController extends Controller
                     return back()->withErrors($errors)->withInput($request->all());
                 }
 
-                $fieldsData = $request->get('fields');
-
                 $submission = FormSubmission::query()->create([
                     "user_id" => !empty($user) ? $user->id : null,
                     "form_id" => $form->id,
                     "created_at" => time(),
                 ]);
+
+                $fieldsData = $request->get('fields');
+                $fieldsData = $this->handleUploadData($request, $form, $submission, $fieldsData);
 
                 foreach ($fieldsData as $fieldId => $value) {
                     FormSubmissionItem::query()->create([
@@ -162,6 +162,36 @@ class FormsController extends Controller
         }
 
         abort(404);
+    }
+
+    private function handleUploadData(Request $request, $form, $submission, $fieldsData)
+    {
+
+        foreach ($form->fields as $field) {
+            if (in_array($field->type, ['upload'])) {
+                $files = $request->file("fields.{$field->id}");
+
+                if (!empty($files)) {
+                    $path = "/forms/{$form->id}/submission/{$submission->id}";
+
+                    if (is_array($files)) {
+                        foreach ($files as $file) {
+                            $fieldsData[$field->id][] = $this->uploadFile($file, $path);
+                        }
+                    } else {
+                        $fieldsData[$field->id] = $this->uploadFile($files, $path);
+                    }
+                } else {
+                    $submissionItem = $submission->items->where('form_field_id', $field->id)->first();
+
+                    if (!empty($submissionItem)) {
+                        $fieldsData[$field->id] = $submissionItem->value;
+                    }
+                }
+            }
+        }
+
+        return $fieldsData;
     }
 
     private function checkAccess($form, $user)

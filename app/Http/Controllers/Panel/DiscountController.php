@@ -13,9 +13,6 @@ use App\Models\DiscountUser;
 use App\Models\Webinar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use App\Models\Product;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class DiscountController extends Controller
 {
@@ -35,27 +32,32 @@ class DiscountController extends Controller
 
         $query = Discount::query()->where('creator_id', $user->id);
 
-        $totalCoupons = deepClone($query)->count();
-        $activeCoupons = deepClone($query)->where('status', 'active')->where('expired_at', '<', time())->count();
+        $copyQuery = deepClone($query);
+        $query = $this->handleFilters($request, $query);
+        $getListData = $this->getListsData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
+        $totalCoupons = deepClone($copyQuery)->count();
+        $activeCoupons = deepClone($copyQuery)->where('status', 'active')->where('expired_at', '<', time())->count();
         $couponPurchases = 0;
         $purchaseAmount = 0;
 
-        $query = $this->handleFilters($request, $query);
-        $discounts = $query->paginate(10);
-
         $data = [
             'pageTitle' => trans('update.coupons'),
-            'discounts' => $discounts,
             'totalCoupons' => $totalCoupons,
             'activeCoupons' => $activeCoupons,
             'couponPurchases' => $couponPurchases,
             'purchaseAmount' => $purchaseAmount,
         ];
+        $data = array_merge($data, $getListData);
 
-        return view('web.default.panel.marketing.discounts.lists.index', $data);
+        return view('design_1.panel.marketing.discounts.lists.index', $data);
     }
 
-    private function handleFilters(Request $request, $query)
+    private function handleFilters(Request $request, Builder $query): Builder
     {
         $from = $request->get('from');
         $to = $request->get('to');
@@ -79,7 +81,47 @@ class DiscountController extends Controller
             }
         }
 
+        $query->orderBy('created_at', 'desc');
+
         return $query;
+    }
+
+
+    private function getListsData(Request $request, Builder $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = $this->perPage;
+
+        $total = $query->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $discounts = $query
+            ->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $discounts, $total, $count);
+        }
+
+        return [
+            'discounts' => $discounts,
+            'pagination' => $this->makePagination($request, $discounts, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $discounts, $total, $count)
+    {
+        $html = "";
+
+        foreach($discounts as $discountRow) {
+            $html .= (string)view()->make('design_1.panel.marketing.discounts.lists.table_items', ['discount' => $discountRow]);
+        }
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $discounts, $total, $count, true)
+        ]);
     }
 
     public function create()
@@ -87,106 +129,82 @@ class DiscountController extends Controller
         $this->authorize("panel_marketing_new_coupon");
 
         $data = $this->getCreateData();
-        // +++++++++++++++++++ products ++++++++++++++++++
-        $productsGroups = Product::with('translations')->orderBy('created_at', 'desc')
-                                ->where('status', 'active')->get();
-
         $data = array_merge($data, [
             'pageTitle' => trans('update.new_coupon'),
-            'productsGroups' => $productsGroups,
         ]);
 
-        return view('web.default.panel.marketing.discounts.create.index', $data);
+        return view('design_1.panel.marketing.discounts.create.index', $data);
     }
 
     public function store(Request $request)
     {
         $this->authorize("panel_marketing_new_coupon");
-        try
-        {
-            $user = auth()->user();
-            $this->validate($request, [
-                'title' => 'required',
-                'discount_type' => 'required|in:' . implode(',', Discount::$discountTypes),
-                'source' => 'required|in:' . implode(',', Discount::$panelDiscountSource),
-                'code' => 'required|unique:discounts',
-                'percent' => 'nullable',
-                'amount' => 'nullable',
-                'count' => 'nullable',
-                'expired_at' => 'required',
-                'products_ids' => 'nullable|array',
-                'products_ids.*' => 'exists:products,id',
-            ]);
-            $data = $request->all();
-            $expiredAt = convertTimeToUTCzone($data['expired_at'], getTimezone());
-            $discount = Discount::create([
-                'creator_id' => $user->id,
-                'title' => $data['title'],
-                'subtitle' => $data['subtitle'] ?? null,
-                'discount_type' => $data['discount_type'],
-                'source' => $data['source'],
-                'code' => $data['code'],
-                'percent' => (!empty($data['percent']) and $data['percent'] > 0) ? $data['percent'] : 0,
-                'amount' => $data['amount'],
-                'max_amount' => $data['max_amount'],
-                'minimum_order' => $data['minimum_order'],
-                'count' => (!empty($data['count']) and $data['count'] > 0) ? $data['count'] : 1,
-                'user_type' => 'all_users',
-                'product_type' => $data['product_type'] ?? null,
-                'for_first_purchase' => false,
-                'private' => (!empty($data['private']) and $data['private'] == "on"),
-                'status' => 'active',
-                'expired_at' => $expiredAt->getTimestamp(),
-                'created_at' => time(),
-            ]);
-            Log::info($discount);
-            $this->handleRelationItems($discount, $data);
-            // ======== products discount : Attach products to discount ========
-            if ($request->source == 'product' && $request->has('products_ids'))
-            {
-                $discount->discount_coupon_product()->sync($request->products_ids);
-            }
-            Log::info($discount->discount_coupon_product()->pluck('product_id')->toArray());
-            $toastData = [
-                'title' => trans('public.request_success'),
-                'msg' => trans('update.new_discount_coupon_has_been_created_successfully'),
-                'status' => 'success'
-            ];
-            return redirect('/panel/marketing/discounts')->with(['toast' => $toastData]);
-        }
-        catch (\Illuminate\Validation\ValidationException $e)
-        {
-            return redirect()->back()->withErrors($e->errors())->withInput();
-        }
-        catch (\Throwable $e)
-        {
-            Log::info("Error During Storing : ".$e->getMessage());
-        }
+
+        $user = auth()->user();
+
+        $this->validate($request, [
+            'title' => 'required',
+            'discount_type' => 'required|in:' . implode(',', Discount::$discountTypes),
+            'source' => 'required|in:' . implode(',', Discount::$panelDiscountSource),
+            'code' => 'required|unique:discounts',
+            'percent' => 'nullable',
+            'amount' => 'nullable',
+            'count' => 'nullable',
+            'expired_at' => 'required',
+        ]);
+
+        $data = $request->all();
+        $expiredAt = convertTimeToUTCzone($data['expired_at'], getTimezone());
+
+        $discount = Discount::create([
+            'creator_id' => $user->id,
+            'title' => $data['title'],
+            'subtitle' => $data['subtitle'] ?? null,
+            'discount_type' => $data['discount_type'],
+            'source' => $data['source'],
+            'code' => $data['code'],
+            'percent' => (!empty($data['percent']) and $data['percent'] > 0) ? $data['percent'] : 0,
+            'amount' => !empty($data['amount']) ? convertPriceToDefaultCurrency($data['amount']) : null,
+            'max_amount' => !empty($data['max_amount']) ? convertPriceToDefaultCurrency($data['max_amount']) : null,
+            'minimum_order' => !empty($data['minimum_order']) ? convertPriceToDefaultCurrency($data['minimum_order']) : null,
+            'count' => (!empty($data['count']) and $data['count'] > 0) ? $data['count'] : 1,
+            'user_type' => 'all_users',
+            'product_type' => $data['product_type'] ?? null,
+            'for_first_purchase' => false,
+            'private' => (!empty($data['private']) and $data['private'] == "on"),
+            'status' => 'active',
+            'expired_at' => $expiredAt->getTimestamp(),
+            'created_at' => time(),
+        ]);
+
+        $this->handleRelationItems($discount, $data);
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.new_discount_coupon_has_been_created_successfully'),
+            'status' => 'success'
+        ];
+        return redirect('/panel/marketing/discounts')->with(['toast' => $toastData]);
     }
+
     public function edit($id)
     {
         $this->authorize("panel_marketing_new_coupon");
+
         $user = auth()->user();
         $discount = Discount::where('id', $id)
             ->where('creator_id', $user->id)
             ->first();
-        // ++++++++++++++ discount coupon products ++++++++++++++
-        $selectedProductIds = $discount->discount_coupon_product->pluck('id')->toArray(); // Get associated products
-        // +++++++++++++++++++ products ++++++++++++++++++
-        $productsGroups = Product::with('translations')->orderBy('created_at', 'desc')
-                                    ->where('status', 'active')->get();
+
         if (!empty($discount)) {
+
             $data = $this->getCreateData();
             $data = array_merge($data, [
                 'pageTitle' => trans('update.edit_coupon'),
                 'discount' => $discount,
-                // ======== discount coupon products ========
-                'selectedProductIds' => $selectedProductIds,
-                // ======== products ========
-                'productsGroups' => $productsGroups,
             ]);
 
-            return view('web.default.panel.marketing.discounts.create.index', $data);
+            return view('design_1.panel.marketing.discounts.create.index', $data);
         }
 
         abort(404);
@@ -225,9 +243,9 @@ class DiscountController extends Controller
                 'source' => $data['source'],
                 'code' => $data['code'],
                 'percent' => (!empty($data['percent']) and $data['percent'] > 0) ? $data['percent'] : 0,
-                'amount' => $data['amount'],
-                'max_amount' => $data['max_amount'],
-                'minimum_order' => $data['minimum_order'],
+                'amount' => !empty($data['amount']) ? convertPriceToDefaultCurrency($data['amount']) : null,
+                'max_amount' => !empty($data['max_amount']) ? convertPriceToDefaultCurrency($data['max_amount']) : null,
+                'minimum_order' => !empty($data['minimum_order']) ? convertPriceToDefaultCurrency($data['minimum_order']) : null,
                 'count' => (!empty($data['count']) and $data['count'] > 0) ? $data['count'] : 1,
                 'user_type' => 'all_users',
                 'product_type' => $data['product_type'] ?? null,
@@ -242,11 +260,7 @@ class DiscountController extends Controller
             DiscountBundle::where('discount_id', $discount->id)->delete();
 
             $this->handleRelationItems($discount, $data);
-            // ======== products discount coupons : Attach products to discount ========
-            if ($request->source == 'product' && $request->has('products_ids'))
-            {
-                $discount->discount_coupon_product()->sync($request->products_ids);
-            }
+
             $toastData = [
                 'title' => trans('public.request_success'),
                 'msg' => trans('update.discount_coupon_has_been_updated_successfully'),
@@ -257,26 +271,19 @@ class DiscountController extends Controller
 
         abort(404);
     }
-    // ++++++++++++++++ delete() ++++++++++++++++
+
     public function delete(Request $request, $id)
     {
         $this->authorize("panel_marketing_delete_coupon");
+
         $user = auth()->user();
         $discount = Discount::where('id', $id)
-                            ->where('creator_id', $user->id)
-                            ->first();
-        if (!$discount)
-        {
-            abort(404);
-        }
-        try
-        {
-            DB::beginTransaction();
-            // =========== Detach related products before deleting the discount ===========
-            $discount->discount_coupon_product()->detach();
-            // =========== Delete the discount ===========
+            ->where('creator_id', $user->id)
+            ->first();
+
+        if (!empty($discount)) {
             $discount->delete();
-            DB::commit();
+
             $toastData = [
                 'title' => trans('public.request_success'),
                 'msg' => trans('update.discount_coupon_has_been_deleted_successfully'),
@@ -284,20 +291,9 @@ class DiscountController extends Controller
             ];
             return redirect("/panel/marketing/discounts")->with(['toast' => $toastData]);
         }
-        catch (\Exception $e)
-        {
-            DB::rollBack();
 
-            return redirect("/panel/marketing/discounts")->with([
-                'toast' => [
-                    'title' => trans('public.request_failed'),
-                    'msg' => trans('update.error_deleting_discount'),
-                    'status' => 'error'
-                ]
-            ]);
-        }
+        abort(404);
     }
-
 
 
     private function getCreateData()

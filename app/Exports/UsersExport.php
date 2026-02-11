@@ -25,36 +25,37 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping
     }
 
     /**
-     * @inheritDoc
+     * @return array
      */
     public function headings(): array
     {
         return [
             trans('admin/main.id'),
-            trans('admin/pages/users.full_name'),
+            trans('admin/main.name'),
+            trans('admin/main.role_name'),
             trans('admin/main.email'),
-            trans('public.mobile'),
-            trans('admin/pages/users.role_name'),
-            trans('admin/pages/financial.income'),
-            trans('admin/pages/users.status'),
+            trans('admin/main.mobile'),
+            trans('admin/main.status'),
+            trans('admin/main.verified'),
             trans('admin/main.created_at'),
         ];
     }
 
     /**
-     * @inheritDoc
+     * @param mixed $user
+     * @return array
      */
     public function map($user): array
     {
         return [
             $user->id,
             $user->full_name,
+            $user->role->caption,
             $user->email,
             $user->mobile,
-            $user->role->name,
-            20,
             $user->status,
-            dateTimeFormat($user->created_at,'j M Y | H:i')
+            ($user->verified ? trans('admin/main.yes') : trans('admin/main.no')),
+            dateTimeFormat($user->created_at, 'Y/m/d'),
         ];
     }
 }

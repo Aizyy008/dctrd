@@ -317,6 +317,7 @@ class UpcomingCoursesController extends Controller
             'include_quizzes' => (!empty($data['include_quizzes']) and $data['include_quizzes'] == "on"),
             'downloadable' => (!empty($data['downloadable']) and $data['downloadable'] == "on"),
             'forum' => (!empty($data['forum']) and $data['forum'] == "on"),
+            'assignments' => (!empty($data['assignments']) and $data['assignments'] == "on"),
             'message_for_reviewer' => !empty($data['message_for_reviewer']) ? $data['message_for_reviewer'] : null,
         ];
     }
@@ -332,6 +333,7 @@ class UpcomingCoursesController extends Controller
             'title' => $data['title'],
             'description' => $data['description'],
             'seo_description' => $data['seo_description'],
+            'summary' => $data['summary'],
         ]);
 
         UpcomingCourseFilterOption::where('upcoming_course_id', $upcomingCourse->id)->delete();

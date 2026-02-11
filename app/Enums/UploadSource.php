@@ -10,6 +10,7 @@ class UploadSource
     const S3 = 's3';
     const EXTERNAL = 'external';
     const IFRAME = 'iframe';
+    const SECURE_HOST = 'secure_host';
 
     const allSources = [
         self::YOUTUBE,
@@ -17,10 +18,11 @@ class UploadSource
         self::UPLOAD,
         self::S3,
         self::EXTERNAL,
-        self::IFRAME
+        self::IFRAME,
+        self::SECURE_HOST,
     ];
 
-    const uploadItems = [self::UPLOAD, self::S3];
+    const uploadItems = [self::UPLOAD, self::S3, self::SECURE_HOST];
     const urlPathItems = [
         self::YOUTUBE,
         self::VIMEO,

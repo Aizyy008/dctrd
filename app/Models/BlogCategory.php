@@ -17,7 +17,7 @@ class BlogCategory extends Model implements TranslatableContract
     public $timestamps = false;
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
-    public $translatedAttributes = ['title'];
+    public $translatedAttributes = ['title', 'subtitle'];
 
     /**
      * Return the sluggable configuration array for this model.
@@ -41,6 +41,11 @@ class BlogCategory extends Model implements TranslatableContract
     public function getTitleAttribute()
     {
         return getTranslateAttributeValue($this, 'title');
+    }
+
+    public function getSubtitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'subtitle');
     }
 
 

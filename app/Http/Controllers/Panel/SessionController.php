@@ -91,9 +91,11 @@ class SessionController extends Controller
             ]);
 
             if (!empty($session)) {
+                $locale = $request->get("locale", getDefaultLocale());
+
                 SessionTranslation::updateOrCreate([
                     'session_id' => $session->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => $locale,
                 ], [
                     'title' => $data['title'],
                     'description' => $data['description'],
@@ -123,6 +125,10 @@ class SessionController extends Controller
                 WebinarChapterItem::makeItem($session->creator_id, $session->chapter_id, $session->id, WebinarChapterItem::$chapterSession);
             }
 
+
+            $webinar->update([
+                'updated_at' => time()
+            ]);
 
             return response()->json([
                 'code' => 200,
@@ -222,9 +228,12 @@ class SessionController extends Controller
                     'updated_at' => time()
                 ]);
 
+                $locale = $request->get("locale", getDefaultLocale());
+
+
                 SessionTranslation::updateOrCreate([
                     'session_id' => $session->id,
-                    'locale' => mb_strtolower($data['locale']),
+                    'locale' => mb_strtolower($locale),
                 ], [
                     'title' => $data['title'],
                     'description' => $data['description'],
@@ -233,6 +242,11 @@ class SessionController extends Controller
                 if ($changeChapter) {
                     WebinarChapterItem::changeChapter($session->creator_id, $oldChapterId, $session->chapter_id, $session->id, WebinarChapterItem::$chapterSession);
                 }
+
+
+                $webinar->update([
+                    'updated_at' => time()
+                ]);
 
                 return response()->json([
                     'code' => 200,
@@ -369,6 +383,8 @@ class SessionController extends Controller
             ->first();
 
         if (!empty($session) and !empty($user)) {
+            $webinar = $session->webinar;
+
             $session->agora_settings = json_decode($session->agora_settings);
 
             $agoraHistory = AgoraHistory::where('session_id', $session->id)->first();
@@ -412,8 +428,6 @@ class SessionController extends Controller
                         $canAccess = true;
                     }
                 } else {
-                    $webinar = Webinar::find($session->webinar_id);
-
                     if ($webinar->checkUserHasBought($user)) {
                         $canAccess = true;
                     }
@@ -428,7 +442,7 @@ class SessionController extends Controller
                 }
 
                 if ($canAccess) {
-                    $canAccess = (!empty($session->agora_settings) and $session->agora_settings->users_join);
+                    $canAccess = (!empty($session->agora_settings) and !empty($session->agora_settings->users_join));
                     if (!$canAccess) {
                         $canAccessError = trans('update.join_to_the_session_has_been_disabled_by_the_instructor');
                     }
@@ -436,16 +450,25 @@ class SessionController extends Controller
             }
 
             if ($canAccess) {
+                $isHost = ($streamRole === 'host');
                 $agoraController = new AgoraController();
 
-                $isHost = ($streamRole === 'host');
                 $appId = $agoraController->appId;
                 $rtcToken = $agoraController->getRTCToken($channelName, $isHost);
                 $rtmToken = $agoraController->getRTMToken($accountName);
 
+                $webinar->noticeboards_count = $webinar->noticeboards()->count();
+
+                $breadcrumbs = [
+                    ['text' => trans('update.platform'), 'url' => '/'],
+                    ['text' => trans('update.course'), 'url' => $webinar->getUrl()],
+                    ['text' => trans('update.learning_page'), 'url' => null],
+                ];
+
 
                 $data = [
                     'pageTitle' => trans('update.live_session'),
+                    'course' => $webinar,
                     'session' => $session,
                     'isHost' => $isHost,
                     'appId' => $appId,
@@ -458,11 +481,15 @@ class SessionController extends Controller
                     'notStarted' => (!$isHost and empty($agoraHistory)),
                     'streamStartAt' => (!$isHost and !empty($agoraHistory)) ? $agoraHistory->start_at : time(),
                     'authUserId' => $user->id,
+                    'authUser' => $user,
                     'hostUserId' => $session->creator_id,
-                    'sessionStreamType' => $session->getSessionStreamType()
+                    'hostUser' => $session->creator,
+                    'sessionStreamType' => $session->getSessionStreamType(),
+                    'breadcrumbs' => $breadcrumbs,
+                    'userIsCourseTeacher' => $isHost,
                 ];
 
-                return view('web.default.course.agora.index', $data);
+                return view('design_1.web.courses.agora.index', $data);
             } else {
                 $toastData = [
                     'title' => trans('public.request_failed'),

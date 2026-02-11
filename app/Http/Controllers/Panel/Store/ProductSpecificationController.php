@@ -10,7 +10,6 @@ use App\Models\ProductSpecification;
 use App\Models\ProductSpecificationCategory;
 use App\Models\ProductSpecificationMultiValue;
 use App\Models\Translation\ProductSelectedSpecificationTranslation;
-use App\Models\Translation\ProductSpecificationMultiValueTranslation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -78,9 +77,12 @@ class ProductSpecificationController extends Controller
                 if ($data['input_type'] == 'multi_value') {
 
                     $this->handleSelectedSpecificationMultiValue($selectedSpecification, $data['multi_values']);
+
                 } else if (!empty($data['summary'])) {
+                    $locale = $request->get('locale', getDefaultLocale());
+
                     ProductSelectedSpecificationTranslation::updateOrCreate([
-                        'locale' => mb_strtolower($data['locale']),
+                        'locale' => mb_strtolower($locale),
                         'product_selected_specification_id' => $selectedSpecification->id
                     ], [
                         'value' => $data['summary']
@@ -159,9 +161,12 @@ class ProductSpecificationController extends Controller
                 if ($data['input_type'] == 'multi_value') {
 
                     $this->handleSelectedSpecificationMultiValue($selectedSpecification, $data['multi_values']);
+
                 } else if (!empty($data['summary'])) {
+                    $locale = $request->get('locale', getDefaultLocale());
+
                     ProductSelectedSpecificationTranslation::updateOrCreate([
-                        'locale' => mb_strtolower($data['locale']),
+                        'locale' => mb_strtolower($locale),
                         'product_selected_specification_id' => $selectedSpecification->id
                     ], [
                         'value' => $data['summary']
@@ -270,51 +275,5 @@ class ProductSpecificationController extends Controller
             'specifications' => $specifications,
             'defaultLocale' => mb_strtolower($defaultLocale)
         ], 200);
-    }
-
-    public function setMultiValuesAjax(Request $request)
-    {
-        $request->validate([
-            'variant_id' => 'required|exists:product_specifications,id',
-            'values' => 'array',
-        ]);
-
-        $specification = ProductSpecification::findOrFail($request->variant_id);
-        $locale = $request->get('locale') ?? app()->getLocale();
-        $multiValues = $request->get('values', []);
-        $oldIds = [];
-
-        foreach ($multiValues as $multiValue) {
-            if (!empty($multiValue)) {
-                // Check if the value exists within the related multiValues
-                $exists = $specification->multiValues()
-                    ->whereHas('translations', function ($query) use ($multiValue, $locale) {
-                        $query->where('title', $multiValue)
-                            ->where('locale', mb_strtolower($locale));
-                    })
-                    ->exists();
-
-                if (!$exists) {
-                    $new = ProductSpecificationMultiValue::create([
-                        'specification_id' => $specification->id,
-                    ]);
-
-                    ProductSpecificationMultiValueTranslation::updateOrCreate([
-                        'product_specification_multi_value_id' => $new->id,
-                        'locale' => mb_strtolower($locale),
-                    ], [
-                        'title' => $multiValue,
-                    ]);
-
-                    $oldIds[] = $multiValue;
-                }
-            }
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Values updated successfully',
-            'new_ids' => $oldIds,
-        ]);
     }
 }

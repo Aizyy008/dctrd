@@ -12,6 +12,7 @@ use App\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
@@ -59,7 +60,9 @@ class LoginController extends Controller
             'pageRobot' => $pageRobot,
         ];
 
-        return view(getTemplate() . '.auth.login', $data);
+        //
+        $authTemplate = getThemeAuthenticationPagesStyleName();
+        return view("design_1.web.auth.{$authTemplate}.login.index", $data);
     }
 
     public function login(Request $request)
@@ -131,19 +134,6 @@ class LoginController extends Controller
         $this->guard()->logout();
 
         return redirect('/');
-    }
-
-    public function username()
-    {
-        $email_regex = "/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,})$/i";
-
-        if (empty($this->username)) {
-            $this->username = 'mobile';
-            if (preg_match($email_regex, request('username', null))) {
-                $this->username = 'email';
-            }
-        }
-        return $this->username;
     }
 
     protected function getUsername(Request $request)
@@ -248,11 +238,13 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             $verificationController = new VerificationController();
-            $checkConfirmed = $verificationController->checkConfirmed($user, $this->username(), $request->get('username'));
+            $checkConfirmed = $verificationController->checkConfirmed($user, $this->getUsername($request), $this->getUsernameValue($request));
 
             if ($checkConfirmed['status'] == 'send') {
                 return redirect('/verification');
             } elseif ($checkConfirmed['status'] == 'verified') {
+                Auth::login($user);
+
                 $user->update([
                     'status' => User::$active,
                 ]);
@@ -290,7 +282,7 @@ class LoginController extends Controller
         ]);
 
         $cartManagerController = new CartManagerController();
-        $cartManagerController->storeCookieCartsToDB();
+        $cartManagerController->storeCookieCartsToDB($request);
 
         $userLoginHistoryMixin = new UserLoginHistoryMixin();
         $userLoginHistoryMixin->storeUserLoginHistory($user);

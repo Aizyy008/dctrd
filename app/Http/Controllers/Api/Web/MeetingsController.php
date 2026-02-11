@@ -27,6 +27,7 @@ class MeetingsController extends Controller
         $user = apiAuth();
         $timeId = $request->input('time_id');
         $day = $request->input('date');
+        $day = str_replace('/', '-', $day);
         $studentCount = $request->get('student_count', 1);
         $selectedMeetingType = $request->get('meeting_type', 'online');
         $description = $request->get('description');

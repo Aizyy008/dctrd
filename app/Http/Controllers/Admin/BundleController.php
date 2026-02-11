@@ -293,6 +293,7 @@ class BundleController extends Controller
             ], [
                 'title' => $data['title'],
                 'description' => $data['description'],
+                'summary' => $data['summary'],
                 'seo_description' => $data['seo_description'],
             ]);
         }
@@ -485,6 +486,7 @@ class BundleController extends Controller
             ], [
                 'title' => $data['title'],
                 'description' => $data['description'],
+                'summary' => $data['summary'],
                 'seo_description' => $data['seo_description'],
             ]);
         }

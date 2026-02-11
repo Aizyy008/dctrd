@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Mixins\Installment\InstallmentPlans;
 use Illuminate\Database\Eloquent\Model;
 use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
 use Astrotomic\Translatable\Translatable;
@@ -15,11 +16,16 @@ class Subscribe extends Model implements TranslatableContract
     protected $dateFormat = 'U';
     protected $guarded = ['id'];
 
-    public $translatedAttributes = ['title', 'description'];
+    public $translatedAttributes = ['title', 'subtitle', 'description'];
 
     public function getTitleAttribute()
     {
         return getTranslateAttributeValue($this, 'title');
+    }
+
+    public function getSubtitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'subtitle');
     }
 
     public function getDescriptionAttribute()
@@ -100,6 +106,29 @@ class Subscribe extends Model implements TranslatableContract
             }
         }
 
+        if (!empty($activePlan)) {
+            $activePlan->saleCreatedAt = $saleCreatedAt;
+            $remainedDays = 0;
+            $remainedDaysPercent = 0;
+            $expireAt = null;
+
+            if (!empty($saleCreatedAt)) {
+                $saleDays = (int)diffTimestampDay(time(), $saleCreatedAt);
+                $remainedDays = $activePlan->days - $saleDays;
+
+                if ($activePlan->days > 0 and $remainedDays > 0) {
+                    $remainedDaysPercent = ($remainedDays / $activePlan->days) * 100;
+                }
+
+                $expireAt = $saleCreatedAt + ($activePlan->days * 24 * 60 * 60);
+            }
+
+            $activePlan->remained_days = $remainedDays;
+            $activePlan->remained_days_percent = $remainedDaysPercent;
+
+            $activePlan->expire_at = $expireAt;
+        }
+
         return $activePlan;
     }
 
@@ -135,5 +164,23 @@ class Subscribe extends Model implements TranslatableContract
         }
 
         return $price;
+    }
+
+    public function hasInstallment($user = null)
+    {
+        if (empty($user)) {
+            $user = auth()->user();
+        }
+
+        $hasInstallment = false;
+        $installmentPlans = new InstallmentPlans($user);
+
+        if (getInstallmentsSettings('status') and $this->price > 0 and (empty($user) or $user->enable_installments)) {
+            $installments = $installmentPlans->getPlans('subscription_packages', $this->id);
+
+            $hasInstallment = (!empty($installments) and count($installments));
+        }
+
+        return $hasInstallment;
     }
 }

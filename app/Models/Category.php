@@ -20,11 +20,26 @@ class Category extends Model implements TranslatableContract
 
     static $cacheKey = 'categories';
 
-    public $translatedAttributes = ['title'];
+    public $translatedAttributes = ['title', 'subtitle', 'bottom_seo_title', 'bottom_seo_content'];
 
     public function getTitleAttribute()
     {
         return getTranslateAttributeValue($this, 'title');
+    }
+
+    public function getSubtitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'subtitle');
+    }
+
+    public function getBottomSeoTitleAttribute()
+    {
+        return getTranslateAttributeValue($this, 'bottom_seo_title');
+    }
+
+    public function getBottomSeoContentAttribute()
+    {
+        return getTranslateAttributeValue($this, 'bottom_seo_content');
     }
 
     /**
@@ -131,5 +146,10 @@ class Category extends Model implements TranslatableContract
         }
 
         return $ids;
+    }
+
+    public function getCoursesCount()
+    {
+        return $this->webinars()->where('status', 'active')->count();
     }
 }

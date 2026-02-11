@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\MorphTypesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\traits\CheckContentLimitationTrait;
 use App\Http\Controllers\Web\traits\InstallmentsTrait;
 use App\Mixins\Cashback\CashbackRules;
 use App\Mixins\Installment\InstallmentPlans;
+use App\Mixins\Logs\VisitLogMixin;
 use App\Models\AdvertisingBanner;
 use App\Models\Cart;
 use App\Models\Discount;
 use App\Models\Follow;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductFeaturedCategory;
+use App\Models\ProductTopCategory;
 use App\Models\ProductOrder;
 use App\Models\ProductSelectedFilterOption;
 use App\Models\ProductSelectedSpecification;
 use App\Models\ProductSpecification;
-use App\Models\ProductVariant;
 use App\Models\RewardAccounting;
 use App\Models\Sale;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,16 +32,21 @@ class ProductController extends Controller
     use InstallmentsTrait;
     use CheckContentLimitationTrait;
 
-    public function searchLists(Request $request)
+    public function index(Request $request)
     {
-        $data = $request->all();
-
-        $query = Product::where('products.status', Product::$active)
+        $query = Product::query()->where('products.status', Product::$active)
             ->where('ordering', true);
+
+        $filterMaxPrice = (deepClone($query)->max('price') + 10) * 10;
 
         $query = $this->handleFilters($request, $query);
 
-        $products = $query->paginate(9);
+        $getListData = $this->getListData($request, $query);
+
+        if ($request->ajax()) {
+            return $getListData;
+        }
+
 
         $categories = ProductCategory::whereNull('parent_id')
             ->with([
@@ -48,11 +56,7 @@ class ProductController extends Controller
             ])
             ->get();
 
-        $selectedCategory = null;
-
-        if (!empty($data['category_id'])) {
-            $selectedCategory = ProductCategory::where('id', $data['category_id'])->first();
-        }
+        $categoryId = $request->get('category_id', null);
 
         $seoSettings = getSeoMetas('products_lists');
         $pageTitle = $seoSettings['title'] ?? '';
@@ -63,12 +67,77 @@ class ProductController extends Controller
             'pageTitle' => $pageTitle,
             'pageDescription' => $pageDescription,
             'pageRobot' => $pageRobot,
-            'productsCount' => $products->total(),
             'productCategories' => $categories,
-            'selectedCategory' => $selectedCategory,
-            'products' => $products,
+            'filterMaxPrice' => $filterMaxPrice,
+            'seoSettings' => $seoSettings,
+            'pageBottomSeoContent' => $this->getPageBottomSeoContent($categoryId),
         ];
-        return view(getTemplate() . '.products.search', $data);
+        $data = array_merge($data, $getListData);
+        $data = array_merge($data, $this->getProductFeaturedContents());
+
+        return view('design_1.web.products.lists.index', $data);
+    }
+
+    private function getPageBottomSeoContent($categoryId = null)
+    {
+        if (!empty($categoryId)) {
+            $category = ProductCategory::query()->where('id', $categoryId)->first();
+
+            if (!empty($category) and !empty($category->bottom_seo_title) and !empty($category->bottom_seo_description)) {
+                return [
+                    'title' => $category->bottom_seo_title,
+                    'description' => $category->bottom_seo_description,
+                ];
+            }
+        } else {
+            $seoSettings = getSeoMetas('products_lists');
+
+            if (!empty($seoSettings['bottom_seo_title']) and !empty($seoSettings['bottom_seo_content'])) {
+                return [
+                    'title' => $seoSettings['bottom_seo_title'],
+                    'description' => $seoSettings['bottom_seo_content'],
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    private function getProductFeaturedContents(): array
+    {
+        $data = [];
+        $settings = getStoreFeaturedProductsSettings();
+
+        $data['topCategories'] = ProductTopCategory::query()
+            ->with([
+                'category' => function ($query) {
+                    $query->withCount('products');
+                }
+            ])
+            ->get();
+
+        if (!empty($settings) and !empty($settings['featured_products'])) {
+            $data['featuredProducts'] = Product::query()->whereIn('id', $settings['featured_products'])
+                ->with([
+                    'creator' => function ($query) {
+                        $query->select('id', 'full_name', 'role_id', 'username', 'avatar', 'avatar_settings', 'bio');
+                    }
+                ])
+                ->where('status', Product::$active)
+                ->where('ordering', true)
+                ->get();
+        }
+
+
+        $data['featuredCategories'] = ProductFeaturedCategory::query()
+            ->with([
+                'category' => function ($query) {
+                    $query->withCount('products');
+                }
+            ])
+            ->get();
+
+        return $data;
     }
 
     public function handleFilters(Request $request, $query, $isRewardProducts = false)
@@ -81,7 +150,9 @@ class ProductController extends Controller
         $type = $request->get('type', null);
         $options = $request->get('options', null);
         $categoryId = $request->get('category_id', null);
-        $filterOption = $request->get('filter_option', null);
+        $minPrice = $request->get('min_price', null);
+        $maxPrice = $request->get('max_price', null);
+        $seller = $request->get('seller', null);
 
         if (!empty($search)) {
             $query->whereTranslationLike('title', '%' . $search . '%');
@@ -113,6 +184,10 @@ class ProductController extends Controller
             $query->whereIn('type', $type);
         }
 
+        if (!empty($seller)) {
+            $query->where('creator_id', $seller);
+        }
+
         if (!empty($options) and count($options)) {
             if (in_array('only_available', $options)) {
                 $query->where(function ($query) {
@@ -126,8 +201,21 @@ class ProductController extends Controller
                 });
             }
 
-            if (in_array('with_point', $options)) {
+            if (in_array('products_with_points', $options)) {
                 $query->whereNotNull('point');
+            }
+
+            if (in_array('featured', $options)) {
+                $settings = getStoreFeaturedProductsSettings();
+                $featuredProductsIds = (!empty($settings) and !empty($settings['featured_products'])) ? $settings['featured_products'] : [];
+
+                $query->whereIn('id', $featuredProductsIds);
+            }
+
+            if (in_array('installments', $options)) {
+                // ایجاد کوئری برای این پیچیده بود و نیاز به زمان داره.
+                // پیدا کردن محصولاتی که اقساط داشته باشن سخته و اگر بخوایم همه محصولات رو بگیریم و یکی یکی چک کنیم هم خیلی سنگین میکنه ریکئوست رو
+
             }
         }
 
@@ -135,14 +223,12 @@ class ProductController extends Controller
             $query->where('category_id', $categoryId);
         }
 
-        if (!empty($filterOption) and is_array($filterOption)) {
-            $productIdsFilterOptions = ProductSelectedFilterOption::whereIn('filter_option_id', $filterOption)
-                ->pluck('product_id')
-                ->toArray();
+        if (!empty($minPrice)) {
+            $query->where('price', '>', $minPrice);
+        }
 
-            $productIdsFilterOptions = array_unique($productIdsFilterOptions);
-
-            $query->whereIn('products.id', $productIdsFilterOptions);
+        if (!empty($maxPrice)) {
+            $query->where('price', '<=', $maxPrice);
         }
 
         if (!empty($sort)) {
@@ -168,9 +254,9 @@ class ProductController extends Controller
                         ->whereNotNull('product_orders.sale_id')
                         ->whereNotIn('product_orders.status', [ProductOrder::$canceled, ProductOrder::$pending]);
                 })
-                    ->select('products.*', DB::raw('sum(product_orders.quantity) as salesCounts'))
+                    ->select('products.*', DB::raw('sum(product_orders.quantity) as sales_counts'))
                     ->groupBy('product_orders.product_id')
-                    ->orderBy('salesCounts', 'desc');
+                    ->orderBy('sales_counts', 'desc');
             }
 
             if ($sort == 'best_rates') {
@@ -185,10 +271,78 @@ class ProductController extends Controller
             }
         }
 
+        if (empty($sort) or $sort == "newest") {
+            $query->orderBy('created_at', 'desc');
+        }
+
         return $query;
     }
 
-    public function show($slug)
+    private function getListData(Request $request, $query)
+    {
+        $page = $request->get('page') ?? 1;
+        $count = 9;
+
+        $cloneQuery = deepClone($query);
+        $total = DB::table(DB::raw("({$cloneQuery->toSql()}) as sub"))
+            ->mergeBindings($cloneQuery->getQuery()) // bind parameters
+            ->count();
+
+        $query->limit($count);
+        $query->offset(($page - 1) * $count);
+
+        $products = $query->with([
+            'creator' => function ($query) {
+                $query->select('id', 'full_name', 'username', 'bio', 'role_id', 'role_name', 'avatar', 'avatar_settings');
+            }
+        ])->get();
+
+        if ($request->ajax()) {
+            return $this->getAjaxResponse($request, $products, $total, $count);
+        }
+
+        return [
+            'products' => $products,
+            'pagination' => $this->makePagination($request, $products, $total, $count, true),
+        ];
+    }
+
+    private function getAjaxResponse(Request $request, $products, $total, $count)
+    {
+        $categoryId = $request->get('category_id', null);
+        $specificContent = null;
+
+        if (!empty($categoryId)) {
+            $pageBottomSeoContent = $this->getPageBottomSeoContent($categoryId);
+
+            if (!empty($pageBottomSeoContent) and !empty($pageBottomSeoContent['title']) and !empty($pageBottomSeoContent['description'])) {
+                $specificContent = [
+                    'el' => '.js-page-bottom-seo-content',
+                    'html' => (string)view()->make('design_1.web.products.lists.includes.bottom_seo_content', ['seoContent' => $pageBottomSeoContent])
+                ];
+            } else  {
+                $specificContent = [
+                    'el' => '.js-page-bottom-seo-content',
+                    'html' => null
+                ];
+            }
+        }
+
+        $html = (string)view()->make('design_1.web.products.components.cards.grids.index', [
+            'products' => $products,
+            'gridCardClassName' => "col-12 col-lg-6 mt-24",
+            'withoutStyles' => true,
+        ]);
+
+        return response()->json([
+            'data' => $html,
+            'pagination' => $this->makePagination($request, $products, $total, $count, true),
+            'specific_content' => $specificContent,
+        ]);
+    }
+
+
+    public function show(Request $request, $slug)
     {
         $user = null;
 
@@ -204,27 +358,15 @@ class ProductController extends Controller
         $product = Product::where('status', Product::$active)
             ->where('slug', $slug)
             ->with([
+                'creator' => function ($qu) {
+                    $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings', 'bio', 'about');
+                    $qu->withCount([
+                        'products'
+                    ]);
+                },
                 'selectedSpecifications' => function ($query) {
                     $query->where('status', ProductSelectedSpecification::$Active);
                     $query->with(['specification']);
-                },
-                'comments' => function ($query) {
-                    $query->where('status', 'active');
-                    $query->whereNull('reply_id');
-                    $query->with([
-                        'user' => function ($query) {
-                            $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
-                        },
-                        'replies' => function ($query) {
-                            $query->where('status', 'active');
-                            $query->with([
-                                'user' => function ($query) {
-                                    $query->select('id', 'full_name', 'role_name', 'role_id', 'avatar', 'avatar_settings');
-                                }
-                            ]);
-                        }
-                    ]);
-                    $query->orderBy('created_at', 'desc');
                 },
                 'files' => function ($query) {
                     $query->where('status', 'active');
@@ -232,14 +374,6 @@ class ProductController extends Controller
                 },
                 'reviews' => function ($query) {
                     $query->where('status', 'active');
-                    $query->with([
-                        'comments' => function ($query) {
-                            $query->where('status', 'active');
-                        },
-                        'creator' => function ($qu) {
-                            $qu->select('id', 'full_name', 'avatar');
-                        }
-                    ]);
                 },
             ])
             ->first();
@@ -247,7 +381,6 @@ class ProductController extends Controller
         if (empty($product)) {
             abort(404);
         }
-        $product_variations = ProductVariant::where('product_id', $product->id)->get();
 
 
         $selectableSpecifications = $product->selectedSpecifications->where('allow_selection', true)
@@ -300,6 +433,24 @@ class ProductController extends Controller
                 ->get();
         }
 
+        $product->creator->someRandomProducts = Product::query()->where('creator_id', $product->creator_id)
+            ->where('id', '!=', $product->id)
+            ->inRandomOrder()
+            ->limit(3)
+            ->with([
+                'category'
+            ])->get();
+
+        $commentController = new CommentController();
+        $productComments = $commentController->getComments($request, 'product', $product->id);
+
+        $productReviewController = new ProductReviewController();
+        $productReviews = $productReviewController->getReviewsByCourseSlug($request, $product->slug);
+
+        // Visit Logs
+        $visitLogMixin = new VisitLogMixin();
+        $visitLogMixin->storeVisit($request, $product->creator_id, $product->id, MorphTypesEnum::PRODUCT);
+
 
         $pageRobot = getPageRobot('product_show'); // return => index
 
@@ -320,45 +471,17 @@ class ProductController extends Controller
             'authUserIsFollower' => $authUserIsFollower,
             'advertisingBanners' => $advertisingBanners,
             'activeSpecialOffer' => $product->getActiveDiscount(),
+            'installments' => $installments,
             'hasInstallments' => (!empty($installments) and count($installments)),
             'cashbackRules' => $cashbackRules,
             'instructorDiscounts' => $instructorDiscounts,
-            'product_variations' => $product_variations
+            'productComments' => $productComments,
+            'productReviews' => $productReviews,
+            'productAvailability' => $product->getAvailability(),
         ];
 
-        
-    
-
-
-        return view(getTemplate() . '.products.show', $data);
+        return view("design_1.web.products.show.index", $data);
     }
-
-    public function calculatePrice(Request $request)
-    {
-        $initialPrice = $request->input('initialPrice');
-
-        // Retrieve selected variant prices from query parameters
-        $variantPrices = $request->input('variantsQuery', []);  // This will be an array of variant prices
-
-        // If no variants are selected, the price should be the initial price only
-        if (empty($variantPrices)) {
-            $totalPrice = $initialPrice;
-        } else {
-            // Calculate the total price by adding variant prices
-            $totalPrice = $initialPrice + array_sum($variantPrices);
-        }
-
-        // Get the formatted price using your existing helper
-        $formattedPrice = handlePrice($totalPrice, true, true, false, null, true, 'store');
-
-        // Return the formatted price as JSON
-        return response()->json([
-            'price' => $formattedPrice
-        ]);
-    }
-
-
-
 
     public function buyWithPoint(Request $request, $slug)
     {
@@ -396,7 +519,7 @@ class ProductController extends Controller
                     return back()->with(['toast' => $toastData]);
                 }
 
-                $checkCourseForSale = checkProductForSale($product, $user);
+                $checkCourseForSale = checkProductForSale($request, $product, $user);
 
                 if ($checkCourseForSale != 'ok') {
                     return $checkCourseForSale;
@@ -464,7 +587,7 @@ class ProductController extends Controller
                 ->first();
 
             if (!empty($product)) {
-                $checkCourseForSale = checkProductForSale($product, $user);
+                $checkCourseForSale = checkProductForSale($request, $product, $user);
 
                 if ($checkCourseForSale != 'ok') {
                     return $checkCourseForSale;
@@ -495,6 +618,38 @@ class ProductController extends Controller
 
                 return redirect('/cart');
             }
+        }
+
+        abort(404);
+    }
+
+    public function showFiles($slug)
+    {
+        $user = auth()->user();
+        $product = Product::where('slug', $slug)
+            ->where('status', 'active')
+            ->with([
+                'creator' => function ($qu) {
+                    $qu->select('id', 'username', 'full_name', 'role_id', 'role_name', 'avatar', 'avatar_settings', 'bio', 'about');
+                },
+                'files' => function ($query) {
+                    $query->where('status', 'active');
+                    $query->orderBy('order', 'asc');
+                },
+                'reviews' => function ($query) {
+                    $query->where('status', 'active');
+                },
+            ])
+            ->first();
+
+        if (!empty($user) and !empty($product->files) and count($product->files) and $product->checkUserHasBought()) {
+
+            $data = [
+                'pageTitle' => trans('update.download_page'),
+                'product' => $product,
+            ];
+
+            return view("design_1.web.products.files.index", $data);
         }
 
         abort(404);

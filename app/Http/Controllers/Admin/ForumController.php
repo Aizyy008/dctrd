@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Exports\ForumsExport;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Forum;
@@ -14,10 +13,6 @@ use App\Models\Translation\CategoryTranslation;
 use App\Models\Translation\ForumTranslation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Validator;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ForumController extends Controller
 {
@@ -98,6 +93,7 @@ class ForumController extends Controller
             'title' => 'required|min:3|max:255',
             'description' => 'required',
             'icon' => 'required',
+            'cover' => 'required',
             'role_id' => 'nullable|exists:roles,id',
             'group_id' => 'nullable|exists:groups,id',
             'status' => 'in:active,disabled',
@@ -107,6 +103,7 @@ class ForumController extends Controller
         $forum = Forum::create([
             'slug' => Forum::makeSlug($data['title']),
             'icon' => $data['icon'],
+            'cover' => $data['cover'],
             'group_id' => $data['group_id'] ?? null,
             'role_id' => $data['role_id'] ?? null,
             'status' => $data['status'],
@@ -126,7 +123,12 @@ class ForumController extends Controller
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl().'/forums');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.forum_created_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/forums/{$forum->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function edit(Request $request, $id)
@@ -166,6 +168,7 @@ class ForumController extends Controller
             'title' => 'required|min:3|max:255',
             'description' => 'required',
             'icon' => 'required',
+            'cover' => 'required',
             'group_id' => 'nullable|exists:groups,id',
             'role_id' => 'nullable|exists:roles,id',
             'status' => 'in:active,disabled',
@@ -176,6 +179,7 @@ class ForumController extends Controller
         $forum = Forum::findOrFail($id);
         $forum->update([
             'icon' => $data['icon'],
+            'cover' => $data['cover'],
             'group_id' => $data['group_id'] ?? null,
             'role_id' => $data['role_id'] ?? null,
             'status' => $data['status'],
@@ -195,7 +199,12 @@ class ForumController extends Controller
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl().'/forums');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.forum_updated_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/forums/{$forum->id}/edit"))->with(['toast' => $toastData]);
     }
 
     public function destroy(Request $request, $id)
@@ -211,7 +220,12 @@ class ForumController extends Controller
             $forum->delete();
         }
 
-        return redirect(getAdminPanelUrl().'/forums');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg' => trans('update.forum_deleted_successful'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl("/forums"))->with(['toast' => $toastData]);
     }
 
     public function search(Request $request)
@@ -320,146 +334,4 @@ class ForumController extends Controller
 
         return true;
     }
-
-    public function export()
-    {
-        return Excel::download(new ForumsExport, 'forums.xlsx');
-    }
-
-    public function import(Request $request)
-{
-    $request->validate([
-        'excel_file' => 'required|mimes:xlsx,xls,csv'
-    ]);
-
-    if (!$request->hasFile('excel_file')) {
-        return back()->with('error', 'No file was uploaded.');
-    }
-
-    $file = $request->file('excel_file');
-
-    try {
-        $data = Excel::toArray([], $file)[0];
-
-        if (empty($data) || count($data) < 2) {
-            return back()->with('error', 'The uploaded file is empty or has an incorrect format.');
-        }
-
-        // Remove the header row
-        array_shift($data);
-
-        DB::beginTransaction();
-        try {
-            foreach ($data as $row) {
-                if (count($row) < 5) { // Ensure all required columns exist
-                    continue;
-                }
-
-                $title = trim($row[0]); // Forum Title
-                $description = trim($row[1]); // Forum Description
-                $iconUrl = trim($row[2]); // Forum Icon URL
-                $roleID = !empty(trim($row[3])) ? intval($row[3]) : null;
-                $groupID = !empty(trim($row[4])) ? intval($row[4]) : null;
-                $status = strtolower(trim($row[5])); // Status (active/disabled)
-                $closed = intval($row[6]); // Closed (1 for closed, 0 for open)
-
-                // Validate status (only allow "active" or "disabled")
-                if (!in_array($status, ['active', 'disabled'])) {
-                    $status = 'disabled';
-                }
-
-                // Validate closed (only allow 0 or 1)
-                if (!in_array($closed, [0, 1])) {
-                    $closed = 0;
-                }
-
-                // Create Forum Entry
-                $forum = Forum::create([
-                    'slug' => $this->generateUniqueSlug($title),
-                    'parent_id' => null, // Default as null (main forum)
-                    'role_id' => $roleID,
-                    'group_id' => $groupID,
-                    'icon' => $iconUrl,
-                    'status' => $status,
-                    'close' => $closed,
-                    'created_at' => now()->timestamp,
-                ]);
-
-                // Insert into forum_translations table
-                DB::table('forum_translations')->insert([
-                    [
-                        'forum_id' => $forum->id,
-                        'locale' => 'en',
-                        'title' => $title,
-                        'description' => $description,
-                    ]
-                ]);
-            }
-
-            DB::commit();
-            return back()->with('success', 'Forums imported successfully!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error inserting data: ' . $e->getMessage());
-        }
-    } catch (\Exception $e) {
-        return back()->with('error', 'Error processing file: ' . $e->getMessage());
-    }
-}
-    private function generateUniqueSlug($title)
-    {
-        $slug = Str()->slug($title);
-        $count = 1;
-
-        while (Forum::where('slug', $slug)->exists()) {
-            $slug = Str()->slug($title) . '-' . $count;
-            $count++;
-        }
-
-        return $slug;
-    }
-
-
-
-    public function downloadTemplate()
-{
-    $headers = [
-        'Title', // Forum title in different languages
-        'Description',
-        'Icon URL', // Forum icon
-        'Role ID', // Forum icon
-        'Group ID', // Forum icon
-        'Status', // active or disabled
-        'Closed' // 1 for closed, 0 for open
-    ];
-
-    $spreadsheet = new Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-
-    // Set headers in the first row (A1:I1)
-    foreach ($headers as $index => $header) {
-        $sheet->setCellValueByColumnAndRow($index + 1, 1, $header);
-    }
-
-    // Apply bold styling to headers
-    $styleArray = [
-        'font' => ['bold' => true],
-        'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-    ];
-    $sheet->getStyle('A1:G1')->applyFromArray($styleArray);
-
-    // Auto-size columns
-    foreach (range('A', 'G') as $column) {
-        $sheet->getColumnDimension($column)->setAutoSize(true);
-    }
-
-    $writer = new Xlsx($spreadsheet);
-    $fileName = 'forum_import_template.xlsx';
-    $tempFilePath = storage_path('app/' . $fileName);
-    $writer->save($tempFilePath);
-
-    return response()->download($tempFilePath)->deleteFileAfterSend(true);
-}
-
-
 }
