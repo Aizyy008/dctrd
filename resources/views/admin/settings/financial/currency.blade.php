@@ -48,13 +48,13 @@
                 </div>
 
 
-                <div class="form-group custom-switches-stacked">
-                    <label class="custom-switch pl-0 d-flex align-items-center">
-                        <input type="hidden" name="value[multi_currency]" value="0">
-                        <input type="checkbox" name="value[multi_currency]" id="multiCurrencySwitch" value="1" {{ (!empty($itemValue) and !empty($itemValue['multi_currency']) and $itemValue['multi_currency']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                <div class="form-group mt-3 custom-switches-stacked">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[content_translate]" value="0">
                         <span class="custom-switch-indicator"></span>
-                        <label class="custom-switch-description mb-0 cursor-pointer" for="multiCurrencySwitch">{{ trans('update.enable_multi_currency') }}</label>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.enable_multi_currency') }}</label>
                     </label>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
 
                 <section class="js-multi-currency-section mt-3 {{ (!empty($itemValue) and !empty($itemValue['multi_currency'])) ? : "d-none" }}">
@@ -83,14 +83,22 @@
                                     </button>
 
 
-                                    <div class="dropdown-menu text-left">
-                                        <button type="button" data-path="{{ getAdminPanelUrl("/settings/financial/currency/{$currencyItem->id}/edit") }}" class="js-edit-currency font-14 btn-transparent d-block">{{ trans('public.edit') }}</button>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <button type="button"
+                                                data-path="{{ getAdminPanelUrl("/settings/financial/currency/{$currencyItem->id}/edit") }}"
+                                                class="js-edit-currency dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                            <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                            <span class="text-gray-500">{{ trans('public.edit') }}</span>
+                                        </button>
 
                                         @include('admin.includes.delete_button',[
-                                          'url' => getAdminPanelUrl("/settings/financial/currency/{$currencyItem->id}/delete"),
-                                          'btnClass' => 'btn-sm btn-transparent d-block text-danger mt-1' ,
-                                          'btnText' => trans('public.delete')
-                                          ])
+                                            'url' => getAdminPanelUrl("/settings/financial/currency/{$currencyItem->id}/delete"),
+                                            'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                            'btnText' => trans('public.delete'),
+                                            'btnIcon' => 'trash',
+                                            'iconType' => 'lin',
+                                            'iconClass' => 'text-danger mr-2',
+                                        ])
                                     </div>
                                 </div>
                             </li>
@@ -112,5 +120,5 @@
     <script>
         var saveSuccessLang = '{{ trans('webinars.success_store') }}';
     </script>
-    <script src="/assets/default/js/admin/settings/currencies.min.js"></script>
+    <script src="/assets/admin/js/parts/settings/currencies.min.js"></script>
 @endpush

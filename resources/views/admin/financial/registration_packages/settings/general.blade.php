@@ -14,7 +14,7 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="generalStatusSwitch">{{ trans('update.registration_packages_general_status') }}</label>
                     </label>
-                    <div class="text-muted text-small">{{ trans('update.registration_packages_general_status_hint') }}</div>
+                    <div class="text-gray-500 text-small">{{ trans('update.registration_packages_general_status_hint') }}</div>
                 </div>
 
                 <div class="form-group custom-switches-stacked">
@@ -24,7 +24,7 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="showPackagesDuringRegistrationSwitch">{{ trans('update.show_packages_during_registration') }}</label>
                     </label>
-                    <div class="text-muted text-small">{{ trans('update.show_packages_during_registration_hint') }}</div>
+                    <div class="text-gray-500 text-small">{{ trans('update.show_packages_during_registration_hint') }}</div>
                 </div>
 
                 <div class="form-group custom-switches-stacked">
@@ -34,7 +34,7 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="forceUserSelectPackageSwitch">{{ trans('update.force_user_to_select_a_package') }}</label>
                     </label>
-                    <div class="text-muted text-small">{{ trans('update.force_user_to_select_a_package_hint') }}</div>
+                    <div class="text-gray-500 text-small">{{ trans('update.force_user_to_select_a_package_hint') }}</div>
                 </div>
 
                 <div class="form-group custom-switches-stacked">
@@ -44,10 +44,25 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="enableHomeSectionSwitch">{{ trans('update.enable_home_section') }}</label>
                     </label>
-                    <div class="text-muted text-small">{{ trans('update.enable_home_section_hint') }}</div>
+                    <div class="text-gray-500 text-small">{{ trans('update.enable_home_section_hint') }}</div>
                 </div>
 
-                <button type="submit" class="btn btn-success">{{ trans('admin/main.save_change') }}</button>
+                <div class="form-group">
+                    <label class="input-label">{{ trans("update.right_float_image") }}</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button type="button" class="input-group-text admin-file-manager" data-input="image_right_float_image" data-preview="holder">
+                                <i class="fa fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <input type="text" name="value[right_float_image]" id="image_right_float_image" value="{{ (!empty($pageGeneralSettings) and !empty($pageGeneralSettings["right_float_image"])) ? $pageGeneralSettings["right_float_image"] : "" }}" class="form-control"/>
+                    </div>
+                </div>
+
+                <div class="text-right">
+                <button type="submit" class="btn btn-primary">{{ trans('admin/main.save_change') }}</button>
+                </div>
+
             </form>
         </div>
     </div>

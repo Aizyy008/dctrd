@@ -43,15 +43,15 @@
 
         <div class="form-group">
             <label class="input-label">{{ trans('public.discount') }} <span class="braces">(%)</span></label>
-            <input type="text" name="discount" class="js-ajax-discount form-control" placeholder="10"/>
+            <input type="number" name="discount" class="js-ajax-discount form-control" placeholder="10"/>
             <div class="invalid-feedback"></div>
         </div>
 
         <div class="form-group">
             <label class="input-label">{{ trans('public.capacity') }}</label>
-            <input type="text" name="capacity" class="js-ajax-capacity form-control" placeholder="{{ trans('forms.empty_means_unlimited') }}"/>
+            <input type="number" name="capacity" class="js-ajax-capacity form-control" placeholder="{{ trans('forms.empty_means_unlimited') }}"/>
             <div class="invalid-feedback"></div>
-            <div class="text-muted text-small mt-1">{{ trans('admin/main.price_plan_modal_capacity_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.price_plan_modal_capacity_hint') }}</div>
         </div>
 
         <div class="mt-30 d-flex align-items-center justify-content-end">

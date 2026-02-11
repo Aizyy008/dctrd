@@ -18,7 +18,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th>{{ trans('admin/main.user') }}</th>
                                         <th class="text-left">{{ trans('admin/main.post_or_webinar') }}</th>
@@ -38,15 +38,29 @@
                                             <td>{{ dateTimeFormat($report->created_at, 'Y M j | H:i') }}</td>
 
                                             <td width="150px">
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
+        <div class="dropdown-menu dropdown-menu-right">
+            <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $report->comment_id }}/edit"
+               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                <x-iconsax-lin-eye class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                <span class="text-gray-500 font-14">{{ trans('admin/main.show') }}</span>
+            </a>
 
-                                                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $report->comment_id }}/edit" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.show') }}">
-                                                    <i class="fa fa-eye"></i>
-                                                </a>
-
-                                                @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/comments/'. $page .'/reports/'.$report->id.'/delete','btnClass' => ''])
-
-                                            </td>
+            @include('admin.includes.delete_button',[
+                'url' => getAdminPanelUrl().'/comments/'.$page.'/reports/'.$report->id.'/delete',
+                'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                'btnText' => trans('admin/main.delete'),
+                'btnIcon' => 'trash',
+                'iconType' => 'lin',
+                'iconClass' => 'text-danger mr-2'
+            ])
+        </div>
+    </div>
+</td>
                                         </tr>
                                     @endforeach
                                 </table>

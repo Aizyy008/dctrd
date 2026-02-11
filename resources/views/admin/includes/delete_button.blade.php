@@ -1,15 +1,20 @@
-<button class="@if(empty($hideDefaultClass) or !$hideDefaultClass) {{ !empty($noBtnTransparent) ? '' : 'btn-transparent' }} text-primary @endif {{ $btnClass ?? '' }}"
+<button class="d-flex align-items-center btn-transparent gap-4 {{ $btnClass ?? '' }}"
         data-confirm="{{ $deleteConfirmMsg ?? trans('admin/main.delete_confirm_msg') }}"
         data-confirm-href="{{ $url }}"
         data-confirm-text-yes="{{ trans('admin/main.yes') }}"
         data-confirm-text-cancel="{{ trans('admin/main.cancel') }}"
         @if(empty($btnText))
-        data-toggle="tooltip" data-placement="top" title="{{ !empty($tooltip) ? $tooltip : trans('admin/main.delete') }}"
+            data-toggle="tooltip" data-placement="top" title="{{ !empty($tooltip) ? $tooltip : trans('admin/main.delete') }}"
     @endif
 >
-    @if(!empty($btnText))
-        {!! $btnText !!}
-    @else
-        <i class="fa {{ !empty($btnIcon) ? $btnIcon : 'fa-times' }}" aria-hidden="true"></i>
+    @if(!empty($btnIcon))
+        @php
+            $btnIconType = (!empty($iconType) and in_array($iconType, ['lin', 'bol', 'bul'])) ? $iconType : 'lin';
+            $btnIconClass = !empty($iconClass) ? $iconClass : 'text-black';
+        @endphp
+
+        @svg("iconsax-{$btnIconType}-{$btnIcon}", ['width' => '18px', 'height' => '18px', 'class' => "icons {$btnIconClass}"])
     @endif
+
+    <span class="">{!! $btnText ?? '' !!}</span>
 </button>

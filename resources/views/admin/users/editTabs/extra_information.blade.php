@@ -25,5 +25,5 @@
 @push('scripts_bottom')
     <script src="/assets/default/vendors/daterangepicker/daterangepicker.min.js"></script>
     <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>
-    <script src="/assets/default/js/parts/forms.min.js"></script>
+    <script src="/assets/design_1/js/parts/forms.min.js"></script>
 @endpush

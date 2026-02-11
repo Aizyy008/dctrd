@@ -78,23 +78,38 @@
                                             <div class="payment-channel-credentials-card border mb-3">
                                                 <h5 class="mb-2">{{ trans('update.channel_credentials') }}</h5>
 
-                                                @foreach($credentialItems as $credentialItem)
-                                                    <div class="form-group">
-                                                        <label>{{ $credentialItem }}</label>
-                                                        <input type="text" name="credentials[{{ $credentialItem }}]"
-                                                               class="form-control"
-                                                               value="{{ (!empty($paymentChannel) and !empty($paymentChannel->credentials) and !empty($paymentChannel->credentials[$credentialItem])) ? $paymentChannel->credentials[$credentialItem] : '' }}"/>
-                                                    </div>
+                                                @foreach($credentialItems as $credentialKey => $credentialItem)
+                                                    @if(is_array($credentialItem))
+                                                        <div class="form-group">
+                                                            <label>{{ $credentialKey }}</label>
+                                                            <select name="credentials[{{ $credentialKey }}]" class="form-control">
+                                                                <option value="">{{ trans('update.select_a_option') }}</option>
+
+                                                                @foreach($credentialItem as $cItem)
+                                                                    <option value="{{ $cItem }}" {{ (!empty($paymentChannel) and !empty($paymentChannel->credentials) and !empty($paymentChannel->credentials[$credentialKey]) and $paymentChannel->credentials[$credentialKey] == $cItem) ? 'selected' : '' }}>{{ $cItem }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                    @else
+                                                        <div class="form-group">
+                                                            <label>{{ $credentialItem }}</label>
+                                                            <input type="text" name="credentials[{{ $credentialItem }}]"
+                                                                   class="form-control"
+                                                                   value="{{ (!empty($paymentChannel) and !empty($paymentChannel->credentials) and !empty($paymentChannel->credentials[$credentialItem])) ? $paymentChannel->credentials[$credentialItem] : '' }}"/>
+                                                        </div>
+                                                    @endif
                                                 @endforeach
 
-                                                <div class="form-group custom-switches-stacked mb-0">
-                                                    <label class="custom-switch pl-0">
-                                                        <input type="hidden" name="credentials[test_mode]" value="">
-                                                        <input type="checkbox" name="credentials[test_mode]" id="test_modeSwitch" value="on" class="custom-switch-input" {{ (!empty($paymentChannel) and !empty($paymentChannel->credentials) and !empty($paymentChannel->credentials['test_mode'])) ? 'checked' : '' }}/>
-                                                        <span class="custom-switch-indicator"></span>
-                                                        <label class="custom-switch-description mb-0 cursor-pointer" for="test_modeSwitch">{{ trans('update.test_mode') }}</label>
-                                                    </label>
-                                                </div>
+                                                @if($showTestModeToggle)
+                                                    <div class="form-group custom-switches-stacked mb-0">
+                                                        <label class="custom-switch pl-0">
+                                                            <input type="hidden" name="credentials[test_mode]" value="">
+                                                            <input type="checkbox" name="credentials[test_mode]" id="test_modeSwitch" value="on" class="custom-switch-input" {{ (!empty($paymentChannel) and !empty($paymentChannel->credentials) and !empty($paymentChannel->credentials['test_mode'])) ? 'checked' : '' }}/>
+                                                            <span class="custom-switch-indicator"></span>
+                                                            <label class="custom-switch-description mb-0 cursor-pointer" for="test_modeSwitch">{{ trans('update.test_mode') }}</label>
+                                                        </label>
+                                                    </div>
+                                                @endif
 
                                             </div>
                                         @endif

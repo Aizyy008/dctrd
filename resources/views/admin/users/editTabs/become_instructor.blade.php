@@ -29,7 +29,7 @@
                 @foreach($becomeInstructorFormFieldValues as $becomeInstructorFormFieldTitle => $becomeInstructorFormFieldValue)
                     <div class="mt-3">
                         <label>{{ $becomeInstructorFormFieldTitle }}:</label>
-                        <p class="text-muted white-space-pre-wrap">{{ $becomeInstructorFormFieldValue }}</p>
+                        <p class="text-gray-500 white-space-pre-wrap">{{ $becomeInstructorFormFieldValue }}</p>
                     </div>
                 @endforeach
             @endif

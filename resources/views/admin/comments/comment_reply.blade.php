@@ -30,8 +30,8 @@
                                 <div class="mt-1 w-100">
                                     <h4>{{ trans('admin/main.reply_list') }}</h4>
 
-                                    <div class="table-responsive">
-                                        <table class="table table-striped font-14">
+                                    <div>
+                                        <table class="table custom-table font-14">
                                             <tr>
                                                 <th>{{ trans('admin/main.user') }}</th>
                                                 <th>{{ trans('admin/main.comment') }}</th>
@@ -49,39 +49,59 @@
                                                     </td>
                                                     <td>{{ dateTimeFormat($reply->created_at, 'Y M j | H:i') }}</td>
                                                     <td>
-                                                        <span class="text-{{ ($reply->status == 'pending') ? 'warning' : 'success' }}">
+                                                        <span class="text-{{ ($reply->status == 'pending') ? 'warning' : 'success' }} badge-status bg-{{ ($reply->status == 'pending') ? 'warning' : 'success' }}-30">
                                                             {{ ($reply->status == 'pending') ? trans('admin/main.pending') : trans('admin/main.published') }}
+
                                                         </span>
                                                     </td>
 
                                                     <td>
-                                                        <span class="text-{{ (empty($reply->reply_id)) ? 'info' : 'warning' }}">
+                                                        <span class="text-{{ (empty($reply->reply_id)) ? 'info' : 'warning' }} badge-status bg-{{ (empty($reply->reply_id)) ? 'info' : 'warning' }}-30">
                                                             {{ (empty($reply->reply_id)) ? trans('admin/main.main_comment') : trans('admin/main.replied') }}
                                                         </span>
                                                     </td>
 
                                                     <td>
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                                        @can('admin_comments_status')
-                                                            <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $reply->id }}/toggle" class="btn-transparent text-primary">
-                                                                @if($reply->status == 'pending')
-                                                                    <i class="fa fa-arrow-up"></i>
-                                                                @else
-                                                                    <i class="fa fa-arrow-down"></i>
-                                                                @endif
-                                                            </a>
-                                                        @endcan
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_comments_status')
+                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $reply->id }}/toggle"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    @if($reply->status == 'pending')
+                        <x-iconsax-lin-arrow-up class="icons text-success mr-2" width="18px" height="18px"/>
+                        <span class="text-success">{{ trans('admin/main.approve') }}</span>
+                    @else
+                        <x-iconsax-lin-arrow-down class="icons text-warning mr-2" width="18px" height="18px"/>
+                        <span class="text-warning">{{ trans('admin/main.reject') }}</span>
+                    @endif
+                </a>
+            @endcan
 
-                                                        @can('admin_comments_edit')
-                                                            <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $reply->id }}/edit" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                                <i class="fa fa-edit"></i>
-                                                            </a>
-                                                        @endcan
+            @can('admin_comments_edit')
+                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $reply->id }}/edit"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500">{{ trans('admin/main.edit') }}</span>
+                </a>
+            @endcan
 
-                                                        @can('admin_comments_delete')
-                                                            @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/comments/'. $page .'/'.$reply->id.'/delete','btnClass' => 'btn-sm mt-2'])
-                                                        @endcan
-                                                    </td>
+            @can('admin_comments_delete')
+                @include('admin.includes.delete_button',[
+                    'url' => getAdminPanelUrl().'/comments/'.$page.'/'.$reply->id.'/delete',
+                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                    'btnText' => trans('admin/main.delete'),
+                    'btnIcon' => 'trash',
+                    'iconType' => 'lin',
+                    'iconClass' => 'text-danger mr-2',
+                ])
+            @endcan
+        </div>
+    </div>
+</td>
                                                 </tr>
                                             @endforeach
                                         </table>
@@ -137,5 +157,5 @@
 
 @push('scripts_bottom')
     <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
-    <script src="/assets/default/js/admin/comments.min.js"></script>
+    <script src="/assets/admin/js/parts/comments.min.js"></script>
 @endpush

@@ -1,7 +1,7 @@
 @if(!empty($file) and $file->storage == 'upload_archive')
     @include('admin.webinars.create_includes.accordions.new_interactive_file',['file' => $file])
 @else
-    <li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion-row bg-white rounded-sm border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
+    <li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion-row bg-white rounded-12 border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
         <div class="d-flex align-items-center justify-content-between " role="tab" id="file_{{ !empty($file) ? $file->id :'record' }}">
             <div class="d-flex align-items-center" href="#collapseFile{{ !empty($file) ? $file->id :'record' }}" aria-controls="collapseFile{{ !empty($file) ? $file->id :'record' }}" data-parent="#chapterContentAccordion{{ !empty($chapter) ? $chapter->id :'' }}" role="button" data-toggle="collapse" aria-expanded="true">
             <span class="chapter-icon chapter-content-icon mr-10">
@@ -18,7 +18,7 @@
                 @endif
 
                 @if(!empty($file))
-                    <button type="button" data-item-id="{{ $file->id }}" data-item-type="{{ \App\Models\WebinarChapterItem::$chapterFile }}" data-chapter-id="{{ !empty($chapter) ? $chapter->id : '' }}" class="js-change-content-chapter btn btn-sm btn-transparent text-gray mr-10">
+                    <button type="button" data-item-id="{{ $file->id }}" data-item-type="{{ \App\Models\WebinarChapterItem::$chapterFile }}" data-chapter-id="{{ !empty($chapter) ? $chapter->id : '' }}" class="js-change-content-chapter btn btn-sm btn-transparent text-gray-500 mr-10">
                         <i data-feather="grid" class="" height="20"></i>
                     </button>
                 @endif
@@ -26,7 +26,7 @@
                 <i data-feather="move" class="move-icon mr-10 cursor-pointer" height="20"></i>
 
                 @if(!empty($file))
-                    <a href="{{ getAdminPanelUrl() }}/files/{{ $file->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray">
+                    <a href="{{ getAdminPanelUrl() }}/files/{{ $file->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray-500">
                         <i data-feather="trash-2" class="mr-10 cursor-pointer" height="20"></i>
                     </a>
                 @endif
@@ -36,7 +36,7 @@
         </div>
 
         <div id="collapseFile{{ !empty($file) ? $file->id :'record' }}" aria-labelledby="file_{{ !empty($file) ? $file->id :'record' }}" class=" collapse @if(empty($file)) show @endif" role="tabpanel">
-            <div class="panel-collapse text-gray">
+            <div class="panel-collapse text-gray-500">
                 <div class="js-content-form file-form" data-action="{{ getAdminPanelUrl() }}/files/{{ !empty($file) ? $file->id . '/update' : 'store' }}">
                     <input type="hidden" name="ajax[{{ !empty($file) ? $file->id : 'new' }}][webinar_id]" value="{{ !empty($webinar) ? $webinar->id :'' }}">
 
@@ -261,11 +261,11 @@
                         <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
                     </div>
 
-                    <div class="mt-30 d-flex align-items-center">
-                        <button type="button" class="js-save-file btn btn-sm btn-primary">{{ trans('public.save') }}</button>
+                    <div class="mt-6 d-flex align-items-center">
+                        <button type="button" class="js-save-file btn btn-sm btn-primary size-100">{{ trans('public.save') }}</button>
 
                         @if(empty($file))
-                            <button type="button" class="btn btn-sm btn-danger ml-10 cancel-accordion">{{ trans('public.close') }}</button>
+                            <button type="button" class="btn btn-sm btn-danger ml-10 cancel-accordion size-100">{{ trans('public.close') }}</button>
                         @endif
                     </div>
                 </div>

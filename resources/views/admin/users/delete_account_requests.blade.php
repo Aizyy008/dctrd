@@ -36,6 +36,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="input-label">{{ trans('admin/main.end_date') }}</label>
@@ -45,12 +46,9 @@
                             </div>
                         </div>
 
-                        <div class="col-md-3">
-                            <div class="form-group mt-1">
-                                <label class="input-label mb-4"> </label>
-                                <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                            </div>
-                        </div>
+                            <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
+                            </div> 
                     </div>
                 </form>
             </div>
@@ -58,13 +56,10 @@
     </div>
 
     <div class="card">
-        <div class="card-header">
-            <div class="h-10"></div>
-        </div>
 
         <div class="card-body">
-            <div class="table-responsive text-center">
-                <table class="table table-striped font-14">
+            <div>
+                <table class="table custom-table font-14">
                     <tr>
                         <th>ID</th>
                         <th class="text-left">{{ trans('admin/main.name') }}</th>
@@ -83,14 +78,14 @@
                                         <img src="{{ $request->user->getAvatar() }}" alt="{{ $request->user->full_name }}">
                                     </figure>
                                     <div class="media-body ml-1">
-                                        <div class="mt-0 mb-1 font-weight-bold">{{ $request->user->full_name }}</div>
+                                        <div class="mt-0 mb-1">{{ $request->user->full_name }}</div>
 
                                         @if($request->user->mobile)
-                                            <div class="text-primary text-small font-600-bold">{{ $request->user->mobile }}</div>
+                                            <div class="text-small font-12 text-gray-500">{{ $request->user->mobile }}</div>
                                         @endif
 
                                         @if($request->user->email)
-                                            <div class="text-primary text-small font-600-bold">{{ $request->user->email }}</div>
+                                            <div class="text-small font-12 text-gray-500">{{ $request->user->email }}</div>
                                         @endif
                                     </div>
                                 </div>
@@ -103,31 +98,60 @@
                                     <div class="mt-0 mb-1 font-weight-bold text-danger">{{ trans('admin/main.ban') }}</div>
                                     <div class="text-small font-600-bold">Until {{ dateTimeFormat($request->user->ban_end_at, 'Y/m/j') }}</div>
                                 @else
-                                    <div class="mt-0 mb-1 font-weight-bold {{ ($request->user->status == 'active') ? 'text-success' : 'text-warning' }}">{{ trans('admin/main.'.$request->user->status) }}</div>
+                                <span class="badge-status {{ ($request->user->status == 'active') ? 'text-success bg-success-30' : 'text-warning bg-warning-30' }}">{{ trans('admin/main.'.$request->user->status) }} </span>
                                 @endif
                             </td>
 
-                            <td class="text-center mb-2" width="120">
-                                @can('admin_users_impersonate')
-                                    <a href="{{ getAdminPanelUrl() }}/users/{{ $request->user->id }}/impersonate" target="_blank" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.login') }}">
-                                        <i class="fa fa-user-shield"></i>
-                                    </a>
-                                @endcan
+                            <td class="text-center" width="120">
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                @can('admin_users_edit')
-                                    <a href="{{ getAdminPanelUrl() }}/users/{{ $request->user->id }}/edit" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                        <i class="fa fa-edit"></i>
-                                    </a>
-                                @endcan
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_users_impersonate')
+                <a href="{{ getAdminPanelUrl() }}/users/{{ $request->user->id }}/impersonate" 
+                   target="_blank"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-user-square class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.login') }}</span>
+                </a>
+            @endcan
 
-                                @can('admin_delete_account_requests_confirm')
-                                    @include('admin.includes.delete_button',[
-                                        'url' => getAdminPanelUrl().'/users/delete-account-requests/'.$request->id.'/confirm' ,
-                                        'btnIcon' => 'fa-arrow-up',
-                                        'tooltip' => trans('update.confirm')
-                                       ])
-                                @endcan
-                            </td>
+            @can('admin_users_edit')
+                <a href="{{ getAdminPanelUrl() }}/users/{{ $request->user->id }}/edit"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                </a>
+            @endcan
+
+            @can('admin_delete_account_requests_confirm')
+                <div class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    @include('admin.includes.delete_button',[
+                        'url' => getAdminPanelUrl().'/users/delete-account-requests/'.$request->id.'/confirm',
+                        'btnClass' => 'text-success font-14',
+                        'btnText' => trans('update.confirm'),
+                        'btnIcon' => 'tick-circle',
+                        'iconType' => 'lin',
+                        'iconClass' => 'text-success mr-2'
+                    ])
+                </div>
+
+                <div class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4">
+                    @include('admin.includes.delete_button',[
+                        'url' => getAdminPanelUrl().'/users/delete-account-requests/'.$request->id.'/delete',
+                        'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                        'btnText' => trans('public.delete'),
+                        'btnIcon' => 'trash',
+                        'iconType' => 'lin',
+                        'iconClass' => 'text-danger mr-2'
+                    ])
+                </div>
+            @endcan
+        </div>
+    </div>
+</td>
 
                         </tr>
                     @endforeach

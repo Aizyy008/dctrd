@@ -17,38 +17,39 @@
                     @enderror
                 </div>
 
+
+                <div class="form-group">
+                    <label>{{ trans('update.username') }}</label>
+                    <input type="text" name="username"
+                           class="form-control  @error('username') is-invalid @enderror"
+                           value="{{ !empty($user) ? $user->username : old('username') }}"
+                           placeholder="{{ trans('update.username_input_placeholder') }}"/>
+                    @error('username')
+                    <div class="invalid-feedback">
+                        {{ $message }}
+                    </div>
+                    @enderror
+
+                    <div class="text-muted mt-8 font-12">{{ trans('update.username_input_placeholder') }}</div>
+                </div>
+
                 @can('admin_update_user_role_in_edit_page')
                     <div class="form-group">
                         <label>{{ trans('/admin/main.role_name') }}</label>
                         <select class="form-control @error('role_id') is-invalid @enderror" id="roleId" name="role_id">
                             <option disabled {{ empty($user) ? 'selected' : '' }}>{{ trans('admin/main.select_role') }}</option>
                             @foreach ($roles as $role)
-                                <option value="{{ $role->id }}"
-                                        data-role-name="{{ $role->name }}"
-                                        {{ (!empty($user) && $user->role_id == $role->id) ? 'selected' : '' }}>
-                                    {{ $role->caption }}
-                                </option>
+                                <option value="{{ $role->id }}" {{ (!empty($user) and $user->role_id == $role->id) ? 'selected' :''}}>{{ $role->caption }}</option>
                             @endforeach
                         </select>
                         @error('role_id')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
                         @enderror
                     </div>
                 @endcan
-                {{-- ++++++++++++++++ Live Chat Widget : appear in organization or instructor ++++++++++++++++ --}}
-                <div class="form-group chat-widget-group"
-                    style="display: {{ ($user && ($user->role_name == 'organization' || $user->role_name == 'teacher')) ? 'block' : 'none' }};">
-                    <label>Live Chat Widget</label>
-                    <textarea name="chat_widget" rows="6"
-                            class="form-control @error('chat_widget') is-invalid @enderror">{{ $user->chat_widget ?? '' }}</textarea>
-                    @error('chat_widget')
-                    <div class="invalid-feedback">
-                        {{ $message }}
-                    </div>
-                    @enderror
-                </div>
+
                 <div class="form-group">
                     <label class="input-label">{{ trans('update.timezone') }}</label>
                     <select name="timezone" class="form-control select2" data-allow-clear="false">
@@ -63,88 +64,6 @@
                     </div>
                     @enderror
                 </div>
-                <div class="row">
-                    <!-- New Fields for Backend Link and Frontend Link GR -->
-                    <div class="form-group col-md-6">
-                        <label for="frontend_link_gk">{{ trans('/admin/main.iframe connection (front-end)gr') }}</label>
-                        <input type="text" name="frontend_link_gk" id="frontend_link_gk"
-                            class="form-control @error('frontend_link_gk') is-invalid @enderror"
-                            value="{{ old('frontend_link_gk', $user->frontend_link_gk ?? '') }}"
-                            placeholder="Enter frontend link (optional)">
-                        @error('frontend_link_gk')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                        @enderror
-                    </div>
-
-                    <!-- Front Iframe Height -->
-                    <div class="form-group col-md-4">
-                        <label for="front_iframe_height_gk">{{ trans('/admin/main.Frontend Iframe Height gr') }}</label>
-                        <input type="number" name="front_iframe_height_gk" id="front_iframe_height_gk"
-                            class="form-control @error('front_iframe_height_gk') is-invalid @enderror"
-                            value="{{ old('front_iframe_height_gk', $user->front_iframe_height_gk ?? '') }}"
-                            placeholder="Enter frontend iframe height">
-                        @error('front_iframe_height_gk')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                        @enderror
-                    </div>
-                </div>
-
-
-                <div class="row">
-                <div class="form-group col-md-6">
-                    <label>{{ trans('admin/main.iframe connection (front-end)') }}</label>
-                    <input type="text" name="frontend_link" class="form-control @error('frontend_link') is-invalid @enderror"
-                           value="{{ !empty($user) ? $user->frontend_link : old('frontend_link') }}"
-                           placeholder="Enter backend link"/>
-                    @error('frontend_link')
-                    <div class="invalid-feedback">
-                        {{ $message }}
-                    </div>
-                    @enderror
-                </div>
-                <!-- Frontend Iframe Height -->
-                <div class="form-group col-md-4">
-                    <label>{{ trans('admin/main.Frontend Iframe Height') }}</label>
-                    <input type="number" name="front_iframe_height" class="form-control @error('front_iframe_height') is-invalid @enderror"
-                        value="{{ !empty($user) ? $user->front_iframe_height : old('front_iframe_height') }}"
-                        placeholder="Enter frontend iframe height"/>
-                    @error('front_iframe_height')
-                    <div class="invalid-feedback">
-                        {{ $message }}
-                    </div>
-                    @enderror
-                </div>
-            </div>
-
-                <div class="row">
-                <div class="form-group col-md-6">
-                    <label>{{ trans('admin/main.iframe connection (back-end)') }}</label>
-                    <input type="text" name="backend_link" class="form-control @error('backend_link') is-invalid @enderror"
-                           value="{{ !empty($user) ? $user->backend_link : old('backend_link') }}"
-                           placeholder="Enter backend link"/>
-                    @error('backend_link')
-                    <div class="invalid-feedback">
-                        {{ $message }}
-                    </div>
-                    @enderror
-                </div>
-                <!-- Backend Iframe Height -->
-                <div class="form-group col-md-4">
-                    <label>{{ trans('admin/main.Backend Iframe Height') }}</label>
-                    <input type="number" name="back_iframe_height" class="form-control @error('back_iframe_height') is-invalid @enderror"
-                        value="{{ !empty($user) ? $user->back_iframe_height : old('back_iframe_height') }}"
-                        placeholder="Enter backend iframe height"/>
-                    @error('back_iframe_height')
-                    <div class="invalid-feedback">
-                        {{ $message }}
-                    </div>
-                    @enderror
-                </div>
-            </div>
 
                 @if(!empty($currencies) and count($currencies))
                     @php
@@ -228,7 +147,6 @@
                     </div>
                     @enderror
                 </div>
-
 
                 <div class="form-group">
                     <label>{{ trans('update.certificate_additional') }}</label>
@@ -344,25 +262,7 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="canCreateStoreSwitch">{{ trans('update.store') }}</label>
                     </label>
-                    <div class="text-muted text-small">{{ trans('update.admin_user_edit_can_create_store_hint') }}</div>
-                </div>
-                
-                <div class="form-group custom-switches-stacked mt-2">
-                    <label class="custom-switch pl-0">
-                        <input type="hidden" name="cross_selling" value="0">
-                        <input type="checkbox" name="cross_selling" id="can_cross_selling" value="1" {{ (!empty($user) and $user->cross_selling) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                        <span class="custom-switch-indicator"></span>
-                        <label class="custom-switch-description mb-0 cursor-pointer" for="can_cross_selling">{{ trans('update.Cross Selling') }}</label>
-                    </label>
-                </div>
-                
-                <div class="form-group custom-switches-stacked mt-2">
-                    <label class="custom-switch pl-0">
-                        <input type="hidden" name="up_selling" value="0">
-                        <input type="checkbox" name="up_selling" id="can_up_selling" value="1" {{ (!empty($user) and $user->up_selling) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
-                        <span class="custom-switch-indicator"></span>
-                        <label class="custom-switch-description mb-0 cursor-pointer" for="can_up_selling">{{ trans('update.Up Selling') }}</label>
-                    </label>
+                    <div class="text-gray-500 text-small">{{ trans('update.admin_user_edit_can_create_store_hint') }}</div>
                 </div>
 
                 <div class="form-group custom-switches-stacked mt-2">
@@ -372,7 +272,7 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="contentAccessLimitationSwitch">{{ trans('update.content_access_limitation') }}</label>
                     </label>
-                    <div class="text-muted text-small">{{ trans('update.admin_user_edit_content_access_limitation_hint') }}</div>
+                    <div class="text-gray-500 text-small">{{ trans('update.admin_user_edit_content_access_limitation_hint') }}</div>
                 </div>
 
                 @if(!empty($user) and !$user->isUser())
@@ -383,7 +283,7 @@
                             <span class="custom-switch-indicator"></span>
                             <label class="custom-switch-description mb-0 cursor-pointer" for="aiContentLimitationSwitch">{{ trans('update.enable_ai_content') }}</label>
                         </label>
-                        <div class="text-muted text-small">{{ trans('update.admin_user_edit_enable_ai_content_hint') }}</div>
+                        <div class="text-gray-500 text-small">{{ trans('update.admin_user_edit_enable_ai_content_hint') }}</div>
                     </div>
                 @endif
 
@@ -394,39 +294,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    // ++++++++++++++++ Live Chat Widget : appear in organization or instructor ++++++++++++++++
-    document.addEventListener('DOMContentLoaded', function()
-    {
-        console.log("Script initialized");
-        const roleSelect = document.getElementById('roleId');
-        const chatWidgetGroup = document.querySelector('.chat-widget-group');
-        if (!roleSelect || !chatWidgetGroup) {
-            console.error("Required elements not found:", {
-                roleSelect: !!roleSelect,
-                chatWidgetGroup: !!chatWidgetGroup
-            });
-            return;
-        }
-        // Log initial state
-        console.log("Initial display style:", chatWidgetGroup.style.display);
-        function toggleChatWidget() {
-            console.log("toggleChatWidget called");
-            const selectedOption = roleSelect.options[roleSelect.selectedIndex];
-            const roleName = selectedOption.getAttribute('data-role-name')?.toLowerCase() || '';
-            console.log("Selected option:", selectedOption);
-            console.log("Role name from data attribute:", roleName);
-            console.log("Selected value:", roleSelect.value);
-            const shouldShow = roleName === 'organization' || roleName === 'teacher';
-            chatWidgetGroup.style.display = shouldShow ? 'block' : 'none';
-            console.log("Should show:", shouldShow);
-            console.log("New display style:", chatWidgetGroup.style.display);
-        }
-        // Call immediately
-        toggleChatWidget();
-        // Add event listener
-        roleSelect.addEventListener('change', toggleChatWidget);
-        console.log("Event listener added");
-    });
-</script>

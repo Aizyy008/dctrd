@@ -4,7 +4,7 @@
     }
 @endphp
 
-<li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion-row bg-white rounded-sm border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
+<li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion-row bg-white rounded-12 border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
     <div class="d-flex align-items-center justify-content-between " role="tab" id="session_{{ !empty($session) ? $session->id :'record' }}">
         <div class="d-flex align-items-center" href="#collapseSession{{ !empty($session) ? $session->id :'record' }}" aria-controls="collapseSession{{ !empty($session) ? $session->id :'record' }}" data-parent="#chapterContentAccordion{{ !empty($chapter) ? $chapter->id :'' }}" role="button" data-toggle="collapse" aria-expanded="true">
             <span class="chapter-icon chapter-content-icon mr-10">
@@ -21,7 +21,7 @@
             @endif
 
             @if(!empty($session))
-                <button type="button" data-item-id="{{ $session->id }}" data-item-type="{{ \App\Models\WebinarChapterItem::$chapterSession }}" data-chapter-id="{{ !empty($chapter) ? $chapter->id : '' }}" class="js-change-content-chapter btn btn-sm btn-transparent text-gray mr-10">
+                <button type="button" data-item-id="{{ $session->id }}" data-item-type="{{ \App\Models\WebinarChapterItem::$chapterSession }}" data-chapter-id="{{ !empty($chapter) ? $chapter->id : '' }}" class="js-change-content-chapter btn btn-sm btn-transparent text-gray-500 mr-10">
                     <i data-feather="grid" class="" height="20"></i>
                 </button>
             @endif
@@ -29,7 +29,7 @@
             <i data-feather="move" class="move-icon mr-10 cursor-pointer" height="20"></i>
 
             @if(!empty($session))
-                <a href="{{ getAdminPanelUrl() }}/sessions/{{ $session->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray">
+                <a href="{{ getAdminPanelUrl() }}/sessions/{{ $session->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray-500">
                     <i data-feather="trash-2" class="mr-10 cursor-pointer" height="20"></i>
                 </a>
             @endif
@@ -39,7 +39,7 @@
     </div>
 
     <div id="collapseSession{{ !empty($session) ? $session->id :'record' }}" aria-labelledby="session_{{ !empty($session) ? $session->id :'record' }}" class=" collapse @if(empty($session)) show @endif" role="tabpanel">
-        <div class="panel-collapse text-gray">
+        <div class="panel-collapse text-gray-500">
             <div class="js-content-form session-form" data-action="{{ getAdminPanelUrl() }}/sessions/{{ !empty($session) ? $session->id . '/update' : 'store' }}">
                 <input type="hidden" name="ajax[{{ !empty($session) ? $session->id : 'new' }}][webinar_id]" value="{{ !empty($webinar) ? $webinar->id :'' }}">
 
@@ -227,19 +227,19 @@
                     </div>
                 </div>
 
-                <div class="mt-30 d-flex align-items-center">
-                    <button type="button" class="js-save-session btn btn-sm btn-primary">{{ trans('public.save') }}</button>
+                <div class="mt-6 d-flex align-items-center">
+                    <button type="button" class="js-save-session btn btn-sm btn-primary size-100">{{ trans('public.save') }}</button>
 
                     @if(!empty($session))
                         @if(!$session->isFinished())
-                            <a href="{{ $session->getJoinLink(true) }}" target="_blank" class="ml-10 btn btn-sm btn-secondary">{{ trans('footer.join') }}</a>
+                            <a href="{{ $session->getJoinLink(true) }}" target="_blank" class="ml-10 btn btn-sm btn-secondary size-100">{{ trans('footer.join') }}</a>
                         @else
-                            <button type="button" class="js-session-has-ended ml-10 btn btn-sm btn-secondary disabled">{{ trans('footer.join') }}</button>
+                            <button type="button" class="js-session-has-ended ml-10 btn btn-sm btn-secondary disabled size-100">{{ trans('footer.join') }}</button>
                         @endif
                     @endif
 
                     @if(empty($session))
-                        <button type="button" class="btn btn-sm btn-danger ml-10 cancel-accordion">{{ trans('public.close') }}</button>
+                        <button type="button" class="btn btn-sm btn-danger ml-10 cancel-accordion size-100">{{ trans('public.close') }}</button>
                     @endif
                 </div>
             </div>

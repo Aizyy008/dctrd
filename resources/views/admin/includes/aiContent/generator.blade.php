@@ -6,11 +6,11 @@
     <div class="ai-content-generator-drawer-header d-flex align-items-center justify-content-between p-15">
         <div class="">
             <h5 class="font-16 font-weight-bold mb-0">{{ trans('update.ai_content_generator') }}</h5>
-            <p class="mt-1 font-12 text-gray mb-0">{{ trans('update.generate_content_using_AI_fast_and_premium') }}</p>
+            <p class="mt-1 font-12 text-gray-500 mb-0">{{ trans('update.generate_content_using_AI_fast_and_premium') }}</p>
         </div>
 
         <button type="button" class="js-right-drawer-close d-flex btn-transparent">
-            <i data-feather="x" width="33" height="33" class=""></i>
+            <x-iconsax-lin-arrow-right class="icons text-gray-400" width="20px" height="20px"/>
         </button>
     </div>
 
@@ -24,8 +24,8 @@
                     <img src="/assets/default/img/ai/ai-chip.svg" alt="ai" class="" width="20px" height="20px">
                 </div>
                 <div class="ml-2">
-                    <h5 class="d-block font-weight-bold text-gray font-14 mb-0">{{ trans('update.generate_content_easily') }}</h5>
-                    <p class="font-12 text-gray mb-0">{{ trans('update.select_the_content_type_you_want_and_describe_your_requirements_and_get_the_content') }}</p>
+                    <h5 class="d-block font-weight-bold text-dark font-14 mb-0">{{ trans('update.generate_content_easily') }}</h5>
+                    <p class="font-12 text-gray-500 mb-0">{{ trans('update.select_the_content_type_you_want_and_describe_your_requirements_and_get_the_content') }}</p>
                 </div>
             </div>
 
@@ -157,7 +157,7 @@
         <div class="js-image-generated mt-20 p-15 bg-info-light border-gray300 rounded-sm d-none">
             <div class="">
                 <h4 class="font-14 text-gray">{{ trans('update.generated_content') }}</h4>
-                <p class="mt-1 text-gray font-12">{{ trans('update.click_on_images_to_download_them') }}</p>
+                <p class="mt-1 text-gray-500 font-12">{{ trans('update.click_on_images_to_download_them') }}</p>
             </div>
 
             <div class="js-content mt-15 d-flex-center flex-wrap">

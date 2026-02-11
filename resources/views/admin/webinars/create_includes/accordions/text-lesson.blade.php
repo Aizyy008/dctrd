@@ -1,4 +1,4 @@
-<li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion-row bg-white rounded-sm border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
+<li data-id="{{ !empty($chapterItem) ? $chapterItem->id :'' }}" class="accordion-row bg-white rounded-12 border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
     <div class="d-flex align-items-center justify-content-between " role="tab" id="text_lesson_{{ !empty($textLesson) ? $textLesson->id :'record' }}">
         <div class="d-flex align-items-center" href="#collapseTextLesson{{ !empty($textLesson) ? $textLesson->id :'record' }}" aria-controls="collapseTextLesson{{ !empty($textLesson) ? $textLesson->id :'record' }}" data-parent="#chapterContentAccordion{{ !empty($chapter) ? $chapter->id :'' }}" role="button" data-toggle="collapse" aria-expanded="true">
             <span class="chapter-icon chapter-content-icon mr-10">
@@ -15,7 +15,7 @@
             @endif
 
             @if(!empty($textLesson))
-                <button type="button" data-item-id="{{ $textLesson->id }}" data-item-type="{{ \App\Models\WebinarChapterItem::$chapterTextLesson }}" data-chapter-id="{{ !empty($chapter) ? $chapter->id : '' }}" class="js-change-content-chapter btn btn-sm btn-transparent text-gray mr-10">
+                <button type="button" data-item-id="{{ $textLesson->id }}" data-item-type="{{ \App\Models\WebinarChapterItem::$chapterTextLesson }}" data-chapter-id="{{ !empty($chapter) ? $chapter->id : '' }}" class="js-change-content-chapter btn btn-sm btn-transparent text-gray-500 mr-10">
                     <i data-feather="grid" class="" height="20"></i>
                 </button>
             @endif
@@ -23,7 +23,7 @@
             <i data-feather="move" class="move-icon mr-10 cursor-pointer" height="20"></i>
 
             @if(!empty($textLesson))
-                <a href="{{ getAdminPanelUrl() }}/text-lesson/{{ $textLesson->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray">
+                <a href="{{ getAdminPanelUrl() }}/text-lesson/{{ $textLesson->id }}/delete" class="delete-action btn btn-sm btn-transparent text-gray-500">
                     <i data-feather="trash-2" class="mr-10 cursor-pointer" height="20"></i>
                 </a>
             @endif
@@ -33,7 +33,7 @@
     </div>
 
     <div id="collapseTextLesson{{ !empty($textLesson) ? $textLesson->id :'record' }}" aria-labelledby="text_lesson_{{ !empty($textLesson) ? $textLesson->id :'record' }}" class=" collapse @if(empty($textLesson)) show @endif" role="tabpanel">
-        <div class="panel-collapse text-gray">
+        <div class="panel-collapse text-gray-500">
             <div class="js-content-form text_lesson-form" data-action="{{ getAdminPanelUrl() }}/text-lesson/{{ !empty($textLesson) ? $textLesson->id . '/update' : 'store' }}">
                 <input type="hidden" name="ajax[{{ !empty($textLesson) ? $textLesson->id : 'new' }}][webinar_id]" value="{{ !empty($webinar) ? $webinar->id :'' }}">
 
@@ -194,11 +194,11 @@
                     </div>
                 </div>
 
-                <div class="mt-30 d-flex align-items-center">
-                    <button type="button" class="js-save-text_lesson btn btn-sm btn-primary">{{ trans('public.save') }}</button>
+                <div class="mt-6 d-flex align-items-center">
+                    <button type="button" class="js-save-text_lesson btn btn-sm btn-primary size-100">{{ trans('public.save') }}</button>
 
                     @if(empty($textLesson))
-                        <button type="button" class="btn btn-sm btn-danger ml-10 cancel-accordion">{{ trans('public.close') }}</button>
+                        <button type="button" class="btn btn-sm btn-danger ml-10 cancel-accordion size-100">{{ trans('public.close') }}</button>
                     @endif
                 </div>
             </div>

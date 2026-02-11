@@ -16,75 +16,70 @@
         </div>
 
         <div class="row">
-
-
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-primary">
-                        <i class="fas fa-envelope"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{trans('admin/main.total_conversations')}}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{trans('admin/main.total_conversations')}}</span>
+                            <div class="d-flex-center size-48 bg-primary-30 rounded-12">
+                                <x-iconsax-bul-sms class="icons text-primary" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $totalConversations }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalConversations }}</h5>
                     </div>
                 </div>
             </div>
 
-
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-warning">
-                        <i class="fas fa-hourglass-start"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{trans('admin/main.pending_reply')}}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{trans('admin/main.pending_reply')}}</span>
+                            <div class="d-flex-center size-48 bg-warning-30 rounded-12">
+                                <x-iconsax-bul-sms class="icons text-warning" width="24px" height="24px"/>  
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $pendingReplySupports }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $pendingReplySupports }}</h5>
                     </div>
                 </div>
             </div>
 
-
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-success">
-                        <i class="fas fa-envelope-open"></i>
-                    </div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{trans('admin/main.open_conversations')}}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{trans('admin/main.open_conversations')}}</span>
+                            <div class="d-flex-center size-48 bg-success-30 rounded-12">
+                                <x-iconsax-bul-sms class="icons text-success" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $openConversationsCount }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $openConversationsCount }}</h5>
                     </div>
                 </div>
             </div>
+
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-danger">
-                        <i class="fas fa-envelope"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{trans('admin/main.closed_conversations')}}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{trans('admin/main.closed_conversations')}}</span>
+                            <div class="d-flex-center size-48 bg-danger-30 rounded-12">
+                                <x-iconsax-bul-sms class="icons text-danger" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $closeConversationsCount }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $closeConversationsCount }}</h5>
                     </div>
                 </div>
             </div>
         </div>
 
-
         <div class="section-body">
-            <section class="card">
-                <div class="card-body">
+            <section class="card mt-32">
+                <div class="card-body pb-4">
                     <form method="get" class="mb-0">
 
                         <div class="row">
@@ -144,12 +139,10 @@
                             </div>
 
 
-                            <div class="col-md-2">
-                                <div class="form-group mt-1">
-                                    <label class="input-label mb-4"> </label>
-                                    <input type="submit" class="text-center btn btn-primary w-100" value="{{trans('admin/main.show_results')}}">
-                                </div>
+                            <div class="col-md-2 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
                             </div>
+
                         </div>
 
                     </form>
@@ -157,9 +150,30 @@
             </section>
 
             <section class="card">
+
+            <div class="card-header justify-content-between">
+                            
+                            <div>
+                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_tickets_in_a_single_place') }}</p>
+                           </div>
+                           
+                            <div class="d-flex align-items-center gap-12">
+
+                            @can('admin_support_send')
+                                   <a href="{{ getAdminPanelUrl("/supports/create") }}" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.add_new') }}</span>
+                                   </a>
+                               @endcan
+
+                            </div>
+                           
+                       </div>
+
                 <div class="card-body">
                     <div class="table-responsive text-center">
-                        <table class="table table-striped font-14">
+                        <table class="table custom-table font-14">
 
                             <tr>
                                 <th>{{trans('admin/main.title')}}</th>
@@ -175,17 +189,17 @@
                             @foreach($supports as $support)
                                 <tr>
                                     <td>
-                                        <a href="{{ getAdminPanelUrl() }}/supports/{{ $support->id }}/conversation">
+                                        <a class="text-dark" href="{{ getAdminPanelUrl() }}/supports/{{ $support->id }}/conversation">
                                             {{ $support->title }}
                                         </a>
                                     </td>
 
-                                    <td class="text-center">{{ dateTimeFormat($support->created_at,'j M Y | H:i') }}</td>
+                                    <td class="text-center font-12">{{ dateTimeFormat($support->created_at,'j M Y | H:i') }}</td>
 
-                                    <td class="text-center">{{ (!empty($support->updated_at)) ? dateTimeFormat($support->updated_at,'j M Y | H:i') : '-' }}</td>
+                                    <td class="text-center font-12">{{ (!empty($support->updated_at)) ? dateTimeFormat($support->updated_at,'j M Y | H:i') : '-' }}</td>
 
                                     <td class="text-left">
-                                        <a title="{{ $support->user->full_name }}" href="{{ $support->user->getProfileUrl() }}" target="_blank">{{ $support->user->full_name }}</a>
+                                        <a class="text-dark" title="{{ $support->user->full_name }}" href="{{ $support->user->getProfileUrl() }}" target="_blank">{{ $support->user->full_name }}</a>
                                     </td>
 
                                     <td class="text-center">
@@ -202,25 +216,42 @@
 
                                     <td class="text-center">
                                         @if($support->status == 'close')
-                                            <span class="text-danger">{{ trans('admin/main.close') }}</span>
+                                            <span class="badge-status text-danger bg-danger-30">{{ trans('public.close') }}</span>
                                         @elseif($support->status == 'replied' or $support->status == 'open')
-                                            <span class="text-warning">{{trans('admin/main.pending_reply')}}</span>
+                                            <span class="badge-status text-warning bg-warning-30">{{trans('admin/main.pending_reply')}}</span>
                                         @else
-                                            <span class="text-primary">{{trans('admin/main.replied')}}</span>
+                                            <span class="badge-status text-success bg-success-30">{{ trans('admin/main.replied') }}</span>
                                         @endif
                                     </td>
 
                                     <td class="text-center" width="50">
-                                        @can('admin_supports_reply')
-                                            <a href="{{ getAdminPanelUrl() }}/supports/{{ $support->id }}/conversation" class="btn-transparent btn-sm text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.reply') }}">
-                                                <i class="fa fa-reply" aria-hidden="true"></i>
-                                            </a>
-                                        @endcan
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                        @can('admin_supports_delete')
-                                            @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/supports/'.$support->id.'/delete' , 'btnClass' => 'btn-sm'])
-                                        @endcan
-                                    </td>
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_supports_reply')
+                <a href="{{ getAdminPanelUrl() }}/supports/{{ $support->id }}/conversation"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-message-text class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.reply') }}</span>
+                </a>
+            @endcan
+
+            @can('admin_supports_delete')
+                @include('admin.includes.delete_button',[
+                    'url' => getAdminPanelUrl().'/supports/'.$support->id.'/delete',
+                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                    'btnText' => trans('admin/main.delete'),
+                    'btnIcon' => 'trash',
+                    'iconType' => 'lin',
+                    'iconClass' => 'text-danger mr-2'
+                ])
+            @endcan
+        </div>
+    </div>
+</td>
                                 </tr>
                             @endforeach
 

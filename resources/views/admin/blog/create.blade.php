@@ -82,6 +82,19 @@
                                         </div>
 
                                         <div class="form-group">
+                                            <label>{{ trans('admin/main.subtitle') }}</label>
+                                            <input type="text" name="subtitle"
+                                                   class="form-control  @error('subtitle') is-invalid @enderror"
+                                                   value="{{ !empty($post) ? $post->subtitle : old('subtitle') }}"
+                                            />
+                                            @error('subtitle')
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="form-group">
                                             <label>{{ trans('/admin/main.category') }}</label>
                                             <select class="form-control @error('category_id') is-invalid @enderror" name="category_id">
                                                 <option {{ !empty($trend) ? '' : 'selected' }} disabled>{{ trans('admin/main.choose_category') }}</option>
@@ -96,6 +109,11 @@
                                                 {{ $message }}
                                             </div>
                                             @enderror
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>{{ trans('public.study_time') }} ({{ trans('update.min') }})</label>
+                                            <input type="text" name="study_time" class="form-control" value="{{ !empty($post) ? $post->study_time : old('study_time') }}"/>
                                         </div>
 
                                         {{-- Product Badges --}}
@@ -124,7 +142,7 @@
 
                                 <div class="form-group mt-15">
                                     <label class="input-label">{{ trans('public.description') }}</label>
-                                    <div class="text-muted text-small mb-3">{{ trans('admin/main.create_blog_description_hint') }}</div>
+                                    <div class="text-gray-500 text-small mb-3">{{ trans('admin/main.create_blog_description_hint') }}</div>
                                     <textarea id="summernote" name="description" class="summernote form-control @error('description')  is-invalid @enderror" placeholder="{{ trans('admin/main.description_placeholder') }}">{!! !empty($post) ? $post->description : old('description')  !!}</textarea>
                                     @error('description')
                                     <div class="invalid-feedback">
@@ -135,7 +153,7 @@
 
                                 <div class="form-group mt-15">
                                     <label class="input-label">{{ trans('admin/main.content') }}</label>
-                                    <div class="text-muted text-small mb-3">{{ trans('admin/main.create_blog_content_hint') }}</div>
+                                    <div class="text-gray-500 text-small mb-3">{{ trans('admin/main.create_blog_content_hint') }}</div>
                                     <textarea id="contentSummernote" name="content" class="summernote form-control @error('content')  is-invalid @enderror" placeholder="{{ trans('admin/main.content_placeholder') }}">{!! !empty($post) ? $post->content : old('content')  !!}</textarea>
                                     @error('content')
                                     <div class="invalid-feedback">

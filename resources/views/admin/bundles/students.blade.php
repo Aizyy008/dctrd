@@ -22,53 +22,52 @@
     </section>
 
     <div class="row">
-        <div class="col-sm-6 col-lg-4 col-12">
-            <div class="card card-statistic-1">
-                <div class="card-icon bg-primary">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="card-wrap">
-                    <div class="card-header">
-                        <h4>{{ trans('admin/main.total_students') }}</h4>
+        <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+            <div class="card-statistic">
+                <div class="card-statistic__mask"></div>
+                <div class="card-statistic__wrap">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="text-gray-500 mt-8">{{trans('admin/main.total_students')}}</span>
+                        <div class="d-flex-center size-48 bg-primary-30 rounded-12">
+                            <x-iconsax-bul-user class="icons text-primary" width="24px" height="24px"/>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        {{ $totalStudents }}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-4 col-12">
-            <div class="card card-statistic-1">
-                <div class="card-icon bg-success">
-                    <i class="fas fa-briefcase"></i></div>
-                <div class="card-wrap">
-                    <div class="card-header">
-                        <h4>{{ trans('update.active_students') }}</h4>
-                    </div>
-                    <div class="card-body">
-                        {{ $totalActiveStudents }}
-                    </div>
+                    <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalStudents }}</h5>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-4 col-12">
-            <div class="card card-statistic-1">
-                <div class="card-icon bg-warning">
-                    <i class="fas fa-info-circle"></i></div>
-                <div class="card-wrap">
-                    <div class="card-header">
-                        <h4>{{ trans('update.expire_students') }}</h4>
+        <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+            <div class="card-statistic">
+                <div class="card-statistic__mask"></div>
+                <div class="card-statistic__wrap">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="text-gray-500 mt-8">{{trans('update.active_students')}}</span>
+                        <div class="d-flex-center size-48 bg-success-30 rounded-12">
+                            <x-iconsax-bul-user-tick class="icons text-success" width="24px" height="24px"/>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        {{ $totalExpireStudents }}
+                    <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalActiveStudents }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+            <div class="card-statistic">
+                <div class="card-statistic__mask"></div>
+                <div class="card-statistic__wrap">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="text-gray-500 mt-8">{{trans('update.expire_students')}}</span>
+                        <div class="d-flex-center size-48 bg-danger-30 rounded-12">
+                            <x-iconsax-bul-user-remove class="icons text-danger" width="24px" height="24px"/>
+                        </div>
                     </div>
+                    <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalExpireStudents }}</h5>
                 </div>
             </div>
         </div>
     </div>
 
-    <section class="card">
-        <div class="card-body">
+    <section class="card mt-32">
+        <div class="card-body pb-4">
             <form method="get" class="mb-0">
 
                 <div class="row">
@@ -145,12 +144,9 @@
                     </div>
 
 
-                    <div class="col-md-3">
-                        <div class="form-group mt-1">
-                            <label class="input-label mb-4"> </label>
-                            <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                        </div>
-                    </div>
+                   <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
+                            </div>
                 </div>
             </form>
         </div>
@@ -171,7 +167,7 @@
 
         <div class="card-body">
             <div class="table-responsive text-center">
-                <table class="table table-striped font-14">
+                <table class="table custom-table font-14">
                     <tr>
                         <th class="text-left">ID</th>
                         <th class="text-left">{{ trans('admin/main.name') }}</th>
@@ -180,7 +176,7 @@
                         <th>{{ trans('admin/main.user_group') }}</th>
                         <th>{{ trans('panel.purchase_date') }}</th>
                         <th>{{ trans('admin/main.status') }}</th>
-                        <th width="120">{{ trans('admin/main.actions') }}</th>
+                        <th width="80">{{ trans('admin/main.actions') }}</th>
                     </tr>
 
                     @foreach($students as $student)
@@ -235,24 +231,42 @@
                                 @endif
                             </td>
 
-                            <td class="text-center mb-2" width="120">
+                            <td>
                                 @if(!empty($student->id))
-                                    {{-- null id => Gift recipient who has not registered yet --}}
-                                    @can('admin_users_impersonate')
-                                        <a href="{{ getAdminPanelUrl() }}/users/{{ $student->id }}/impersonate" target="_blank" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.login') }}">
-                                            <i class="fa fa-user-shield"></i>
-                                        </a>
-                                    @endcan
+                                <div class="btn-group dropdown table-actions position-relative">
+                                    <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                        <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                    </button>
 
-                                    @can('admin_users_edit')
-                                        <a href="{{ getAdminPanelUrl() }}/users/{{ $student->id }}/edit" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                            <i class="fa fa-edit"></i>
-                                        </a>
-                                    @endcan
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        @can('admin_users_impersonate')
+                                            <a href="{{ getAdminPanelUrl() }}/users/{{ $student->id }}/impersonate" target="_blank"
+                                               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                <x-iconsax-lin-user-tag class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                <span class="text-gray-500 font-14">{{ trans('admin/main.login') }}</span>
+                                            </a>
+                                        @endcan
 
-                                    @can('admin_users_delete')
-                                        @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/users/'.$student->id.'/delete' , 'btnClass' => ''])
-                                    @endcan
+                                        @can('admin_users_edit')
+                                            <a href="{{ getAdminPanelUrl() }}/users/{{ $student->id }}/edit"
+                                               class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                                            </a>
+                                        @endcan
+
+                                        @can('admin_users_delete')
+                                            @include('admin.includes.delete_button',[
+                                                'url' => getAdminPanelUrl().'/users/'.$student->id.'/delete',
+                                                'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                'btnText' => trans('admin/main.delete'),
+                                                'btnIcon' => 'trash',
+                                                'iconType' => 'lin',
+                                                'iconClass' => 'text-danger mr-2'
+                                            ])
+                                        @endcan
+                                    </div>
+                                </div>
                                 @endif
                             </td>
 
@@ -332,5 +346,5 @@
         var saveSuccessLang = '{{ trans('webinars.success_store') }}';
     </script>
 
-    <script src="/assets/default/js/admin/webinar_students.min.js"></script>
+    <script src="/assets/admin/js/parts/webinar_students.min.js"></script>
 @endpush

@@ -156,7 +156,7 @@
                                 </div>
                             </div>
 
-                            <div class="text-muted text-small mt-1">{{ trans("update.{$commissionSource}_commission_hint") }}</div>
+                            <div class="text-gray-500 text-small mt-1">{{ trans("update.{$commissionSource}_commission_hint") }}</div>
                         </div>
                     @endforeach
                 @endif

@@ -3,7 +3,7 @@
 
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped font-14">
+                <table class="table custom-table font-14">
                     <tr>
                         <th class="text-left">{{ trans('admin/main.title') }}</th>
                         <th>{{ trans('public.status') }}</th>
@@ -21,23 +21,34 @@
                                 @endif
                             </td>
 
-                            <td>
-                                @can('admin_payment_channel_edit')
-                                    <a href="{{ getAdminPanelUrl() }}/settings/payment_channels/{{ $paymentChannel->id }}/edit" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                        <i class="fa fa-edit"></i>
-                                    </a>
-                                @endcan
+                            <td width="80px">
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                @can('admin_payment_channel_toggle_status')
-                                    <a href="{{ getAdminPanelUrl() }}/settings/payment_channels/{{ $paymentChannel->id }}/toggleStatus" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.'.(($paymentChannel->status == 'active') ? 'inactive' : 'active')) }}">
-                                        @if($paymentChannel->status == 'inactive')
-                                            <i class="fa fa-arrow-up"></i>
-                                        @else
-                                            <i class="fa fa-arrow-down"></i>
-                                        @endif
-                                    </a>
-                                @endcan
-                            </td>
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_payment_channel_edit')
+                <a href="{{ getAdminPanelUrl() }}/settings/payment_channels/{{ $paymentChannel->id }}/edit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                </a>
+            @endcan
+
+            @can('admin_payment_channel_toggle_status')
+                <a href="{{ getAdminPanelUrl() }}/settings/payment_channels/{{ $paymentChannel->id }}/toggleStatus" class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4">
+                    @if($paymentChannel->status == 'inactive')
+                        <x-iconsax-lin-arrow-up class="icons text-success mr-2" width="18px" height="18px"/>
+                        <span class="text-success">{{ trans('admin/main.active') }}</span>
+                    @else
+                        <x-iconsax-lin-arrow-down class="icons text-warning mr-2" width="18px" height="18px"/>
+                        <span class="text-warning">{{ trans('admin/main.inactive') }}</span>
+                    @endif
+                </a>
+            @endcan
+        </div>
+    </div>
+</td>
                         </tr>
                     @endforeach
 

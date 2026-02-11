@@ -6,8 +6,8 @@
 
 @section('content')
     <section class="section">
-    <div class="section-header">
-            <h1>{{ trans('update.update_app') }} (v1.9.7)</h1>
+        <div class="section-header">
+            <h1>{{ trans('update.update_app') }} (v2.0)</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{ trans('admin/main.dashboard') }}</a></div>
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}/settings">{{ trans('admin/main.settings') }}</a></div>
@@ -80,5 +80,5 @@
 
 @push('scripts_bottom')
     <script src="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.js"></script>
-    <script src="/assets/default/js/admin/settings/update_app.min.js"></script>
+    <script src="/assets/admin/js/parts/settings/update_app.min.js"></script>
 @endpush

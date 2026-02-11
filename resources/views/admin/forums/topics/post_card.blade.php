@@ -13,7 +13,7 @@
                     <h4 class="js-post-user-name font-14 text-dark mt-2 font-weight-bold w-100 text-center">{{ $cardUser->full_name }}</h4>
                 </a>
 
-                <span class="px-2 py-1 mt-1 rounded-lg border bg-info-light text-center font-12 text-gray">
+                <span class="px-2 py-1 mt-1 rounded-lg border bg-info-light text-center font-12 text-gray-500">
                             @if($cardUser->isUser())
                         {{ trans('quiz.student') }}
                     @elseif($cardUser->isTeacher())
@@ -36,27 +36,27 @@
                 @endif
 
                 <div class="mt-3 w-100">
-                    <div class="d-flex align-items-center justify-content-between font-12 text-gray">
+                    <div class="d-flex align-items-center justify-content-between font-12 text-gray-500">
                         <span class="">{{ trans('site.posts') }}:</span>
                         <span class="">{{ $cardUser->getTopicsPostsCount() }}</span>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-between font-12 text-gray mt-2">
+                    <div class="d-flex align-items-center justify-content-between font-12 text-gray-500 mt-2">
                         <span class="">{{ trans('update.likes') }}:</span>
                         <span class="">{{ $cardUser->getTopicsPostsLikesCount() }}</span>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-between font-12 text-gray mt-2">
+                    <div class="d-flex align-items-center justify-content-between font-12 text-gray-500 mt-2">
                         <span class="">{{ trans('panel.followers') }}:</span>
                         <span class="">{{ count($cardUser->followers()) }}</span>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-between font-12 text-gray mt-2">
+                    <div class="d-flex align-items-center justify-content-between font-12 text-gray-500 mt-2">
                         <span class="">{{ trans('update.member_since') }}:</span>
                         <span class="">{{ dateTimeFormat($cardUser->created_at,'j M Y') }}</span>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-between font-12 text-gray mt-2">
+                    <div class="d-flex align-items-center justify-content-between font-12 text-gray-500 mt-2">
                         <span class="">{{ trans('update.location') }}:</span>
                         <span class="">{{ $cardUser->getCountryAndState() }}</span>
                     </div>
@@ -81,7 +81,7 @@
                                 </div>
                                 <div class="ml-2">
                                     <span class="d-block">{{ trans('update.reply_to') }}</span>
-                                    <span class="font-12 font-weight-bold text-gray">{{ $post->parent->user->full_name }}</span>
+                                    <span class="font-12 font-weight-bold font-12 text-gray-500">{{ $post->parent->user->full_name }}</span>
                                 </div>
                             </div>
 
@@ -93,7 +93,7 @@
 
                     @if(!empty($post) and !empty($post->attach))
                         <div class="mt-auto d-inline-flex">
-                            <a href="{{ $post->getAttachmentUrl($forum->slug,$topic->slug) }}" target="_blank" class="d-flex align-items-center text-gray bg-info-light border px-2 py-1 rounded-pill">
+                            <a href="{{ $post->getAttachmentUrl($forum->slug,$topic->slug) }}" target="_blank" class="d-flex align-items-center font-12 text-gray-500 bg-info-light border px-2 py-1 rounded-pill">
                                 <i class="fa fa-download"></i>
                                 <span class="ml-1">{{ truncate($post->getAttachmentName(),24) }}</span>
                             </a>
@@ -101,7 +101,7 @@
                     @elseif(empty($post) and !empty($topic->attachments) and count($topic->attachments))
                         <div class="mt-auto d-inline-flex align-items-center">
                             @foreach($topic->attachments as $attachment)
-                                <a href="{{ $attachment->getDownloadUrl($forum->slug,$topic->slug) }}" target="_blank" class="d-flex align-items-center text-gray bg-info-light border px-2 py-1 rounded-pill mr-2">
+                                <a href="{{ $attachment->getDownloadUrl($forum->slug,$topic->slug) }}" target="_blank" class="d-flex align-items-center font-12 text-gray-500 bg-info-light border px-2 py-1 rounded-pill mr-2">
                                     <i class="fa fa-download"></i>
                                     <span class="ml-1">{{ truncate($attachment->getName(),24) }}</span>
                                 </a>
@@ -111,7 +111,7 @@
                 </div>
 
                 <div class="d-flex align-items-center justify-content-between mt-3 pt-2 border-top">
-                    <span class="font-14 font-weight-500 text-gray">{{ dateTimeFormat(!empty($post) ? $post->created_at : $topic->created_at,'j M Y | H:i') }}</span>
+                    <span class="font-14 font-weight-500 font-12 text-gray-500">{{ dateTimeFormat(!empty($post) ? $post->created_at : $topic->created_at,'j M Y | H:i') }}</span>
 
                     <div class="d-flex align-items-center">
                         @if(!empty($post))
@@ -130,21 +130,21 @@
 
                         @if(!$topic->close)
                             @if(!empty($post))
-                                <button type="button" data-action="{{ getAdminPanelUrl() }}/forums/{{ $forum->id }}/topics/{{ $topic->id }}/posts/{{ $post->id }}/edit" class="js-post-edit btn-transparent mr-3 font-14 font-weight-500 text-gray">{{ trans('public.edit') }}</button>
+                                <button type="button" data-action="{{ getAdminPanelUrl() }}/forums/{{ $forum->id }}/topics/{{ $topic->id }}/posts/{{ $post->id }}/edit" class="js-post-edit btn-transparent mr-3 font-14 font-weight-500 font-12 text-gray-500">{{ trans('public.edit') }}</button>
                             @else
-                                <a href="{{ getAdminPanelUrl() }}/forums/{{ $forum->id }}/topics/{{ $topic->id }}/edit" target="_blank" class="mr-3 font-14 font-weight-500 text-gray">{{ trans('public.edit') }}</a>
+                                <a href="{{ getAdminPanelUrl() }}/forums/{{ $forum->id }}/topics/{{ $topic->id }}/edit" target="_blank" class="mr-3 font-14 font-weight-500 font-12 text-gray-500">{{ trans('public.edit') }}</a>
                             @endif
 
                             @if(!empty($post))
                                 @if($post->pin)
                                     <button type="button" data-action="{{ getAdminPanelUrl() }}/forums/{{ $topic->forum_id }}/topics/{{ $topic->id }}/posts/{{ $post->id }}/un_pin" class="js-btn-post-un-pin btn-transparent font-14 font-weight-500 text-warning mr-3">{{ trans('update.un_pin') }}</button>
                                 @else
-                                    <button type="button" data-action="{{ getAdminPanelUrl() }}/forums/{{ $topic->forum_id }}/topics/{{ $topic->id }}/posts/{{ $post->id }}/pin" class="js-btn-post-pin btn-transparent font-14 font-weight-500 text-gray mr-3">{{ trans('update.pin') }}</button>
+                                    <button type="button" data-action="{{ getAdminPanelUrl() }}/forums/{{ $topic->forum_id }}/topics/{{ $topic->id }}/posts/{{ $post->id }}/pin" class="js-btn-post-pin btn-transparent font-14 font-weight-500 font-12 text-gray-500 mr-3">{{ trans('update.pin') }}</button>
                                 @endif
                             @endif
 
                             @if(!empty($post))
-                                <button type="button" data-id="{{ $post->id }}" class="js-reply-post-btn btn-transparent mr-3 font-14 font-weight-500 text-gray">{{ trans('panel.reply') }}</button>
+                                <button type="button" data-id="{{ $post->id }}" class="js-reply-post-btn btn-transparent mr-3 font-14 font-weight-500 font-12 text-gray-500">{{ trans('panel.reply') }}</button>
                             @endif
                         @endif
 

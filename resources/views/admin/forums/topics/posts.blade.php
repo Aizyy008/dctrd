@@ -11,7 +11,7 @@
             <div class="flex-grow-1">
                 <h2 class="font-20 font-weight-bold">{{ $topic->title }}</h2>
 
-                <span class="d-block font-14 font-weight-500 text-gray mt-1">{{ trans('public.by') }} <span class="font-weight-bold">{{ $topic->creator->full_name }}</span> {{ trans('public.in') }} {{ dateTimeFormat($topic->created_at, 'j M Y | H:i') }}</span>
+                <span class="d-block font-14 font-weight-500 text-gray-500 mt-1">{{ trans('public.by') }} <span class="font-weight-bold">{{ $topic->creator->full_name }}</span> {{ trans('public.in') }} {{ dateTimeFormat($topic->created_at, 'j M Y | H:i') }}</span>
             </div>
 
             <div class="section-header-breadcrumb">
@@ -47,8 +47,8 @@
 
                                         <div class="topic-posts-reply-card d-none position-relative px-2 py-2 rounded-sm bg-info-light mb-2">
                                             <input type="hidden" name="reply_post_id" class="js-reply-post-id">
-                                            <div class="js-reply-post-title font-14 font-weight-500 text-gray">{!! trans('update.you_are_replying_to_the_message') !!}</div>
-                                            <div class="js-reply-post-description mt-1 font-14 text-gray"></div>
+                                            <div class="js-reply-post-title font-14 font-weight-500 text-gray-500">{!! trans('update.you_are_replying_to_the_message') !!}</div>
+                                            <div class="js-reply-post-description mt-1 font-14 text-gray-500"></div>
 
                                             <button type="button" class="js-close-reply-post btn-transparent">
                                                 <i class="fa fa-times"></i>
@@ -144,6 +144,6 @@
     <script src="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.js"></script>
     <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
     <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>
-    <script src="/assets/default/js/parts/topic_posts.min.js"></script>
+    <script src="/assets/admin/js/parts/topic_posts.min.js"></script>
 
 @endpush

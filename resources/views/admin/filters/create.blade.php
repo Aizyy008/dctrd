@@ -90,29 +90,28 @@
                                         <button type="button" class="btn btn-success add-btn "><i class="fa fa-plus"></i> {{ trans('admin/main.add') }}</button>
                                     </div>
 
-                                    <ul class="draggable-lists list-group">
+                                    <ul class="draggable-lists mt-3 list-group">
                                         @if(!empty($filterOptions))
                                             @foreach($filterOptions as $key => $filterOption)
 
-                                                <li class="form-group list-group">
-
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <div class="input-group-text cursor-pointer move-icon">
-                                                                <i class="fa fa-arrows-alt"></i>
-                                                            </div>
-                                                        </div>
-
-                                                        <input type="text" name="sub_filters[{{ $filterOption->id }}][title]"
-                                                               class="form-control w-auto flex-grow-1"
-                                                               value="{{ $filterOption->title }}"
-                                                               placeholder="{{ trans('admin/main.choose_title') }}"/>
-
-                                                        <div class="input-group-append">
-                                                            <button type="button" class="btn remove-btn btn-danger"><i class="fa fa-times"></i></button>
-                                                        </div>
+                                            <li class="form-group list-group rounded-lg p-2 mb-3 position-relative">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text cursor-pointer move-icon">
+                                                        <x-iconsax-lin-arrow-3 class="icons" width="18px" height="18px"/>
                                                     </div>
-                                                </li>
+                                                </div>
+                                                <input type="text" name="sub_filters[{{ $filterOption->id }}][title]"
+                                                       class="form-control br-0 w-auto flex-grow-1"
+                                                       value="{{ $filterOption->title }}"
+                                                       placeholder="{{ trans('admin/main.choose_title') }}"/>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn remove-btn mt-1 text-danger bg-transparent border-0">
+                                                        <x-iconsax-lin-trash class="icons" width="20px" height="20px"/>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </li>
                                             @endforeach
                                         @endif
                                     </ul>
@@ -124,23 +123,25 @@
                                 </div>
                             </form>
 
-                            <li class="form-group main-row list-group d-none">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <div class="input-group-text cursor-pointer move-icon">
-                                            <i class="fa fa-arrows-alt"></i>
-                                        </div>
-                                    </div>
-
-                                    <input type="text" name="sub_filters[record][title]"
-                                           class="form-control w-auto flex-grow-1"
-                                           placeholder="{{ trans('admin/main.choose_title') }}"/>
-
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn remove-btn btn-danger"><i class="fa fa-times"></i></button>
-                                    </div>
+                        <li class="form-group main-row list-group d-none position-relative">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text cursor-pointer move-icon">
+                                    <x-iconsax-lin-arrow-3 class="icons" width="18px" height="18px"/>
                                 </div>
-                            </li>
+                            </div>
+
+                            <input type="text" name="sub_filters[record][title]"
+                                   class="form-control br-0 w-auto flex-grow-1"
+                                   placeholder="{{ trans('admin/main.choose_title') }}"/>
+
+                            <div class="input-group-append">
+                                <button type="button" class="btn remove-btn text-danger mt-1 bg-transparent border-0">
+                                    <x-iconsax-lin-trash class="icons" width="20px" height="20px"/>
+                                </button>
+                            </div>
+                        </div>
+                    </li>
                         </div>
                     </div>
                 </div>
@@ -151,5 +152,5 @@
 
 @push('scripts_bottom')
     <script src="/assets/default/vendors/sortable/jquery-ui.min.js"></script>
-    <script src="/assets/default/js/admin/filters.min.js"></script>
+    <script src="/assets/admin/js/parts/filters.min.js"></script>
 @endpush

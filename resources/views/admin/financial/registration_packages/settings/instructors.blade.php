@@ -15,7 +15,7 @@
                         <span class="custom-switch-indicator"></span>
                         <label class="custom-switch-description mb-0 cursor-pointer" for="instructorsStatusSwitch">{{ trans('update.registration_packages_instructors_status') }}</label>
                     </label>
-                    <div class="text-muted text-small">{{ trans('update.registration_packages_instructors_status_hint') }}</div>
+                    <div class="text-gray-500 text-small">{{ trans('update.registration_packages_instructors_status_hint') }}</div>
                 </div>
                 <h2 class="section-title">{{ trans('update.instructor_default_values') }}</h2>
 
@@ -25,9 +25,24 @@
                         <input type="text" class="form-control" name="value[{{ $str }}]" value="{{ (!empty($instructorsSettings) and isset($instructorsSettings[$str])) ? $instructorsSettings[$str] : '' }}">
                     </div>
                 @endforeach
-                <div class="text-muted text-small mt-1">{{ trans('update.saas_package_condition_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.saas_package_condition_hint') }}</div>
 
-                <button type="submit" class="btn btn-success">{{ trans('admin/main.save_change') }}</button>
+                <div class="form-group mt-3">
+                    <label class="input-label">{{ trans('admin/main.icon') }}</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button type="button" class="input-group-text admin-file-manager " data-input="instructorIcon" data-preview="holder">
+                                <i class="fa fa-upload"></i>
+                            </button>
+                        </div>
+                        <input type="text" name="value[icon]" id="instructorIcon" value="{{ (!empty($instructorsSettings) and !empty($instructorsSettings['icon'])) ? $instructorsSettings['icon'] : old('icon') }}" class="form-control"/>
+                    </div>
+                </div>
+
+                <div class="text-right">
+                <button type="submit" class="btn btn-primary">{{ trans('admin/main.save_change') }}</button>
+                </div>
+                
             </form>
         </div>
     </div>

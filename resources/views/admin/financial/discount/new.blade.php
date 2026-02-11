@@ -24,7 +24,7 @@
                         <div class="col-12 col-md-8 col-lg-6">
                             <form action="{{ getAdminPanelUrl() }}/financial/discounts/{{ !empty($discount) ? $discount->id.'/update' : 'store' }}" method="Post">
                                 {{ csrf_field() }}
-                                {{-- +++++++++++++++++ title +++++++++++++++++ --}}
+
                                 <div class="form-group">
                                     <label>{{ trans('admin/main.title') }}</label>
                                     <input type="text" name="title"
@@ -36,7 +36,7 @@
                                     </div>
                                     @enderror
                                 </div>
-                                {{-- +++++++++++++++++ discount_type +++++++++++++++++ --}}
+
                                 <div class="form-group">
                                     <label class="input-label d-block">{{ trans('update.discount_type') }}</label>
                                     <select name="discount_type" class="js-discount-type form-control @error('discount_type') is-invalid @enderror">
@@ -45,7 +45,7 @@
                                     </select>
                                     <div class="invalid-feedback">@error('discount_type') {{ $message }} @enderror</div>
                                 </div>
-                                {{-- +++++++++++++++++ source +++++++++++++++++ --}}
+
                                 <div class="form-group">
                                     <label class="input-label d-block">{{ trans('update.source') }}</label>
                                     <select name="source" class="js-discount-source form-control @error('source') is-invalid @enderror">
@@ -55,7 +55,7 @@
                                     </select>
                                     <div class="invalid-feedback">@error('source') {{ $message }} @enderror</div>
                                 </div>
-                                {{-- +++++++++++++++++ discount Courses +++++++++++++++++ --}}
+
                                 <div class="form-group js-courses-input {{ (empty($discount) or $discount->source != \App\Models\Discount::$discountSourceCourse) ? 'd-none' : '' }}">
                                     <label class="input-label">{{ trans('admin/main.courses') }}</label>
                                     <select name="webinar_ids[]" multiple="multiple" class="form-control search-webinar-select2 " data-placeholder="{{ trans('admin/main.search_webinar') }}">
@@ -97,32 +97,15 @@
                                         @endif
                                     </select>
                                 </div>
-                                {{-- ++++++++++++++++++ start : product_type ++++++++++++++++++ --}}
-                                <div class="form-group js-products-input
-                                    {{ (empty($discount) or $discount->source != \App\Models\Discount::$discountSourceProduct) ? 'd-none' : '' }}">
-                                    <label class="input-label d-block">{{ trans('update.product_type') }}</label>
-                                    <select name="product_type" id="product_type" class="form-control">
-                                        <option value="">select</option>
-                                        <option value="all" {{ (!empty($discount) && $discount->product_type == 'all') ? 'selected' : '' }}>
-                                            {{ trans('admin/main.all') }}
-                                        </option>
-                                        <option value="physical" {{ (!empty($discount) && $discount->product_type == 'physical') ? 'selected' : '' }}>
-                                            {{ trans('update.physical') }}
-                                        </option>
-                                        <option value="virtual" {{ (!empty($discount) && $discount->product_type == 'virtual') ? 'selected' : '' }}>
-                                            {{ trans('update.virtual') }}
-                                        </option>
-                                    </select>
-                                </div>
-                                {{-- ++++++++++++++++++ end : product_type ++++++++++++++++++ --}}
-                                {{-- ++++++++++++++++++ start : products ++++++++++++++++++ --}}
-                                <div class="form-group js-products-section"  style="display: none;">
-                                    <label class="input-label d-block">Products</label>
-                                    <select name="products_ids[]" id="products_dropdown" class="form-control select2" multiple>
 
+                                <div class="form-group js-products-input {{ (empty($discount) or $discount->source != \App\Models\Discount::$discountSourceProduct) ? 'd-none' : '' }}">
+                                    <label class="input-label d-block">{{ trans('update.product_type') }}</label>
+                                    <select name="product_type" class="form-control">
+                                        <option value="all">{{ trans('admin/main.all') }}</option>
+                                        <option value="physical" {{ (!empty($discount) and $discount->product_type == 'physical') ? 'selected' : '' }}>{{ trans('update.physical') }}</option>
+                                        <option value="virtual" {{ (!empty($discount) and $discount->product_type == 'virtual') ? 'selected' : '' }}>{{ trans('update.virtual') }}</option>
                                     </select>
                                 </div>
-                                {{-- ++++++++++++++++++ end : products ++++++++++++++++++ --}}
 
                                 <div class="form-group">
                                     <label class="input-label d-block">{{ trans('admin/main.users') }}</label>
@@ -264,7 +247,7 @@
                                         {{ $message }}
                                     </div>
                                     @enderror
-                                    <div class="text-muted text-small mt-1">{{ trans('admin/main.discount_code_hint') }}</div>
+                                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.discount_code_hint') }}</div>
                                 </div>
 
                                 <div class="form-group">
@@ -293,7 +276,7 @@
                                         <span class="custom-switch-indicator"></span>
                                         <label class="custom-switch-description mb-0 cursor-pointer" for="forFirstPurchaseSwitch">{{ trans('update.apply_only_for_the_first_purchase') }}</label>
                                     </label>
-                                    <div class="text-muted text-small mt-1">{{ trans('update.apply_only_for_the_first_purchase_hint') }}</div>
+                                    <div class="text-gray-500 text-small mt-1">{{ trans('update.apply_only_for_the_first_purchase_hint') }}</div>
                                 </div>
 
                                 <div class=" mt-4">
@@ -309,52 +292,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/discount.min.js"></script>
-    {{-- =========== source and products dropdown =============== --}}
-    <script>
-       $(document).ready(function ()
-       {
-            let selectedProducts = @json(!empty($discount) ? $discount->discount_coupon_product->pluck('id') : []); // Fetch previously selected product IDs
-            $('#product_type').on('change', function ()
-            {
-                let productType = $(this).val();
-                let productDropdown = $('#products_dropdown');
-
-                if (productType) {
-                    $.ajax({
-                        url: "{{ route('admin.getProductsByType') }}",
-                        method: 'GET',
-                        data: { product_type: productType },
-                        success: function (response) {
-                            productDropdown.empty(); // Clear existing options
-
-                            if (response.products.length > 0) {
-                                $.each(response.products, function (index, product) {
-                                    let isSelected = selectedProducts.includes(product.id) ? 'selected' : '';
-                                    productDropdown.append(`<option value="${product.id}" ${isSelected}>${product.title}</option>`);
-                                });
-
-                                $('.js-products-section').show(); // Show dropdown
-                            } else {
-                                $('.js-products-section').hide(); // Hide dropdown if no products
-                            }
-
-                            productDropdown.trigger('change'); // Ensure Select2 updates
-                        },
-                        error: function () {
-                            alert('Failed to fetch products. Please try again.');
-                        }
-                    });
-                } else {
-                    $('.js-products-section').hide(); // Hide dropdown if no type selected
-                }
-            });
-
-            // Manually trigger change if editing an existing discount
-            if (selectedProducts.length > 0) {
-                $('#product_type').trigger('change');
-            }
-        });
-
-    </script>
+    <script src="/assets/admin/js/parts/discount.min.js"></script>
 @endpush

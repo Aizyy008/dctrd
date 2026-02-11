@@ -40,7 +40,7 @@
                                         @endforeach
                                     </select>
                                     <div class="invalid-feedback">@error('type') {{ $message }} @enderror</div>
-                                    <div class="text-muted text-small mt-1">{{ trans('admin/main.new_notification_hint') }}</div>
+                                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.new_notification_hint') }}</div>
                                 </div>
 
                                 <div class="form-group @if(!$errors->has('user_id') and (empty($notification) or empty($notification->user))) d-none @endif" id="userSelect">
@@ -89,7 +89,7 @@
 
 
                         <div class="form-group">
-                            <div class="col-md-12">
+                            <div class="text-right">
                                 <button class="btn btn-primary" type="submit">{{ trans('notification.send_notification') }}</button>
                             </div>
                         </div>
@@ -104,5 +104,5 @@
 @push('scripts_bottom')
     <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
 
-    <script src="/assets/default/js/admin/notifications.min.js"></script>
+    <script src="/assets/admin/js/parts/notifications.min.js"></script>
 @endpush

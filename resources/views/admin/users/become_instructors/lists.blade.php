@@ -17,8 +17,8 @@
                 <div class="col-12 col-md-12">
                     <div class="card">
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                            <div class="">
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th>{{ trans('admin/main.user') }}</th>
                                         <th class="text-center">{{ trans('update.package') }}</th>
@@ -48,53 +48,72 @@
                                             </td>
 
                                             <td class="text-center">
-                                                <span class="{{ ($become->status == 'accept' ? 'text-success' : ($become->status == 'pending' ? 'text-warning' : 'text-danger')) }}">
-                                                    @if($become->status == 'accept')
+                                                <span class="badge-status {{ ($become->status == 'accept' ? 'text-success bg-success-30' : ($become->status == 'pending' ? 'text-warning bg-warning-30' : 'text-danger bg-danger-30')) }}">     @if($become->status == 'accept')
                                                         {{ trans('admin/main.accepted') }}
                                                     @elseif($become->status == 'pending')
                                                         {{ trans('admin/main.waiting') }}
                                                     @else
                                                         {{ trans('public.rejected') }}
-                                                    @endif
-                                                </span>
+                                                    @endif </span>
+                                                
                                             </td>
 
-                                            <td class="text-center">{{ dateTimeFormat($become->created_at, 'Y M j | H:i') }}</td>
+                                            <td class="font-12 text-center">{{ dateTimeFormat($become->created_at, 'Y M j | H:i') }}</td>
 
-                                            <td>
-                                                @can('admin_become_instructors_reject')
-                                                    @if($become->status != 'accept')
-                                                        @include('admin.includes.delete_button',[
-                                                             'url' => getAdminPanelUrl("/users/{$become->user_id}/acceptRequestToInstructor") ,
-                                                             'btnClass' => 'mr-1',
-                                                             'btnIcon' => 'fa-check',
-                                                             'tooltip' => trans('admin/main.accept_request')
-                                                        ])
+<td>
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                                        @include('admin.includes.delete_button',[
-                                                         'url' => getAdminPanelUrl("/users/become-instructors/{$become->id}/reject") ,
-                                                         'btnClass' => 'mr-1',
-                                                         'btnIcon' => 'fa-times',
-                                                         'tooltip' => trans('admin/main.reject_request')
-                                                    ])
-                                                    @endif
-                                                @endcan
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_become_instructors_reject')
+                @if($become->status != 'accept')
+                    <div class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                        @include('admin.includes.delete_button',[
+                            'url' => getAdminPanelUrl().'/users/'.$become->user_id.'/acceptRequestToInstructor',
+                            'btnClass' => 'text-success font-14',
+                            'btnText' => trans('admin/main.accept_request'),
+                            'btnIcon' => 'tick-circle',
+                            'iconType' => 'lin',
+                            'iconClass' => 'text-success mr-2'
+                        ])
+                    </div>
 
-                                                @can('admin_users_edit')
-                                                    <a href="{{ getAdminPanelUrl() }}/users/{{ $become->user_id }}/edit?type=check_instructor_request" class="btn-transparent text-primary mr-1" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.check') }}">
-                                                        <i class="fa fa-id-card" aria-hidden="true"></i>
-                                                    </a>
-                                                @endcan
+                    <div class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                        @include('admin.includes.delete_button',[
+                            'url' => getAdminPanelUrl().'/users/become-instructors/'.$become->id.'/reject',
+                            'btnClass' => 'text-danger font-14',
+                            'btnText' => trans('admin/main.reject_request'),
+                            'btnIcon' => 'close-circle',
+                            'iconType' => 'lin',
+                            'iconClass' => 'text-danger mr-2'
+                        ])
+                    </div>
+                @endif
+            @endcan
 
-                                                @can('admin_become_instructors_delete')
-                                                    @include('admin.includes.delete_button',[
-                                                             'url' => getAdminPanelUrl().'/users/become-instructors/'. $become->id .'/delete' ,
-                                                             'btnClass' => '',
-                                                             'btnIcon' => 'fa-trash',
-                                                             'tooltip' => trans('admin/main.delete')
-                                                         ])
-                                                @endcan
-                                            </td>
+            @can('admin_users_edit')
+                <a href="{{ getAdminPanelUrl() }}/users/{{ $become->user_id }}/edit?type=check_instructor_request"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-profile-2user class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.check') }}</span>
+                </a>
+            @endcan
+
+            @can('admin_become_instructors_delete')
+                @include('admin.includes.delete_button',[
+                    'url' => getAdminPanelUrl().'/users/become-instructors/'.$become->id.'/delete',
+                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                    'btnText' => trans('admin/main.delete'),
+                    'btnIcon' => 'trash',
+                    'iconType' => 'lin',
+                    'iconClass' => 'text-danger mr-2'
+                ])
+            @endcan
+        </div>
+    </div>
+</td>
                                         </tr>
                                     @endforeach
 

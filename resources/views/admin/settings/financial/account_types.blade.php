@@ -68,5 +68,5 @@
         var removeLang = '{{ trans('admin/main.remove') }}';
     </script>
 
-    <script src="/assets/default/js/admin/settings/account_types.min.js"></script>
+    <script src="/assets/admin/js/parts/settings/account_types.min.js"></script>
 @endpush

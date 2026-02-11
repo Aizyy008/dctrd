@@ -27,7 +27,7 @@
 
 <div id="app">
     @php
-        $getPageBackgroundSettings = getPageBackgroundSettings();
+        $getThemePageBackgroundSettings = getThemePageBackgroundSettings();
     @endphp
 
     <section class="section">
@@ -38,18 +38,15 @@
 
             </div>
 
-            <div class="col-lg-8 col-12 order-lg-2 order-1 min-vh-100 background-walk-y position-relative overlay-gradient-bottom" data-background="{{ $getPageBackgroundSettings['admin_login'] ?? '' }}">
-            <div class="absolute-bottom-left index-2">
-            <div class="text-light p-5 pb-2">
-              <div class="mb-2 pb-3">
-                <h1 class="mb-2 display-4 font-weight-bold">Rocket LMS</h1>
-                <h5 class="font-weight-normal text-muted-transparent">fully-featured educational platform</h5>
-              </div>
-              All rights reserved for <a class="text-light bb" target="_blank" href="https://codecanyon.net/user/rocketsoft">Rocket Soft</a> on <a class="text-light bb" target="_blank" href="https://codecanyon.net/collections/10821267-rocket-lms-full-package">Codecanyon</a>
+            <div class="col-lg-8 col-12 order-lg-2 order-1 min-vh-100 background-walk-y position-relative overlay-gradient-bottom" data-background="{{ $getThemePageBackgroundSettings['admin_login'] ?? '' }}">
+                <div class="absolute-bottom-left index-2">
+                    <div class="text-light p-5 pb-2">
+                        <div class="mb-5 pb-3">
+                            <h1 class="mb-2 display-4 font-weight-bold"></h1>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-            </div>
-            
         </div>
     </section>
 </div>

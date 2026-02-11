@@ -20,7 +20,7 @@
                         </div>
                     </div>
 
-                    <p class="text-muted mt-3">{{ trans('update.basic_update_zip_file_hint') }}</p>
+                    <p class="text-gray-500 mt-3">{{ trans('update.basic_update_zip_file_hint') }}</p>
                 </div>
 
                 <div class="form-group">
@@ -61,7 +61,7 @@
                         </div>
                     </div>
 
-                    <p class="text-muted mt-3">{{ trans('update.update_with_json_hint') }}</p>
+                    <p class="text-gray-500 mt-3">{{ trans('update.update_with_json_hint') }}</p>
                 </div>
 
                 <div class="form-group">

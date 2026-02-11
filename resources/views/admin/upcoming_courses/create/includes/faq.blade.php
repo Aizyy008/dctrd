@@ -8,7 +8,7 @@
         <div class="col-12">
             @if(!empty($upcomingCourse->faqs) and !$upcomingCourse->faqs->isEmpty())
                 <div class="table-responsive">
-                    <table class="table table-striped text-center font-14">
+                    <table class="table custom-table text-center font-14">
 
                         <tr>
                             <th>{{ trans('public.title') }}</th>
@@ -37,11 +37,13 @@
                     </table>
                 </div>
             @else
-                @include('admin.includes.no-result',[
-                    'file_name' => 'faq.png',
-                    'title' => trans('public.faq_no_result'),
-                    'hint' => trans('public.faq_no_result_hint'),
-                ])
+                <div class="d-flex-center flex-column px-32 py-120 text-center">
+                    <div class="d-flex-center size-64 rounded-12 bg-primary-30">
+                        <x-iconsax-bul-message-question class="icons text-primary" width="32px" height="32px"/>
+                    </div>
+                    <h3 class="font-16 font-weight-bold mt-12">{{ trans('public.faq_no_result') }}</h3>
+                    <p class="mt-4 font-12 text-gray-500">{!! trans('public.faq_no_result_hint') !!}</p>
+                </div>
             @endif
         </div>
     </div>

@@ -24,7 +24,7 @@
             <div id="productImagesInputs" class="form-group mt-15">
                 <label class="input-label mb-0">{{ trans('update.images') }}</label>
 
-                <div class="main-row input-group product-images-input-group mt-2">
+                <div class="main-row input-group product-images-input-group mt-8">
                     <div class="input-group-prepend">
                         <button type="button" class="input-group-text admin-file-manager" data-input="images_record" data-preview="holder">
                             <i class="fa fa-upload"></i>
@@ -32,14 +32,14 @@
                     </div>
                     <input type="text" name="images[]" id="images_record" value="" class="form-control" placeholder="{{ trans('update.product_images_size') }}"/>
 
-                    <button type="button" class="btn btn-primary btn-sm add-btn">
+                    <button type="button" class="btn ml-4 size-36 p-8 mt-6 btn-primary btn-sm add-btn">
                         <i class="fa fa-plus"></i>
                     </button>
                 </div>
 
                 @if(!empty($product->images) and count($product->images))
                     @foreach($product->images as $productImage)
-                        <div class="input-group product-images-input-group mt-2">
+                        <div class="input-group product-images-input-group mt-8">
                             <div class="input-group-prepend">
                                 <button type="button" class="input-group-text admin-file-manager" data-input="images_{{ $productImage->id }}" data-preview="holder">
                                     <i class="fa fa-upload"></i>
@@ -47,9 +47,9 @@
                             </div>
                             <input type="text" name="images[]" id="images_{{ $productImage->id }}" value="{{ $productImage->path }}" class="form-control" placeholder="{{ trans('update.product_images_size') }}"/>
 
-                            <button type="button" class="btn btn-sm btn-danger remove-btn">
-                                <i class="fa fa-times"></i>
-                            </button>
+                        <button type="button" class="btn remove-btn position-absolute" style="right: 0px; top: 4px;">
+                            <x-iconsax-lin-close-square class="icons text-danger" width="24px" height="24px"/>
+                        </button>
                         </div>
                     @endforeach
                 @endif
@@ -91,20 +91,20 @@
                 </div>
 
                 <div class="mt-1">
-                    <p class="font-14 text-gray">- {{ trans('update.product_files_hint_1') }}</p>
+                    <p class="font-14 text-gray-500">- {{ trans('update.product_files_hint_1') }}</p>
                 </div>
 
 
                 <div class="mt-2">
                     @if(!empty($product->files) and count($product->files))
                         <div class="table-responsive">
-                            <table class="table table-striped text-center font-14">
+                            <table class="table custom-table text-center font-14">
 
                                 <tr>
                                     <th>{{ trans('public.title') }}</th>
                                     <th>{{ trans('admin/main.description') }}</th>
                                     <th>{{ trans('admin/main.status') }}</th>
-                                    <th class="text-right">{{ trans('admin/main.actions') }}</th>
+                                    <th width="80px">{{ trans('admin/main.action') }}</th>
                                 </tr>
 
                                 @foreach($product->files as $file)
@@ -118,23 +118,44 @@
                                         </td>
                                         <td>{{ trans('admin/main.'.$file->status) }}</td>
 
-                                        <td width="160" class="text-right">
-                                            <button type="button" data-file-id="{{ $file->id }}" data-product-id="{{ !empty($product) ? $product->id : '' }}" class="edit-file btn-transparent text-primary mt-1" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                <i class="fa fa-edit"></i>
-                                            </button>
+                                        <td>
+                                            <div class="btn-group dropdown table-actions position-relative">
+                                                <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                                    <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                                </button>
 
-                                            @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/store/products/files/'. $file->id .'/delete', 'btnClass' => ' mt-1'])
+                                                <div class="dropdown-menu dropdown-menu-right">
+                                                    <button type="button" 
+                                                            data-file-id="{{ $file->id }}"
+                                                            data-product-id="{{ !empty($product) ? $product->id : '' }}"
+                                                            class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4 edit-file">
+                                                        <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                        <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                                                    </button>
+
+                                                    @include('admin.includes.delete_button',[
+                                                        'url' => getAdminPanelUrl().'/store/products/files/'.$file->id.'/delete',
+                                                        'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                        'btnText' => trans('admin/main.delete'),
+                                                        'btnIcon' => 'trash',
+                                                        'iconType' => 'lin',
+                                                        'iconClass' => 'text-danger mr-2'
+                                                    ])
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
                             </table>
                         </div>
                     @else
-                        @include(getTemplate() . '.includes.no-result',[
-                            'file_name' => 'files.png',
-                            'title' => trans('public.files_no_result'),
-                            'hint' => trans('public.files_no_result_hint'),
-                        ])
+                        <div class="d-flex-center flex-column px-32 py-120 text-center">
+                            <div class="d-flex-center size-64 rounded-12 bg-primary-30">
+                                <x-iconsax-bul-document-download class="icons text-primary" width="32px" height="32px"/>
+                            </div>
+                            <h3 class="font-16 font-weight-bold mt-12">{{ trans('public.files_no_result') }}</h3>
+                            <p class="mt-4 font-12 text-gray-500">{!! trans('public.files_no_result_hint') !!}</p>
+                        </div>
                     @endif
                 </div>
             </div>

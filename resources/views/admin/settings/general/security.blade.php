@@ -18,16 +18,14 @@
         <div class="row">
             <div class="col-12 col-md-6">
 
-                <div class="form-group custom-switches-stacked">
+            <div class="form-group custom-switches-stacked">
                     <label class="custom-switch pl-0">
-                        <input type="hidden" name="value[login_device_limit]" value="0">
-                        <input type="checkbox" name="value[login_device_limit]" id="loginDeviceLimit" value="1"
-                               {{ (!empty($itemValue) and !empty($itemValue['login_device_limit']) and $itemValue['login_device_limit']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                        <input type="hidden" name="value[content_translate]" value="0">
                         <span class="custom-switch-indicator"></span>
-                        <label class="custom-switch-description mb-0 cursor-pointer"
-                               for="loginDeviceLimit">{{ trans('update.device_limit') }}</label>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="contentTranslate">{{ trans('update.device_limit') }}</label>
                     </label>
                     <div class="text-muted text-small mt-1">{{ trans('update.device_limit_hint') }}</div>
+                    <div class="text-muted text-small mt-1">Paid Plugin</div>
                 </div>
 
                 <div class="js-device-limit-number {{ (!empty($itemValue) and !empty($itemValue['login_device_limit']) and $itemValue['login_device_limit']) ? '' : 'd-none' }}">
@@ -36,16 +34,19 @@
                         <input type="number" name="value[number_of_allowed_devices]" id="number_of_allowed_devices"
                                value="{{ (!empty($itemValue) and !empty($itemValue['number_of_allowed_devices'])) ? $itemValue['number_of_allowed_devices'] : 1 }}"
                                class="form-control"/>
-                        <p class="font-12 text-gray mt-1 mb-0">{{ trans('update.number_of_allowed_devices_hint') }}</p>
+                        <p class="font-12 text-gray-500 mt-1 mb-0">{{ trans('update.number_of_allowed_devices_hint') }}</p>
                     </div>
 
-
                     @include('admin.includes.delete_button',[
-                        'url' => getAdminPanelUrl("/settings/reset-users-login-count"),
-                        'noBtnTransparent' => true,
-                        'btnClass' => 'btn btn-danger text-white',
-                        'btnText' => trans('update.reset_users_login_count'),
-                    ])
+                                                            'url' => getAdminPanelUrl("/settings/reset-users-login-count"),
+                                                           'btnClass' => 'btn-radius16 text-danger border font-14 btn-lg btn-icon icon-left mt-2',
+                                                           'btnText' => trans('update.reset_users_login_count'),
+                                                           'btnIcon' => 'rotate-left',
+                                                           'iconType' => 'lin',
+                                                           'iconClass' => 'text-danger mr-2',
+                                                  
+                                                        ])
+
 
                 </div>
 
@@ -65,7 +66,7 @@
                             <label class="custom-switch-description mb-0 cursor-pointer"
                                    for="captchaSwitch{{ $captchaSwitch }}">{{ trans('update.'.$captchaSwitch) }}</label>
                         </label>
-                        <div class="text-muted text-small">{{ trans('update.'.$captchaSwitch.'_hint') }}</div>
+                        <div class="text-gray-500 text-small">{{ trans('update.'.$captchaSwitch.'_hint') }}</div>
                     </div>
                 @endforeach
 
@@ -77,7 +78,7 @@
                     <input type="text" name="value[admin_panel_url]" id="admin_panel_url"
                            value="{{ (!empty($itemValue) and !empty($itemValue['admin_panel_url'])) ? $itemValue['admin_panel_url'] : 'admin' }}"
                            class="form-control" required/>
-                    <p class="font-12 text-gray mt-1 mb-0">{{ trans('update.admin_panel_url_hint') }}</p>
+                    <p class="font-12 text-gray-500 mt-1 mb-0">{{ trans('update.admin_panel_url_hint') }}</p>
                 </div>
 
 

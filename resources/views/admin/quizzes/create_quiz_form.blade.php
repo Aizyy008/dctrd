@@ -35,10 +35,7 @@
                         <div class="form-group mt-3">
                             <label class="input-label">{{ trans('panel.webinar') }}</label>
                             <select name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][webinar_id]" class="js-ajax-webinar_id custom-select">
-                                <option {{ !empty($quiz) ? 'disabled' : 'selected disabled' }} value="">{{ trans('panel.choose_webinar') }}</option>
-                                @foreach($webinars as $webinar)
-                                    <option value="{{ $webinar->id }}" {{  (!empty($quiz) and $quiz->webinar_id == $webinar->id) ? 'selected' : '' }}>{{ $webinar->title }}</option>
-                                @endforeach
+                            <option>Paid plugin</option>
                             </select>
                             <div class="invalid-feedback"></div>
                         </div>
@@ -77,20 +74,49 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="input-label">{{ trans('admin/main.icon') }}</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button type="button" class="input-group-text admin-file-manager" data-input="icon" data-preview="holder">
+                                <i class="fa fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <input type="text" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][icon]" id="icon" value="{{ (!empty($quiz)) ? $quiz->icon : old('icon') }}" class="form-control @error('icon') is-invalid @enderror"/>
+                        <div class="input-group-append">
+                            <button type="button" class="input-group-text admin-file-view" data-input="icon">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    @error('icon')
+                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+
+                    <div class="text-muted mt-8 font-12">{{ trans('update.quiz_icon_input_hint') }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label">{{ trans('public.description') }}</label>
+                    <textarea rows="5" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][description]"  class="js-ajax-description form-control " placeholder="">{{ !empty($quiz) ? $quiz->description : old('description') }}</textarea>
+                    <div class="invalid-feedback"></div>
+                </div>
+
+                <div class="form-group">
                     <label class="input-label">{{ trans('public.time') }} <span class="braces">({{ trans('public.minutes') }})</span></label>
-                    <input type="text" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][time]" value="{{ !empty($quiz) ? $quiz->time : old('time') }}" class="js-ajax-time form-control " placeholder="{{ trans('forms.empty_means_unlimited') }}"/>
+                    <input type="number" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][time]" value="{{ !empty($quiz) ? $quiz->time : old('time') }}" class="js-ajax-time form-control " placeholder="{{ trans('forms.empty_means_unlimited') }}"/>
                     <div class="invalid-feedback"></div>
                 </div>
 
                 <div class="form-group">
                     <label class="input-label">{{ trans('quiz.number_of_attemps') }}</label>
-                    <input type="text" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][attempt]" value="{{ !empty($quiz) ? $quiz->attempt : old('attempt') }}" class="js-ajax-attempt form-control " placeholder="{{ trans('forms.empty_means_unlimited') }}"/>
+                    <input type="number" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][attempt]" value="{{ !empty($quiz) ? $quiz->attempt : old('attempt') }}" class="js-ajax-attempt form-control " placeholder="{{ trans('forms.empty_means_unlimited') }}"/>
                     <div class="invalid-feedback"></div>
                 </div>
 
                 <div class="form-group">
                     <label class="input-label">{{ trans('quiz.pass_mark') }}</label>
-                    <input type="text" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][pass_mark]" value="{{ !empty($quiz) ? $quiz->pass_mark : old('pass_mark') }}" class="js-ajax-pass_mark form-control @error('pass_mark')  is-invalid @enderror" placeholder=""/>
+                    <input type="number" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][pass_mark]" value="{{ !empty($quiz) ? $quiz->pass_mark : old('pass_mark') }}" class="js-ajax-pass_mark form-control @error('pass_mark')  is-invalid @enderror" placeholder=""/>
                     <div class="invalid-feedback"></div>
                 </div>
 
@@ -99,7 +125,7 @@
                     <input type="number" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][expiry_days]" value="{{ !empty($quiz) ? $quiz->expiry_days : old('expiry_days') }}" class="js-ajax-expiry_days form-control @error('expiry_days')  is-invalid @enderror" min="0"/>
                     <div class="invalid-feedback"></div>
 
-                    <p class="font-12 text-gray mt-1">{{ trans('update.quiz_expiry_days_hint') }}</p>
+                    <p class="font-12 text-gray-500 mt-1">{{ trans('update.quiz_expiry_days_hint') }}</p>
                 </div>
 
                 @if(!empty($quiz))
@@ -138,7 +164,7 @@
                 <div class="form-group mt-4 d-flex align-items-center justify-content-between">
                     <label class="cursor-pointer" for="statusSwitch{{ !empty($quiz) ? $quiz->id : 'record' }}">{{ trans('quiz.active_quiz') }}</label>
                     <div class="custom-control custom-switch">
-                        <input type="checkbox" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][status]" class="custom-control-input" id="statusSwitch{{ !empty($quiz) ? $quiz->id : 'record' }}" {{ !empty($quiz) && $quiz->status ? 'checked' : ''}}>
+                        <input type="checkbox" name="ajax[{{ !empty($quiz) ? $quiz->id : 'new' }}][status]" class="custom-control-input" id="statusSwitch{{ !empty($quiz) ? $quiz->id : 'record' }}" {{ (!empty($quiz) and $quiz->status == \App\Models\Quiz::ACTIVE) ? 'checked' : ''}}>
                         <label class="custom-control-label" for="statusSwitch{{ !empty($quiz) ? $quiz->id : 'record' }}"></label>
                     </div>
                 </div>
@@ -157,7 +183,7 @@
             @if($quizQuestions)
                 <ul class="draggable-questions-lists draggable-questions-lists-{{ $quiz->id }}" data-drag-class="draggable-questions-lists-{{ $quiz->id }}" data-order-table="quizzes_questions" data-quiz="{{ $quiz->id }}">
                     @foreach($quizQuestions as $question)
-                        <li data-id="{{ $question->id }}" class="quiz-question-card d-flex align-items-center mt-4">
+                        <li data-id="{{ $question->id }}" class="quiz-question-card border d-flex align-items-center mt-3">
                             <div class="flex-grow-1">
                                 <h4 class="question-title">{{ $question->title }}</h4>
                                 <div class="font-12 mt-3 question-infos">
@@ -165,17 +191,32 @@
                                 </div>
                             </div>
 
-                            <i data-feather="move" class="move-icon mr-10 cursor-pointer" height="20"></i>
+                            <i data-feather="move" class="move-icon text-gray-500 mr-10 cursor-pointer" height="18"></i>
 
-                            <div class="btn-group dropdown table-actions">
-                                <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="fa fa-ellipsis-v"></i>
+                            <div class="btn-group dropdown table-actions position-relative">
+                                <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                    <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
                                 </button>
-                                <div class="dropdown-menu text-left">
-                                    <button type="button" data-question-id="{{ $question->id }}" class="edit_question btn btn-sm btn-transparent">{{ trans('public.edit') }}</button>
-                                    @include('admin.includes.delete_button',['url' => getAdminPanelUrl('/quizzes-questions/'. $question->id .'/delete'), 'btnClass' => 'btn-sm btn-transparent' , 'btnText' => trans('public.delete')])
+
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <button type="button"
+                                            data-question-id="{{ $question->id }}"
+                                            class="edit_question dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                        <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                        <span class="text-gray-500 font-14">{{ trans('public.edit') }}</span>
+                                    </button>
+
+                                    @include('admin.includes.delete_button',[
+                                        'url' => getAdminPanelUrl('/quizzes-questions/'. $question->id .'/delete'),
+                                        'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                        'btnText' => trans('public.delete'),
+                                        'btnIcon' => 'trash',
+                                        'iconType' => 'lin',
+                                        'iconClass' => 'text-danger mr-2',
+                                    ])
                                 </div>
                             </div>
+
                         </li>
                     @endforeach
                 </ul>

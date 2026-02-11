@@ -41,8 +41,8 @@
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="username">{{ trans('auth.email_or_mobile') }}:</label>
-                                            <input name="username" type="text" class="form-control @error('email') is-invalid @enderror @error('mobile') is-invalid @enderror" id="username" value="{{ old('email') }}" aria-describedby="emailHelp">
+                                            <label for="email_or_mobile">{{ trans('auth.email_or_mobile') }}:</label>
+                                            <input name="email_or_mobile" type="text" class="form-control @error('email') is-invalid @enderror @error('mobile') is-invalid @enderror" id="email_or_mobile" value="{{ old('email') }}" aria-describedby="emailHelp">
                                             @error('email')
                                             <div class="invalid-feedback">
                                                 {{ $message }}
@@ -72,7 +72,7 @@
                                                 @enderror
                                             </div>
                                         </div>
-                                        {{-- ++++++++++++++++ user role ++++++++++++++++ --}}
+
                                         <div class="form-group">
                                             <label>{{ trans('/admin/main.role_name') }}</label>
                                             <select class="form-control select2 @error('role_id') is-invalid @enderror" id="roleId" name="role_id">
@@ -82,16 +82,6 @@
                                                 @endforeach
                                             </select>
                                             @error('role_id')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                            @enderror
-                                        </div>
-                                        {{-- ++++++++++++++++ Live Chat Widget : appear in organization or instructor ++++++++++++++++ --}}
-                                        <div class="form-group chat-widget-group" style="display: none;">
-                                            <label>Live Chat Widget</label>
-                                            <textarea name="chat_widget" rows="6" class="form-control @error('chat_widget') is-invalid @enderror"></textarea>
-                                            @error('chat_widget')
                                             <div class="invalid-feedback">
                                                 {{ $message }}
                                             </div>
@@ -126,92 +116,6 @@
                                             @enderror
                                         </div>
 
-
-                                        <div class="row">
-                                        <!-- New Fields for Backend Link and Frontend Link gr -->
-                                        <div class="form-group col-md-6">
-                                            <label for="frontend_link_gk">{{ trans('/admin/main.iframe connection (front-end)gr') }}</label>
-                                            <input type="text" name="frontend_link_gk" id="frontend_link_gk"
-                                                class="form-control @error('frontend_link_gk') is-invalid @enderror"
-                                                value="{{ old('frontend_link_gk') }}"
-                                                placeholder="Enter frontend link (optional)">
-                                            @error('frontend_link_gk')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                            @enderror
-                                        </div>
-                                        <!-- Front Iframe Height -->
-                                        <div class="form-group  col-md-4">
-                                            <label for="front_iframe_height_gk">{{ trans('/admin/main.Frontend Iframe Height gr') }}</label>
-                                            <input type="number" name="front_iframe_height_gk" id="front_iframe_height_gk"
-                                                class="form-control @error('front_iframe_height_gk') is-invalid @enderror"
-                                                value="{{ old('front_iframe_height_gk') }}"
-                                                placeholder="Enter frontend iframe height">
-                                            @error('front_iframe_height_gk')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                        <div class="row">
-                                        <!-- New Fields for Backend Link and Frontend Link En -->
-                                        <div class="form-group col-md-6">
-                                            <label for="frontend_link">{{ trans('/admin/main.iframe connection (front-end)en') }}</label>
-                                            <input type="text" name="frontend_link" id="frontend_link"
-                                                class="form-control @error('frontend_link') is-invalid @enderror"
-                                                value="{{ old('frontend_link') }}"
-                                                placeholder="Enter frontend link (optional)">
-                                            @error('frontend_link')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                            @enderror
-                                        </div>
-                                        <!-- Front Iframe Height -->
-                                        <div class="form-group  col-md-4">
-                                            <label for="front_iframe_height">{{ trans('/admin/main.Frontend Iframe Height') }}</label>
-                                            <input type="number" name="front_iframe_height" id="front_iframe_height"
-                                                class="form-control @error('front_iframe_height') is-invalid @enderror"
-                                                value="{{ old('front_iframe_height') }}"
-                                                placeholder="Enter frontend iframe height">
-                                            @error('front_iframe_height')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="form-group col-md-6">
-                                            <label for="backend_link">{{ trans('/admin/main.iframe connection (back-end)') }}</label>
-                                            <input type="text" name="backend_link" id="backend_link"
-                                                class="form-control @error('backend_link') is-invalid @enderror"
-                                                value="{{ old('backend_link') }}"
-                                                placeholder="Enter backend link (optional)">
-                                            @error('backend_link')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                            @enderror
-                                        </div>
-                                        <!-- Back Iframe Height -->
-                                        <div class="form-group col-md-4">
-                                            <label for="back_iframe_height">{{ trans('/admin/main.Backend Iframe Height') }}</label>
-                                            <input type="number" name="back_iframe_height" id="back_iframe_height"
-                                                class="form-control @error('back_iframe_height') is-invalid @enderror"
-                                                value="{{ old('back_iframe_height') }}"
-                                                placeholder="Enter backend iframe height">
-                                            @error('back_iframe_height')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                            @enderror
-                                        </div>
-                                    </div>
-
                                         <div class="text-right mt-4">
                                             <button class="btn btn-primary">{{ trans('admin/main.submit') }}</button>
                                         </div>
@@ -227,47 +131,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script>
-        // ++++++++++++++++ Live Chat Widget : appear in organization or instructor ++++++++++++++++
-        document.addEventListener('DOMContentLoaded', function()
-        {
-            console.log("Script initialized");
-            const roleSelect = document.getElementById('roleId');
-            const chatWidgetGroup = document.querySelector('.chat-widget-group');
-            if (!roleSelect || !chatWidgetGroup)
-            {
-                console.error("Required elements not found");
-                return;
-            }
-            function toggleChatWidget()
-            {
-                console.log("toggleChatWidget called");
-                // Get the selected value from Select2
-                const selectedValue = $('#roleId').val();
-                if (!selectedValue)
-                {
-                    console.log("No value selected");
-                    chatWidgetGroup.style.display = 'none';
-                    return;
-                }
-                // Get the option element using the value
-                const selectedOption = roleSelect.querySelector(`option[value="${selectedValue}"]`);
-                const roleName = selectedOption ?
-                    selectedOption.text.split(' - ')[0].toLowerCase() : '';
-                console.log("Selected value:", selectedValue);
-                console.log("Selected role:", roleName);
-                chatWidgetGroup.style.display =
-                    (roleName === 'organization' || roleName === 'teacher') ?
-                    'block' : 'none';
-            }
-            // Initial call after Select2 is initialized
-            setTimeout(() => {
-                toggleChatWidget();
-            }, 500); // Wait for Select2 initialization
-            // Listen for Select2 change event
-            $('#roleId').on('select2:select', toggleChatWidget);
-            // Fallback for regular change event
-            roleSelect.addEventListener('change', toggleChatWidget);
-        });
-    </script>
+
 @endpush

@@ -4,7 +4,7 @@
             <form action="{{ getAdminPanelUrl("/settings/update-app/database") }}" method="post">
                 {{ csrf_field() }}
 
-                <p class="text-muted font-12">{{ trans('update.database_update_hint') }}</p>
+                <p class="text-gray-500 font-12">{{ trans('update.database_update_hint') }}</p>
 
                 <div class="js-database-update-message my-25 text-success"></div>
 

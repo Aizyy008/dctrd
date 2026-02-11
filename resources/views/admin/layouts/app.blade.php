@@ -1,11 +1,11 @@
 <html lang="{{ app()->getLocale() }}">
 @php
     $rtlLanguages = !empty($generalSettings['rtl_languages']) ? $generalSettings['rtl_languages'] : [];
-
     $isRtl = ((in_array(mb_strtoupper(app()->getLocale()), $rtlLanguages)) or (!empty($generalSettings['rtl_layout']) and $generalSettings['rtl_layout'] == 1));
+    $themeCustomCssAndJs = getThemeCustomCssAndJs();
 @endphp
 <head>
-    @include('web.default.includes.metas')
+    @include('design_1.web.includes.metas')
     <title>{{ $pageTitle ?? '' }} </title>
 
     <!-- General CSS File -->
@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="/assets/admin/css/style.css">
     <link rel="stylesheet" href="/assets/admin/css/custom.css">
     <link rel="stylesheet" href="/assets/admin/css/components.css">
+    <link rel="stylesheet" href="/assets/admin/css/extra.min.css">
     @if($isRtl)
         <link rel="stylesheet" href="/assets/admin/css/rtl.css">
     @endif
@@ -29,18 +30,20 @@
     @stack('scripts_top')
 
     <style>
-        {!! !empty(getCustomCssAndJs('css')) ? getCustomCssAndJs('css') : '' !!}
+        {!! !empty($themeCustomCssAndJs['css']) ? $themeCustomCssAndJs['css'] : '' !!}
+
+        {!! getThemeFontsSettings() !!}
 
         {!! getThemeColorsSettings(true) !!}
     </style>
 </head>
-<body class="@if($isRtl) rtl @endif">
+<body class="{{ $isRtl ? 'rtl' : '' }}">
 
 <div id="app">
     <div class="main-wrapper">
-        @include('admin.includes.navbar')
+        @include('admin.includes.header.index')
 
-        @include('admin.includes.sidebar')
+        @include('admin.includes.sidebar.index')
 
 
         <div class="main-content">
@@ -60,7 +63,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <img src="" class="w-100" height="350px" alt="">
+                    <img src="" class="img-fluid" alt="">
                 </div>
 
                 <div class="modal-footer">
@@ -77,6 +80,9 @@
     @include('admin.includes.aiContent.generator')
 @endif
 
+<script>
+    window.adminPanelPrefix = '{{ getAdminPanelUrl() }}';
+</script>
 
 <!-- General JS Scripts -->
 <script src="/assets/admin/vendor/jquery/jquery-3.3.1.min.js"></script>
@@ -87,32 +93,6 @@
 <script src="/assets/admin/js/stisla.js"></script>
 <script src="/assets/default/vendors/toast/jquery.toast.min.js"></script>
 
-<script>
-    (function () {
-        "use strict";
-
-        window.csrfToken = $('meta[name="csrf-token"]');
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        window.adminPanelPrefix = '{{ getAdminPanelUrl() }}';
-
-        @if(session()->has('toast'))
-        $.toast({
-            heading: '{{ session()->get('toast')['title'] ?? '' }}',
-            text: '{{ session()->get('toast')['msg'] ?? '' }}',
-            bgColor: '@if(session()->get('toast')['status'] == 'success') #43d477 @else #f63c3c @endif',
-            textColor: 'white',
-            hideAfter: 10000,
-            position: 'bottom-right',
-            icon: '{{ session()->get('toast')['status'] }}'
-        });
-        @endif
-    })(jQuery);
-</script>
 
 <script src="/assets/admin/vendor/daterangepicker/daterangepicker.min.js"></script>
 <script src="/assets/default/vendors/select2/select2.min.js"></script>
@@ -121,10 +101,23 @@
 <!-- Template JS File -->
 <script src="/assets/admin/js/scripts.js"></script>
 
+
+<script src="/assets/admin/js/admin.min.js"></script>
+
 @stack('styles_bottom')
 @stack('scripts_bottom')
 
 <script>
+    (function () {
+        "use strict";
+
+        @if(session()->has('toast'))
+        showToast('{{ session()->get('toast')['status'] }}', '{{ session()->get('toast')['title'] ?? '' }}', '{{ session()->get('toast')['msg'] ?? '' }}')
+        @endif
+    })(jQuery);
+
+
+    var siteDomain = '{{ url('') }}';
     var deleteAlertTitle = '{{ trans('public.are_you_sure') }}';
     var deleteAlertHint = '{{ trans('public.deleteAlertHint') }}';
     var deleteAlertConfirm = '{{ trans('public.deleteAlertConfirm') }}';
@@ -138,13 +131,14 @@
     var generatedContentLang = '{{ trans('update.generated_content') }}';
     var copyLang = '{{ trans('public.copy') }}';
     var doneLang = '{{ trans('public.done') }}';
+    var priceInvalidHintLang = '{{ trans('update.price_invalid_hint') }}';
 </script>
 
 <script src="/assets/admin/js/custom.js"></script>
-<script src="/assets/default/js/panel/ai-content-generator.min.js"></script>
+<script src="/assets/admin/js/parts/ai-content-generator.min.js"></script>
 
 <script>
-    {!! !empty(getCustomCssAndJs('js')) ? getCustomCssAndJs('js') : '' !!}
+    {!! !empty($themeCustomCssAndJs['js']) ? $themeCustomCssAndJs['js'] : '' !!}
 </script>
 </body>
 </html>

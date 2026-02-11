@@ -14,7 +14,11 @@
     <link rel="stylesheet" href="/assets/admin/css/components.css">
 
     <style>
-        {!! !empty(getCustomCssAndJs('css')) ? getCustomCssAndJs('css') : '' !!}
+        @php
+            $themeCustomCssAndJs = getThemeCustomCssAndJs();
+        @endphp
+
+        {!! !empty($themeCustomCssAndJs['css']) ? $themeCustomCssAndJs['css'] : '' !!}
     </style>
 </head>
 <body>
@@ -94,7 +98,7 @@
                                                     <div class="col-md-12">
                                                         <div class="section-title">{{ trans('home.order_summary') }}</div>
                                                         <div class="table-responsive">
-                                                            <table class="table table-striped table-hover table-md">
+                                                            <table class="table custom-table table-hover table-md">
                                                                 <tr>
                                                                     <th data-width="40">#</th>
                                                                     <th>{{ trans('cart.item') }}</th>

@@ -13,59 +13,58 @@
 
         <div class="row">
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-primary">
-                        <i class="fas fa-comment"></i>
-                    </div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{ trans('admin/main.total_comments') }}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{trans('admin/main.total_comments')}}</span>
+                            <div class="d-flex-center size-48 bg-primary-30 rounded-12">
+                                <x-iconsax-bul-message-2 class="icons text-primary" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $totalComments }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-success">
-                        <i class="fas fa-eye"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{ trans('admin/main.published_comments') }}</h4>
-                        </div>
-                        <div class="card-body">
-                            {{ $publishedComments }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalComments }}</h5>
                     </div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-warning">
-                        <i class="fas fa-hourglass-start"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{ trans('admin/main.pending_comments') }}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{trans('admin/main.published_comments')}}</span>
+                            <div class="d-flex-center size-48 bg-success-30 rounded-12">
+                                <x-iconsax-bul-message-2 class="icons text-success" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $pendingComments }}
-                        </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $publishedComments }}</h5>
                     </div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                <div class="card card-statistic-1">
-                    <div class="card-icon bg-danger">
-                        <i class="fas fa-flag"></i></div>
-                    <div class="card-wrap">
-                        <div class="card-header">
-                            <h4>{{ trans('admin/main.comments_reports') }}</h4>
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{trans('admin/main.pending_comments')}}</span>
+                            <div class="d-flex-center size-48 bg-warning-30 rounded-12">
+                                <x-iconsax-bul-message-2 class="icons text-warning" width="24px" height="24px"/>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {{ $commentReports }}
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $pendingComments }}</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                <div class="card-statistic">
+                    <div class="card-statistic__mask"></div>
+                    <div class="card-statistic__wrap">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <span class="text-gray-500 mt-8">{{trans('admin/main.comments_reports')}}</span>
+                            <div class="d-flex-center size-48 bg-danger-30 rounded-12">
+                                <x-iconsax-bul-message-2 class="icons text-danger" width="24px" height="24px"/>
+                            </div>
                         </div>
+                        <h5 class="font-24 mt-12 line-height-1 text-black">{{ $commentReports }}</h5>
                     </div>
                 </div>
             </div>
@@ -73,8 +72,8 @@
 
         <div class="section-body">
 
-            <section class="card">
-                <div class="card-body">
+            <section class="card mt-32">
+                <div class="card-body pb-4">
                     <form method="get" class="mb-0">
 
                         <div class="row">
@@ -178,13 +177,10 @@
                                 </div>
                             </div>
 
-
-                            <div class="col-md-4">
-                                <div class="form-group mt-1">
-                                    <label class="input-label mb-4"> </label>
-                                    <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                                </div>
+                            <div class="col-md-4 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
                             </div>
+
                         </div>
 
                     </form>
@@ -196,8 +192,8 @@
                 <div class="col-12 col-md-12">
                     <div class="card">
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                            <div>
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th>{{ trans('admin/main.comment') }}</th>
                                         <th>{{ trans('admin/main.created_date') }}</th>
@@ -218,16 +214,16 @@
                                     @foreach($comments as $comment)
                                         <tr>
                                             <td>
-                                                <button type="button" class="js-show-description btn btn-outline-primary">{{ trans('admin/main.show') }}</button>
+                                                <button type="button" class="js-show-description btn-sm btn btn-outline-primary">{{ trans('admin/main.show') }}</button>
                                                 <input type="hidden" value="{!! nl2br($comment->comment) !!}">
                                             </td>
                                             <td>{{ dateTimeFormat($comment->created_at, 'j M Y | H:i') }}</td>
                                             <td class="text-left">
-                                                <a href="{{ $comment->user->getProfileUrl() }}" target="_blank" class="">{{ $comment->user->full_name }}</a>
+                                                <a href="{{ $comment->user->getProfileUrl() }}" target="_blank" class="text-dark">{{ $comment->user->full_name }}</a>
                                             </td>
 
                                             <td class="text-left">
-                                                <a href="{{ $comment->$itemRelation->getUrl() }}" target="_blank">
+                                                <a class="text-dark" href="{{ $comment->$itemRelation->getUrl() }}" target="_blank">
                                                     {{ $comment->$itemRelation->title }}
                                                 </a>
                                             </td>
@@ -239,39 +235,58 @@
                                             </td>
 
                                             <td>
-                                                <span class="text-{{ ($comment->status == 'pending') ? 'warning' : 'success' }}">
-                                                    {{ ($comment->status == 'pending') ? trans('admin/main.pending') : trans('admin/main.published') }}
-                                                </span>
+                                            <span class="badge-status {{ ($comment->status == 'pending') ? 'text-warning bg-warning-30' : 'text-success bg-success-30' }}">{{ ($comment->status == 'pending') ? trans('admin/main.pending') : trans('admin/main.published') }}</span>
                                             </td>
 
-                                            <td width="150px" class="text-center">
+                                            <td>
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                                @can('admin_comments_status')
-                                                    <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $comment->id }}/toggle" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.'.(($comment->status == 'pending') ? 'publish' : 'pending')) }}">
-                                                        @if($comment->status == 'pending')
-                                                            <i class="fa fa-eye"></i>
-                                                        @else
-                                                            <i class="fa fa-eye-slash"></i>
-                                                        @endif
-                                                    </a>
-                                                @endcan
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_comments_status')
+                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $comment->id }}/toggle"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    @if($comment->status == 'pending')
+                        <x-iconsax-lin-eye class="icons text-success mr-2" width="18px" height="18px"/>
+                        <span class="text-success">{{ trans('admin/main.publish') }}</span>
+                    @else
+                        <x-iconsax-lin-eye-slash class="icons text-warning mr-2" width="18px" height="18px"/>
+                        <span class="text-warning">{{ trans('admin/main.pending') }}</span>
+                    @endif
+                </a>
+            @endcan
 
-                                                @can('admin_comments_reply')
-                                                    <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ !empty($comment->reply_id) ? $comment->reply_id : $comment->id }}/reply" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.reply') }}">
-                                                        <i class="fa fa-reply"></i>
-                                                    </a>
-                                                @endcan
+            @can('admin_comments_reply')
+                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ !empty($comment->reply_id) ? $comment->reply_id : $comment->id }}/reply"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-messages-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.reply') }}</span>
+                </a>
+            @endcan
 
-                                                @can('admin_comments_edit')
-                                                    <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $comment->id }}/edit" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                @endcan
+            @can('admin_comments_edit')
+                <a href="{{ getAdminPanelUrl() }}/comments/{{ $page }}/{{ $comment->id }}/edit"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                </a>
+            @endcan
 
-                                                @can('admin_comments_delete')
-                                                    @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/comments/'. $page .'/'.$comment->id.'/delete','btnClass' => ''])
-                                                @endcan
-                                            </td>
+            @can('admin_comments_delete')
+                @include('admin.includes.delete_button',[
+                    'url' => getAdminPanelUrl().'/comments/'.$page.'/'.$comment->id.'/delete',
+                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                    'btnText' => trans('admin/main.delete'),
+                    'btnIcon' => 'trash',
+                    'iconType' => 'lin',
+                    'iconClass' => 'text-danger mr-2'
+                ])
+            @endcan
+        </div>
+    </div>
+</td>
                                         </tr>
                                     @endforeach
                                 </table>
@@ -309,5 +324,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/comments.min.js"></script>
+    <script src="/assets/admin/js/parts/comments.min.js"></script>
 @endpush

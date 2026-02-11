@@ -102,12 +102,10 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label class="input-label mb-4"> </label>
-                                    <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                                </div>
+                             <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
                             </div>
+
                         </div>
 
                     </form>
@@ -117,15 +115,31 @@
             <div class="row">
                 <div class="col-12 col-md-12">
                     <div class="card">
-                        <div class="card-header">
+
+                        <div class="card-header justify-content-between">
+
+                            <div>
+                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_payout_in_a_single_place') }}</p>
+                           </div>
+
+                            <div class="d-flex align-items-center gap-12">
+
                             @can('admin_payouts_export_excel')
-                                <a href="{{ getAdminPanelUrl() }}/financial/payouts/excel?{{ http_build_query(request()->all()) }}" class="btn btn-primary">{{ trans('admin/main.export_xls') }}</a>
+                                   <a href="{{ getAdminPanelUrl() }}/financial/payouts/excel?{{ http_build_query(request()->all()) }}" class="btn bg-white bg-hover-gray-100 border-gray-400 text-gray-500">
+                                       <x-iconsax-lin-import-2 class="icons text-gray-500" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.export_xls') }}</span>
+                                   </a>
                             @endcan
-                        </div>
+
+
+                            </div>
+
+                       </div>
 
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th>{{ trans('admin/main.user') }}</th>
                                         <th>{{ trans('admin/main.role') }}</th>
@@ -185,39 +199,49 @@
 
                                                 @if(request()->get('payout') == 'history')
                                                     <td>
-                                                        <span class="{{ ($payout->status == 'done') ? 'text-success' : 'text-danger' }}">{{ trans('public.'.$payout->status) }}</span>
+                                                        <span class="badge-status {{ ($payout->status == 'done') ? 'text-success bg-success-30' : 'text-danger bg-danger-30' }}">{{ trans('public.'.$payout->status) }}</span>
                                                     </td>
                                                 @endif
 
 
-                                                <td width="150px">
-                                                    <div class="">
-                                                        <button type="button" class="js-show-details btn-sm btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('update.show_details') }}">
-                                                            <i class="fa fa-eye"></i>
-                                                        </button>
+                                                <td width="80px">
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
 
-                                                        @if(request()->get('payout') == 'requests' and $payout->status === \App\Models\Payout::$waiting)
+        <div class="dropdown-menu dropdown-menu-right">
+            <button type="button" class="js-show-details dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                <x-iconsax-lin-eye class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                <span class="text-gray-500 font-14">{{ trans('update.show_details') }}</span>
+            </button>
 
-                                                            @can('admin_payouts_payout')
-                                                                @include('admin.includes.delete_button',[
-                                                                        'url' => getAdminPanelUrl().'/financial/payouts/'. $payout->id .'/payout',
-                                                                        'tooltip' => trans('admin/main.payout'),
-                                                                        'btnClass' => 'ml-2',
-                                                                        'btnIcon' => 'fa-credit-card'
-                                                                    ])
-                                                            @endcan
+            @if(request()->get('payout') == 'requests' and $payout->status === \App\Models\Payout::$waiting)
+                @can('admin_payouts_payout')
+                    @include('admin.includes.delete_button',[
+                        'url' => getAdminPanelUrl().'/financial/payouts/'.$payout->id.'/payout',
+                        'btnClass' => 'dropdown-item text-success mb-3 py-3 px-0 font-14',
+                        'btnText' => trans('admin/main.payout'),
+                        'btnIcon' => 'card',
+                        'iconType' => 'lin',
+                        'iconClass' => 'text-success mr-2'
+                    ])
+                @endcan
 
-                                                            @can('admin_payouts_reject')
-                                                                @include('admin.includes.delete_button',[
-                                                                        'url' => getAdminPanelUrl().'/financial/payouts/'. $payout->id .'/reject',
-                                                                        'tooltip' => trans('public.reject'),
-                                                                        'btnIcon' => 'fa-times-circle',
-                                                                        'btnClass' => 'ml-2',
-                                                                    ])
-                                                            @endcan
-                                                        @endif
-                                                    </div>
-                                                </td>
+                @can('admin_payouts_reject')
+                    @include('admin.includes.delete_button',[
+                        'url' => getAdminPanelUrl().'/financial/payouts/'.$payout->id.'/reject',
+                        'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                        'btnText' => trans('public.reject'),
+                        'btnIcon' => 'close-circle',
+                        'iconType' => 'lin',
+                        'iconClass' => 'text-danger mr-2'
+                    ])
+                @endcan
+            @endif
+        </div>
+    </div>
+</td>
 
                                             </tr>
                                         @endforeach
@@ -267,5 +291,5 @@
     </script>
 
     <script src="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.js"></script>
-    <script src="/assets/default/js/admin/payout.min.js"></script>
+    <script src="/assets/admin/js/parts/payout.min.js"></script>
 @endpush

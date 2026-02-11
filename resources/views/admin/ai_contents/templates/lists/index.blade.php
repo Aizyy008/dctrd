@@ -17,68 +17,33 @@
 
         <div class="section-body">
 
-            <div class="row">
-                <div class="col-12 col-md-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped font-14">
-                                    <tr>
-                                        <th>{{ trans('admin/main.title') }}</th>
-                                        <th>{{ trans('update.service_type') }}</th>
-                                        <th>{{ trans('update.generated_contents') }}</th>
-                                        <th>{{ trans('admin/main.status') }}</th>
-                                        <th>{{ trans('admin/main.actions') }}</th>
-                                    </tr>
-                                    @foreach($templates as $template)
-                                        <tr>
-                                            <td>{{ $template->title }}</td>
+<div class="row">
+    <div class="col-12 col-md-12">
+        <div class="card">
+            <div class="card-body">
 
-                                            <td>{{ trans($template->type) }}</td>
 
-                                            <td>{{ $template->contents_count ?? 0 }}</td>
 
-                                            <td>
-                                                @if($template->enable)
-                                                    <span class="text-success">{{ trans('admin/main.active') }}</span>
-                                                @else
-                                                    <span class="text-danger">{{ trans('admin/main.inactive') }}</span>
-                                                @endif
-                                            </td>
+                <div class="empty-state mx-auto d-block"  data-width="900" >
+                    <img class="img-fluid col-md-6" src="/assets/default/img/plugin.svg" alt="image">
+                    <h3 class="mt-3">This is a paid plugin!</h3>
+                    <h5 class="lead">
+                        You can purchase it by <strong><a href="https://codecanyon.net/item/universal-plugins-bundle-for-rocket-lms/33297004">this link</a></strong> on Codecanyon.
+                    </h5>             
+                  </div>
 
-                                            <td>
 
-                                                @can('admin_ai_contents_templates_edit')
-                                                    <a href="{{ getAdminPanelUrl() }}/ai-contents/templates/{{ $template->id }}/edit"
-                                                       class="btn-transparent btn-sm text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-
-                                                    @include('admin.includes.delete_button',[
-                                                          'url' => getAdminPanelUrl('/ai-contents/templates/'. $template->id.'/statusToggle'),
-                                                          'tooltip' => ($template->enable ? trans('admin/main.inactive') : trans('admin/main.active')),
-                                                          'btnClass' => 'mx-2',
-                                                          'btnIcon' => "fa-times-circle"
-                                                      ])
-                                                @endcan
-
-                                                @can('admin_ai_contents_templates_delete')
-                                                    @include('admin.includes.delete_button',['url' => getAdminPanelUrl().'/ai-contents/templates/'.$template->id.'/delete'])
-                                                @endcan
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="card-footer text-center">
-                            {{ $templates->appends(request()->input())->links() }}
-                        </div>
-                    </div>
-                </div>
+                
             </div>
+
+          
+
         </div>
+    </div>
+</div>
+</div>
+
+
     </section>
 @endsection
 

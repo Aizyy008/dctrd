@@ -38,6 +38,20 @@
                                                 </div>
                                                 <input type="text" name="value[image]" id="image" value="{{ (!empty($value) and !empty($value['image'])) ? $value['image'] : old('image') }}" class="form-control"/>
                                             </div>
+                                            <div class="mt-1 fs-11 text-gray-500">{{ trans('update.advertising_modal_image_hint') }}</div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="input-label">{{ trans('admin/main.icon') }}</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <button type="button" class="input-group-text admin-file-manager" data-input="icon" data-preview="holder">
+                                                        <i class="fa fa-chevron-up"></i>
+                                                    </button>
+                                                </div>
+                                                <input type="text" name="value[icon]" id="icon" value="{{ (!empty($value) and !empty($value['icon'])) ? $value['icon'] : old('icon') }}" class="form-control"/>
+                                            </div>
+                                            <div class="mt-1 fs-11 text-gray-500">{{ trans('update.advertising_modal_icon_hint') }}</div>
                                         </div>
 
                                         <div class="form-group">
@@ -51,29 +65,41 @@
                                         </div>
 
                                         <div class="form-group">
-                                            <label>{{ trans('update.button') }} 1</label>
-                                            <div class="row">
-                                                <div class="col-6">
-                                                    <label>{{ trans('admin/main.title') }}</label>
-                                                    <input type="text" name="value[button1][title]" value="{{ (!empty($value) and !empty($value['button1'])) ? $value['button1']['title'] : '' }}" class="form-control "/>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label>{{ trans('admin/main.link') }}</label>
-                                                    <input type="text" name="value[button1][link]" value="{{ (!empty($value) and !empty($value['button1'])) ? $value['button1']['link'] : '' }}" class="form-control "/>
-                                                </div>
-                                            </div>
+                                            <label>{{ trans('update.countdown') }}</label>
+                                            <input type="text" name="value[countdown]" class="form-control datetimepicker"
+                                                   aria-describedby="dateRangeLabel" autocomplete="off" data-drops="down"
+                                                   value="{{ (!empty($value) and !empty($value['countdown'])) ? dateTimeFormat($value['countdown'], 'Y-m-d H:i', false) : old('countdown') }}"/>
+                                            <div class="mt-1 fs-11 text-gray-500">{{ trans('update.advertising_modal_countdown_hint') }}</div>
                                         </div>
 
                                         <div class="form-group">
-                                            <label>{{ trans('update.button') }} 2</label>
+                                            <label>{{ trans('update.opening_delay') }} ({{ trans('update.seconds') }})</label>
+                                            <input type="number" name="value[opening_delay]" class="form-control"
+                                                   value="{{ (!empty($value) and !empty($value['opening_delay'])) ? $value['opening_delay'] : old('opening_delay') }}"/>
+                                            <div class="mt-1 fs-11 text-gray-500">{{ trans('update.advertising_modal_opening_delay_hint') }}</div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>{{ trans('update.autoclose') }} ({{ trans('update.seconds') }})</label>
+                                            <input type="number" name="value[autoclose]" class="form-control"
+                                                   value="{{ (!empty($value) and !empty($value['autoclose'])) ? $value['autoclose'] : old('autoclose') }}"/>
+                                            <div class="mt-1 fs-11 text-gray-500">{{ trans('update.advertising_modal_autoclose_hint') }}</div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>{{ trans('update.button') }}</label>
                                             <div class="row">
                                                 <div class="col-6">
                                                     <label>{{ trans('admin/main.title') }}</label>
-                                                    <input type="text" name="value[button2][title]" value="{{ (!empty($value) and !empty($value['button2'])) ? $value['button2']['title'] : '' }}" class="form-control "/>
+                                                    <input type="text" name="value[button1][title]" value="{{ (!empty($value) and !empty($value['button1']) and !empty($value['button1']['title'])) ? $value['button1']['title'] : '' }}" class="form-control "/>
                                                 </div>
                                                 <div class="col-6">
+                                                    <label>{{ trans('admin/main.subtitle') }}</label>
+                                                    <input type="text" name="value[button1][subtitle]" value="{{ (!empty($value) and !empty($value['button1']) and !empty($value['button1']['subtitle'])) ? $value['button1']['subtitle'] : '' }}" class="form-control "/>
+                                                </div>
+                                                <div class="col-12 mt-2">
                                                     <label>{{ trans('admin/main.link') }}</label>
-                                                    <input type="text" name="value[button2][link]" value="{{ (!empty($value) and !empty($value['button2'])) ? $value['button2']['link'] : '' }}" class="form-control "/>
+                                                    <input type="text" name="value[button1][link]" value="{{ (!empty($value) and !empty($value['button1']) and !empty($value['button1']['link'])) ? $value['button1']['link'] : '' }}" class="form-control "/>
                                                 </div>
                                             </div>
                                         </div>
@@ -85,15 +111,15 @@
                                                 <span class="custom-switch-indicator"></span>
                                                 <label class="custom-switch-description mb-0 cursor-pointer" for="advertiseModalStatusSwitch">{{ trans('admin/main.active') }}</label>
                                             </label>
-                                            <div class="text-muted text-small mt-1">{{ trans('update.advertising_modal_status_hint') }}</div>
+                                            <div class="text-gray-500 text-small mt-1">{{ trans('update.advertising_modal_status_hint') }}</div>
                                         </div>
 
                                     </div>
                                 </div>
 
-                                <div class="">
+                                <div class="col-6 text-right">
                                     <button type="submit" class="btn btn-primary">{{ trans('admin/main.save_change') }}</button>
-                                    <button type="button" class="js-preview-modal btn btn-warning ml-2">{{ trans('update.preview') }}</button>
+                                    <button type="button" class="js-preview-modal btn btn-warning ml-2" data-path="{{ getAdminPanelUrl("/advertising_modal/preview") }}">{{ trans('update.preview') }}</button>
                                 </div>
                             </form>
                         </div>
@@ -106,5 +132,7 @@
 
 @push('scripts_bottom')
     <script src="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.js"></script>
-    <script src="/assets/default/js/admin/advertising_modal.min.js"></script>
+    <script src="/assets/design_1/js/parts/time-counter-down.min.js"></script>
+
+    <script src="/assets/admin/js/parts/advertising_modal.min.js"></script>
 @endpush

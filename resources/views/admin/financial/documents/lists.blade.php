@@ -3,11 +3,11 @@
 @section('content')
     <section class="section">
         <div class="section-header">
-            <h1>{{ trans('admin/main.documents') }}</h1>
+            <h1>{{ trans('admin/main.balances') }}</h1>
             <div class="section-header-breadcrumb">
                 <div class="breadcrumb-item active"><a href="{{ getAdminPanelUrl() }}">{{trans('admin/main.dashboard')}}</a>
                 </div>
-                <div class="breadcrumb-item">{{ trans('admin/main.documents') }}</div>
+                <div class="breadcrumb-item">{{ trans('admin/main.balances') }}</div>
             </div>
         </div>
         <div class="section-filters">
@@ -105,6 +105,7 @@
                             <div class="col-12 col-md-3 d-flex align-items-center justify-content-end">
                                 <button type="submit" class="btn btn-primary w-100">{{ trans('admin/main.show_results') }}</button>
                             </div>
+                            
                         </form>
                     </div>
                 </div>
@@ -113,17 +114,40 @@
 
         <div class="section-body">
 
-            <div class="d-flex align-items-center justify-content-between">
-
-                {{--<a href="{{ getAdminPanelUrl() }}/offline_payments/excel" class="btn btn-danger">{{ trans('admin/main.export_xls') }}</a>--}}
-            </div>
 
             <div class="row">
                 <div class="col-12 col-md-12">
                     <div class="card">
+
+                        <div class="card-header justify-content-between">
+                            
+                            <div>
+                               <h5 class="font-14 mb-0">{{ trans('admin/main.balances') }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_transactions_in_a_single_place') }}</p>
+                           </div>
+                           
+                            <div class="d-flex align-items-center gap-12">
+
+                                   <a href="{{ getAdminPanelUrl() }}/financial/documents/excel?{{ http_build_query(request()->all())" class="btn bg-white bg-hover-gray-100 border-gray-400 text-gray-500">
+                                       <x-iconsax-lin-import-2 class="icons text-gray-500" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.export_xls') }}</span>
+                                   </a>
+
+                                   @can('admin_documents_create')
+                                   <a href="{{ getAdminPanelUrl() }}/financial/documents/new" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.add_new') }}</span>
+                                   </a>
+                                    @endcan
+
+                            </div>
+                           
+                       </div>
+
+
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                                <table class="table custom-table font-14">
                                     <tr>
                                         <th class="text-left">{{ trans('admin/main.title') }}</th>
                                         <th class="text-left">{{ trans('admin/main.user') }}</th>
@@ -144,49 +168,49 @@
                                                 <td class="text-left">
                                                     <div class="text-left">
                                                         @if($document->is_cashback)
-                                                            <span class="d-block font-weight-bold">{{ trans('update.cashback') }}</span>
+                                                            <span class="d-block">{{ trans('update.cashback') }}</span>
                                                         @endif
 
                                                         @if(!empty($document->webinar_id))
                                                             @if(!$document->is_cashback)
-                                                                <span class="d-block font-weight-bold">{{ trans('admin/main.item_purchased') }}</span>
+                                                                <span class="d-block ">{{ trans('admin/main.item_purchased') }}</span>
                                                             @endif
 
                                                             <a href="{{ !empty($document->webinar) ? $document->webinar->getUrl() : '' }}"
-                                                               target="_blank" class="font-12">#{{ $document->webinar_id }}-{{ !empty($document->webinar) ? $document->webinar->title : '' }}</a>
+                                                               target="_blank" class="font-12 text-gray-500">#{{ $document->webinar_id }}-{{ !empty($document->webinar) ? $document->webinar->title : '' }}</a>
                                                         @elseif(!empty($document->bundle_id))
                                                             @if(!$document->is_cashback)
-                                                                <span class="d-block font-weight-bold">{{ trans('update.bundle_purchased') }}</span>
+                                                                <span class="d-block ">{{ trans('update.bundle_purchased') }}</span>
                                                             @endif
 
                                                             <a href="{{ !empty($document->bundle) ? $document->bundle->getUrl() : '' }}"
-                                                               target="_blank" class="font-12">#{{ $document->bundle_id }}-{{ !empty($document->bundle) ? $document->bundle->title : '' }}</a>
+                                                               target="_blank" class="font-12 text-gray-500">#{{ $document->bundle_id }}-{{ !empty($document->bundle) ? $document->bundle->title : '' }}</a>
                                                         @elseif(!empty($document->product_id))
                                                             @if(!$document->is_cashback)
-                                                                <span class="d-block font-weight-bold">{{ trans('update.product_purchased') }}</span>
+                                                                <span class="d-block ">{{ trans('update.product_purchased') }}</span>
                                                             @endif
 
                                                             <a href="{{ !empty($document->product) ? $document->product->getUrl() : '' }}"
-                                                               target="_blank" class="font-12">#{{ $document->product_id }}-{{ !empty($document->product) ? $document->product->title : '' }}</a>
+                                                               target="_blank" class="font-12 text-gray-500">#{{ $document->product_id }}-{{ !empty($document->product) ? $document->product->title : '' }}</a>
                                                         @elseif(!empty($document->meeting_time_id))
                                                             @if(!$document->is_cashback)
-                                                                <span class="d-block font-weight-bold">{{ trans('admin/main.item_purchased') }}</span>
+                                                                <span class="d-block ">{{ trans('admin/main.item_purchased') }}</span>
                                                             @endif
 
-                                                            <a href="" target="_blank" class="font-12">#{{ $document->meeting_time_id }} {{ trans('admin/main.meeting') }}</a>
+                                                            <a href="" target="_blank" class="font-12 text-gray-500">#{{ $document->meeting_time_id }} {{ trans('admin/main.meeting') }}</a>
                                                         @elseif(!empty($document->subscribe_id))
-                                                            <span class="{{ (!$document->is_cashback) ? 'd-block font-weight-bold' : 'font-12' }}">{{ trans('admin/main.purchased_subscribe') }}</span>
+                                                            <span class="{{ (!$document->is_cashback) ? 'd-block ' : 'font-12 text-gray-500' }}">{{ trans('admin/main.purchased_subscribe') }}</span>
                                                         @elseif(!empty($document->promotion_id))
-                                                            <span class="{{ (!$document->is_cashback) ? 'd-block font-weight-bold' : 'font-12' }}">{{ trans('admin/main.purchased_promotion') }}</span>
+                                                            <span class="{{ (!$document->is_cashback) ? 'd-block ' : 'font-12 text-gray-500' }}">{{ trans('admin/main.purchased_promotion') }}</span>
                                                         @elseif(!empty($document->registration_package_id))
-                                                            <span class="{{ (!$document->is_cashback) ? 'd-block font-weight-bold' : 'font-12' }}">{{ trans('update.purchased_registration_package') }}</span>
+                                                            <span class="{{ (!$document->is_cashback) ? 'd-block ' : 'font-12 text-gray-500' }}">{{ trans('update.purchased_registration_package') }}</span>
                                                         @elseif($document->store_type == \App\Models\Accounting::$storeManual)
-                                                            <span class="{{ (!$document->is_cashback) ? 'd-block font-weight-bold' : 'font-12' }}">{{ trans('admin/main.manual_document') }}</span>
+                                                            <span class="{{ (!$document->is_cashback) ? 'd-block ' : 'font-12 text-gray-500' }}">{{ trans('admin/main.manual_document') }}</span>
                                                         @else
                                                             @if($document->is_cashback)
-                                                                <span class="font-12">{{ $document->description }}</span>
+                                                                <span class="font-12 text-gray-500">{{ $document->description }}</span>
                                                             @else
-                                                                <span class="d-block font-weight-bold">{{ trans('admin/main.automatic_document') }}</span>
+                                                                <span class="d-block">{{ trans('admin/main.automatic_document') }}</span>
                                                             @endif
                                                         @endif
                                                     </div>
@@ -195,7 +219,7 @@
                                                 <td class="text-left">
                                                     @if(!empty($document->user))
                                                         <a href="{{ getAdminPanelUrl() }}/users/{{ $document->user_id }}/edit" target="_blank"
-                                                           class="">{{ $document->user->full_name }}</a>
+                                                           class="text-dark">{{ $document->user->full_name }}</a>
                                                     @endif
                                                 </td>
 
@@ -212,16 +236,16 @@
                                                 </td>
 
                                                 <td>
-                                                    <span class="text-success">{{ handlePrice($document->amount) }}</span>
+                                                    <span>{{ handlePrice($document->amount) }}</span>
                                                 </td>
 
                                                 <td>
                                                     @switch($document->type)
                                                         @case(\App\Models\Accounting::$addiction)
-                                                            <span class="text-success">{{ trans('admin/main.addiction') }}</span>
+                                                            <span class="badge-status text-success bg-success-30">{{ trans('admin/main.addiction') }}</span>
                                                             @break
                                                         @case(\App\Models\Accounting::$deduction)
-                                                            <span class="text-danger">{{ trans('admin/main.deduction') }}</span>
+                                                            <span class="badge-status text-danger bg-danger-30">{{ trans('admin/main.deduction') }}</span>
                                                             @break
                                                     @endswitch
                                                 </td>
@@ -241,10 +265,22 @@
                                                 <td>{{ dateTimeFormat($document->created_at, 'j F Y H:i') }}</td>
 
                                                 <td>
-                                                    @can('admin_documents_print')
-                                                        <a href="{{ getAdminPanelUrl() }}/financial/documents/{{ $document->id }}/print" class="btn-sm fa fa-print"></a>
-                                                    @endcan
-                                                </td>
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
+
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_documents_print')
+                <a href="{{ getAdminPanelUrl() }}/financial/documents/{{ $document->id }}/print"
+                   class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4">
+                    <x-iconsax-lin-printer class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.print') }}</span>
+                </a>
+            @endcan
+        </div>
+    </div>
+</td>
                                             </tr>
                                         @endforeach
                                     @endif

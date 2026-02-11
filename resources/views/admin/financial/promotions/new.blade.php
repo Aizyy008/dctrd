@@ -126,11 +126,11 @@
                                         <span class="custom-switch-indicator"></span>
                                         <label class="custom-switch-description mb-0 cursor-pointer" for="isPopular">{{ trans('admin/main.is_popular') }}</label>
                                     </label>
-                                    <div class="text-muted text-small mt-1">{{ trans('admin/main.is_popular_hint') }}</div>
+                                    <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.is_popular_hint') }}</div>
                                 </div>
 
 
-                                <div class=" mt-4">
+                                <div class="text-right mt-4">
                                     <button class="btn btn-primary">{{ trans('admin/main.submit') }}</button>
                                 </div>
                             </form>

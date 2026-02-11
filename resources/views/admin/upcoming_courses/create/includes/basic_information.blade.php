@@ -48,7 +48,7 @@
         <div class="form-group mt-15">
             <label class="input-label">{{ trans('admin/main.class_url') }}</label>
             <input type="text" name="slug" value="{{ !empty($upcomingCourse) ? $upcomingCourse->slug : old('slug') }}" class="form-control @error('slug')  is-invalid @enderror" placeholder=""/>
-            <div class="text-muted text-small mt-1">{{ trans('admin/main.class_url_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.class_url_hint') }}</div>
             @error('slug')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -91,7 +91,7 @@
         <div class="form-group mt-15">
             <label class="input-label">{{ trans('public.seo_description') }}</label>
             <input type="text" name="seo_description" value="{{ !empty($upcomingCourse) ? $upcomingCourse->seo_description : old('seo_description') }}" class="form-control @error('seo_description')  is-invalid @enderror"/>
-            <div class="text-muted text-small mt-1">{{ trans('admin/main.seo_description_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.seo_description_hint') }}</div>
             @error('seo_description')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -153,14 +153,14 @@
                 <select name="video_demo_source"
                         class="js-video-demo-source form-control"
                 >
-                    @foreach(\App\Models\Webinar::$videoDemoSource as $source)
+                    @foreach(getFeaturesSettings('available_sources') as $source)
                         <option value="{{ $source }}" @if(!empty($upcomingCourse) and $upcomingCourse->video_demo_source == $source) selected @endif>{{ trans('update.file_source_'.$source) }}</option>
                     @endforeach
                 </select>
             </div>
         </div>
 
-        <div class="js-video-demo-other-inputs form-group mt-0 {{ (empty($upcomingCourse) or $upcomingCourse->video_demo_source != 'secure_host') ? '' : 'd-none' }}">
+        <div class="js-video-demo-other-inputs form-group mt-0 {{ (empty($upcomingCourse) or !in_array($upcomingCourse->video_demo_source, ['secure_host', 's3'])) ? '' : 'd-none' }}">
             <label class="input-label font-12">{{ trans('update.path') }}</label>
             <div class="input-group js-video-demo-path-input">
                 <div class="input-group-prepend">
@@ -181,7 +181,7 @@
             </div>
         </div>
 
-        <div class="form-group js-video-demo-secure-host-input {{ (!empty($upcomingCourse) and $upcomingCourse->video_demo_source == 'secure_host') ? '' : 'd-none' }}">
+        <div class="form-group js-video-demo-file-input {{ (!empty($upcomingCourse) and in_array($upcomingCourse->video_demo_source, ['secure_host', 's3'])) ? '' : 'd-none' }}">
             <div class="input-group">
                 <div class="input-group-prepend">
                     <button type="button" class="input-group-text">
@@ -189,12 +189,22 @@
                     </button>
                 </div>
                 <div class="custom-file js-ajax-s3_file">
-                    <input type="file" name="video_demo_secure_host_file" class="custom-file-input cursor-pointer" id="video_demo_secure_host_file" accept="video/*">
-                    <label class="custom-file-label cursor-pointer" for="video_demo_secure_host_file">{{ trans('update.choose_file') }}</label>
+                    <input type="file" name="video_demo_file" class="custom-file-input cursor-pointer" id="video_demo_file" accept="video/*">
+                    <label class="custom-file-label cursor-pointer" for="video_demo_file">{{ trans('update.choose_file') }}</label>
                 </div>
 
                 <div class="invalid-feedback"></div>
             </div>
+        </div>
+
+        <div class="form-group mt-15">
+            <label class="input-label">{{ trans('public.summary') }}</label>
+            <textarea name="summary" rows="5" class="form-control @error('summary')  is-invalid @enderror" placeholder="{{ trans('forms.webinar_summary_placeholder') }}">{!! !empty($upcomingCourse) ? $upcomingCourse->summary : old('summary')  !!}</textarea>
+            @error('summary')
+            <div class="invalid-feedback">
+                {{ $message }}
+            </div>
+            @enderror
         </div>
 
     </div>

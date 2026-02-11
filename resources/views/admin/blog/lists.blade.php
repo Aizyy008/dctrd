@@ -79,37 +79,50 @@
                             </div>
 
 
-                            <div class="col-md-3">
-                                <div class="form-group mt-1">
-                                    <label class="input-label mb-4"> </label>
-                                    <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                                </div>
-                            </div>
+                            <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
+                            </div> 
+
                         </div>
                     </form>
-                    <a href="{{route('admin.blogs.export')}}" class="btn btn-success">{{trans('admin/main.bulk_export')}}</a>
-
                 </div>
             </section>
 
             <div class="row">
                 <div class="col-12 col-md-12">
                     <div class="card">
-                        <div class="card-header">
-                            @can('admin_blog_create')
-                                <a href="{{ getAdminPanelUrl() }}/blog/create" class="btn btn-success">{{ trans('admin/main.create_blog') }}</a>
-                            @endcan
+      
+                        <div class="card-header justify-content-between">
+                            
+                            <div>
+                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_blogs_in_a_single_place') }}</p>
+                           </div>
+                           
+                            <div class="d-flex align-items-center gap-12">
 
-                            @can('admin_blog_categories')
-                                <a href="{{ getAdminPanelUrl() }}/blog/categories" class="btn btn-primary ml-2">{{ trans('admin/main.create_category') }}</a>
-                            @endcan
-                        </div>
+                            @can('admin_blog_create')
+                                   <a href="{{ getAdminPanelUrl("/blog/create") }}" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.create_blog') }}</span>
+                                   </a>
+                               @endcan
+
+                               @can('admin_blog_categories')
+                                   <a href="{{ getAdminPanelUrl("/blog/categories") }}" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('admin/main.create_category') }}</span>
+                                   </a>
+                               @endcan
+
+                            </div>
+                           
+                       </div>
 
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14">
+                                <table class="table custom-table font-14">
                                     <tr>
-                                        <th>ID</th>
                                         <th>{{ trans('admin/main.title') }}</th>
                                         <th>{{ trans('admin/main.category') }}</th>
                                         <th>{{ trans('admin/main.author') }}</th>
@@ -121,10 +134,7 @@
                                     @foreach($blog as $post)
                                         <tr>
                                             <td>
-                                                 {{$post->id }}
-                                            </td>
-                                            <td>
-                                                <a href="{{ $post->getUrl() }}" target="_blank">{{ $post->title }}</a>
+                                                <a class="text-dark" href="{{ $post->getUrl() }}" target="_blank">{{ $post->title }}</a>
                                             </td>
                                             <td>{{ $post->category->title }}</td>
                                             @if(!empty($post->author->full_name))
@@ -133,25 +143,41 @@
                                             <td class="text-danger">Deleted</td>
                                             @endif
                                             <td>
-                                                <a href="{{ $post->getUrl() }}" target="_blank">{{ $post->comments_count }}</a>
+                                                <a class="text-dark" href="{{ $post->getUrl() }}" target="_blank">{{ $post->comments_count }}</a>
                                             </td>
                                             <td>{{ dateTimeFormat($post->created_at, 'j M Y | H:i') }}</td>
                                             <td>
-                                                <span class="text-{{ ($post->status == 'pending') ? 'warning' : 'success' }}">
-                                                    {{ ($post->status == 'pending') ? trans('admin/main.pending') : trans('admin/main.published') }}
-                                                </span>
+                                                <span class="badge-status {{ ($post->status == 'pending') ? 'text-warning bg-warning-30' : 'text-success bg-success-30' }}">{{ ($post->status == 'pending') ? trans('admin/main.pending') : trans('admin/main.published') }}</span>
                                             </td>
 
                                             <td width="150px">
-                                                @can('admin_blog_edit')
-                                                    <a href="{{ getAdminPanelUrl() }}/blog/{{ $post->id }}/edit" class="btn-transparent text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                @endcan
-                                                @can('admin_blog_delete')
-                                                    @include('admin.includes.delete_button',['url' => getAdminPanelUrl('/blog/'.$post->id.'/delete'),'btnClass' => ''])
-                                                @endcan
-                                            </td>
+    <div class="btn-group dropdown table-actions position-relative">
+        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+        </button>
+
+        <div class="dropdown-menu dropdown-menu-right">
+            @can('admin_blog_edit')
+                <a href="{{ getAdminPanelUrl() }}/blog/{{ $post->id }}/edit"
+                   class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                    <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                    <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                </a>
+            @endcan
+
+            @can('admin_blog_delete')
+                @include('admin.includes.delete_button',[
+                    'url' => getAdminPanelUrl().'/blog/'.$post->id.'/delete',
+                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                    'btnText' => trans('admin/main.delete'),
+                    'btnIcon' => 'trash',
+                    'iconType' => 'lin',
+                    'iconClass' => 'text-danger mr-2'
+                ])
+            @endcan
+        </div>
+    </div>
+</td>
                                         </tr>
                                     @endforeach
                                 </table>
@@ -167,109 +193,5 @@
             </div>
         </div>
     </section>
-
-    @if ($errors->any())
-    <div class="alert alert-danger">
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-@if (session('error'))
-    <div class="alert alert-danger">
-        {{ session('error') }}
-    </div>
-@endif
-
-@if (session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-@endif
-
-<section class="section">
-    <div class="row">
-        <!-- Form and Download Button -->
-        <div class="col-12 col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4>{{ trans('admin/main.upload_excel') }}</h4>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('admin.blogs.import') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="form-group">
-                            <label>{{ trans('admin/main.upload_excel') }}</label>
-                            <div class="d-flex align-items-center">
-                                <input type="file" name="excel_file" class="form-control col-md-6 mr-2" required>
-                                <button type="submit" class="btn btn-primary">{{ trans('admin/main.upload') }}</button>
-                            </div>
-                        </div>
-                        <div class="mt-5">
-                            <a href="{{ route('admin.blogs.download-template') }}" class="btn btn-success">{{ trans('admin/main.download_template') }}</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-        <!-- Instructions Table -->
-        <div class="col-12 col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4>{{ trans('admin/main.instructions') }}</h4>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>{{ trans('admin/main.column_number') }}</th>
-                                <th>{{ trans('admin/main.column_name') }}</th>
-                                <th>{{ trans('admin/main.instructions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>{{ trans('admin/main.title') }}
-                                    <span class="badge badge-success">{{ trans('admin/main.required') }}</span>
-                                </td>
-                                <td>{{ trans('admin/main.blogs_title_description') }}</td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>{{ trans('admin/main.category') }}
-                                    <span class="badge badge-success">{{ trans('admin/main.required') }}</span>
-                                </td>
-                                <td>{{ trans('admin/main.category_description') }}</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>{{ trans('admin/main.author') }}
-                                    <span class="badge badge-success">{{ trans('admin/main.required') }}</span>
-                                </td>
-                                <td>{{ trans('admin/main.author_description') }}</td>
-                            </tr>
-                            <tr>
-                                <td>4</td>
-                                <td>{{ trans('admin/main.status') }}
-                                    <span class="badge badge-success">{{ trans('admin/main.required') }}</span>
-                                </td>
-                                <td>{{ trans('admin/main.bolgs_status_description') }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
-</section>
 @endsection
 

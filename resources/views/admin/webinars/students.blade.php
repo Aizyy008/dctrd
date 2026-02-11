@@ -23,66 +23,68 @@
 
     <div class="row">
         <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-            <div class="card card-statistic-1">
-                <div class="card-icon bg-primary">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="card-wrap">
-                    <div class="card-header">
-                        <h4>{{ trans('admin/main.total_students') }}</h4>
+            <div class="card-statistic">
+                <div class="card-statistic__mask"></div>
+                <div class="card-statistic__wrap">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="text-gray-500 mt-8">{{ trans('admin/main.total_students') }}</span>
+                        <div class="d-flex-center size-48 bg-primary-30 rounded-12">
+                            <x-iconsax-bul-user class="icons text-primary" width="24px" height="24px"/>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        {{ $totalStudents }}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-            <div class="card card-statistic-1">
-                <div class="card-icon bg-success">
-                    <i class="fas fa-briefcase"></i></div>
-                <div class="card-wrap">
-                    <div class="card-header">
-                        <h4>{{ trans('update.active_students') }}</h4>
-                    </div>
-                    <div class="card-body">
-                        {{ $totalActiveStudents }}
-                    </div>
+                    <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalStudents }}</h5>
                 </div>
             </div>
         </div>
+
         <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-            <div class="card card-statistic-1">
-                <div class="card-icon bg-warning">
-                    <i class="fas fa-info-circle"></i></div>
-                <div class="card-wrap">
-                    <div class="card-header">
-                        <h4>{{ trans('update.expire_students') }}</h4>
+            <div class="card-statistic">
+                <div class="card-statistic__mask"></div>
+                <div class="card-statistic__wrap">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="text-gray-500 mt-8">{{ trans('update.active_students') }}</span>
+                        <div class="d-flex-center size-48 bg-success-30 rounded-12">
+                            <x-iconsax-bul-user-tick class="icons text-success" width="24px" height="24px"/>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        {{ $totalExpireStudents }}
-                    </div>
+                    <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalActiveStudents }}</h5>
                 </div>
             </div>
         </div>
+
         <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-            <div class="card card-statistic-1">
-                <div class="card-icon bg-danger">
-                    <i class="fas fa-ban"></i></div>
-                <div class="card-wrap">
-                    <div class="card-header">
-                        <h4>{{ trans('update.average_learning') }}</h4>
+            <div class="card-statistic">
+                <div class="card-statistic__mask"></div>
+                <div class="card-statistic__wrap">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="text-gray-500 mt-8">{{ trans('update.expire_students') }}</span>
+                        <div class="d-flex-center size-48 bg-danger-30 rounded-12">
+                            <x-iconsax-bul-user-remove class="icons text-danger" width="24px" height="24px"/>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        {{ $averageLearning }}
+                    <h5 class="font-24 mt-12 line-height-1 text-black">{{ $totalExpireStudents }}</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+            <div class="card-statistic">
+                <div class="card-statistic__mask"></div>
+                <div class="card-statistic__wrap">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="text-gray-500 mt-8">{{ trans('update.average_learning') }}</span>
+                        <div class="d-flex-center size-48 bg-accent-30 rounded-12">
+                            <x-iconsax-bul-percentage-circle class="icons text-accent" width="24px" height="24px"/>
+                        </div>
                     </div>
+                    <h5 class="font-24 mt-12 line-height-1 text-black">{{ $averageLearning }}</h5>
                 </div>
             </div>
         </div>
     </div>
 
-    <section class="card">
-        <div class="card-body">
+    <section class="card mt-32">
+        <div class="card-body pb-4">
             <form method="get" class="mb-0">
 
                 <div class="row">
@@ -160,32 +162,46 @@
                     </div>
 
 
-                    <div class="col-md-3">
-                        <div class="form-group mt-1">
-                            <label class="input-label mb-4"> </label>
-                            <input type="submit" class="text-center btn btn-primary w-100" value="{{ trans('admin/main.show_results') }}">
-                        </div>
-                    </div>
+                   <div class="col-md-3 d-flex align-items-center ">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg">{{trans('admin/main.show_results')}}</button>
+                            </div>
                 </div>
             </form>
         </div>
     </section>
 
     <div class="card">
-        <div class="card-header">
-            @can('admin_webinar_notification_to_students')
-                <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/sendNotification" class="btn btn-primary mr-2">{{ trans('notification.send_notification') }}</a>
-            @endcan
 
-            @can('admin_enrollment_add_student_to_items')
-                <button type="button" id="addStudentToCourse" class="btn btn-primary mr-2">{{ trans('update.add_student_to_course') }}</button>
-            @endcan
-            <div class="h-10"></div>
-        </div>
+                        <div class="card-header justify-content-between">
+
+                            <div>
+                               <h5 class="font-14 mb-0">{{ $pageTitle }}</h5>
+                               <p class="font-12 mt-4 mb-0 text-gray-500">{{ trans('update.manage_all_items_in_a_single_place') }}</p>
+                           </div>
+
+                            <div class="d-flex align-items-center gap-12">
+
+                            @can('admin_webinar_notification_to_students')
+                            <a href="{{ getAdminPanelUrl() }}/webinars/{{ $webinar->id }}/sendNotification" target="_blank" class="btn btn-primary">
+                                       <x-iconsax-lin-notification class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('notification.send_notification') }}</span>
+                                   </a>
+                               @endcan
+
+                               @can('admin_enrollment_add_student_to_items')
+                                   <a type="button" id="addStudentToCourse" href="{{ getAdminPanelUrl() }}/users/create"  class="btn btn-primary">
+                                       <x-iconsax-lin-add class="icons text-white" width="18px" height="18px"/>
+                                       <span class="ml-4 font-12">{{ trans('update.add_student_to_course') }}</span>
+                                   </a>
+                               @endcan
+
+                            </div>
+
+                       </div>
 
         <div class="card-body">
             <div class="table-responsive text-center">
-                <table class="table table-striped font-14">
+                <table class="table custom-table font-14">
                     <tr>
                         <th class="text-left">ID</th>
                         <th class="text-left">{{ trans('admin/main.name') }}</th>
@@ -251,35 +267,51 @@
                                 @endif
                             </td>
 
-                            <td class="text-center mb-2" width="120">
+                             <td class="text-center mb-2" width="120">
                                 @if(!empty($student->id))
-                                    {{-- null id => Gift recipient who has not registered yet --}}
-                                    @can('admin_users_impersonate')
-                                        <a href="{{ getAdminPanelUrl() }}/users/{{ $student->id }}/impersonate" target="_blank" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.login') }}">
-                                            <i class="fa fa-user-shield"></i>
-                                        </a>
-                                    @endcan
+                                <div class="btn-group dropdown table-actions position-relative">
+                                    <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                        <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                    </button>
 
-                                    @can('admin_users_edit')
-                                        <a href="{{ getAdminPanelUrl() }}/users/{{ $student->id }}/edit" class="btn-transparent  text-primary" data-toggle="tooltip" data-placement="top" title="{{ trans('admin/main.edit') }}">
-                                            <i class="fa fa-edit"></i>
-                                        </a>
-                                    @endcan
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        @can('admin_users_impersonate')
+                                            <a href="{{ getAdminPanelUrl() }}/users/{{ $student->id }}/impersonate" target="_blank" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                <x-iconsax-lin-user-square class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                <span class="text-gray-500 font-14">{{ trans('admin/main.login') }}</span>
+                                            </a>
+                                        @endcan
 
-                                    @can('admin_webinar_students_delete')
-                                        @if(!$student->access_to_purchased_item)
-                                            @include('admin.includes.delete_button',[
-                                                'url' => getAdminPanelUrl().'/enrollments/'. $student->sale_id .'/enable-access',
-                                                'tooltip' => trans('update.enable-student-access'),
-                                                'btnIcon' => 'fa-check'
-                                            ])
-                                        @else
-                                            @include('admin.includes.delete_button',[
-                                                        'url' => getAdminPanelUrl().'/enrollments/'. $student->sale_id .'/block-access',
-                                                        'tooltip' => trans('update.block_access'),
-                                                    ])
-                                        @endif
-                                    @endcan
+                                        @can('admin_users_edit')
+                                            <a href="{{ getAdminPanelUrl() }}/users/{{ $student->id }}/edit" class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                                                <x-iconsax-lin-edit-2 class="icons text-gray-500 mr-2" width="18px" height="18px"/>
+                                                <span class="text-gray-500 font-14">{{ trans('admin/main.edit') }}</span>
+                                            </a>
+                                        @endcan
+
+                                        @can('admin_webinar_students_delete')
+                                            @if(!$student->access_to_purchased_item)
+                                                @include('admin.includes.delete_button',[
+                                                    'url' => getAdminPanelUrl().'/enrollments/'. $student->sale_id .'/enable-access',
+                                                    'btnClass' => 'dropdown-item text-success mb-3 py-3 px-0 font-14',
+                                                    'btnText' => trans('update.enable-student-access'),
+                                                    'btnIcon' => 'tick-square',
+                                                    'iconType' => 'lin',
+                                                    'iconClass' => 'text-success mr-2',
+                                                ])
+                                            @else
+                                                @include('admin.includes.delete_button',[
+                                                    'url' => getAdminPanelUrl().'/enrollments/'. $student->sale_id .'/block-access',
+                                                    'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                                    'btnText' => trans('update.block_access'),
+                                                    'btnIcon' => 'lock',
+                                                    'iconType' => 'lin',
+                                                    'iconClass' => 'text-danger mr-2',
+                                                ])
+                                            @endif
+                                        @endcan
+                                    </div>
+                                </div>
                                 @endif
                             </td>
 
@@ -359,5 +391,5 @@
         var saveSuccessLang = '{{ trans('webinars.success_store') }}';
     </script>
 
-    <script src="/assets/default/js/admin/webinar_students.min.js"></script>
+    <script src="/assets/admin/js/parts/webinar_students.min.js"></script>
 @endpush

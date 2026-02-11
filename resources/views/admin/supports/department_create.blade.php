@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @push('styles_top')
-
+    <link rel="stylesheet" href="/assets/admin/vendor/bootstrap-colorpicker/bootstrap-colorpicker.min.css">
 @endpush
 
 @section('content')
@@ -57,6 +57,43 @@
                                     @enderror
                                 </div>
 
+                                <div class="form-group">
+                                    <label class="input-label">{{ trans('admin/main.icon') }}</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <button type="button" class="input-group-text admin-file-manager" data-input="statisticIcon" data-preview="holder">
+                                                <i class="fa fa-chevron-up"></i>
+                                            </button>
+                                        </div>
+                                        <input type="text" name="icon" id="statisticIcon" value="{{ !empty($department) ? $department->icon : old("icon") }}" class="js-ajax-icon form-control"/>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>{{ trans('admin/main.trend_color') }}</label>
+
+                                    <div class="input-group colorpickerinput">
+                                        <input type="text" name="color"
+                                               autocomplete="off"
+                                               class="form-control  @error('color') is-invalid @enderror"
+                                               value="{{ !empty($department) ? $department->color : old('color') }}"
+                                               placeholder=""
+                                        />
+
+                                        <div class="input-group-append">
+                                            <div class="input-group-text">
+                                                <i class="fas fa-fill-drip"></i>
+                                            </div>
+                                        </div>
+
+                                        @error('color')
+                                        <div class="invalid-feedback d-block">
+                                            {{ $message }}
+                                        </div>
+                                        @enderror
+                                    </div>
+                                </div>
+
                                 <div class="text-right mt-4">
                                     <button class="btn btn-primary">{{ trans('admin/main.submit') }}</button>
                                 </div>
@@ -70,5 +107,5 @@
 @endsection
 
 @push('scripts_bottom')
-
+    <script src="/assets/admin/vendor/bootstrap-colorpicker/bootstrap-colorpicker.min.js"></script>
 @endpush

@@ -1,4 +1,4 @@
-<li data-id="{{ !empty($formField) ? $formField->id :'' }}" class="accordion-row bg-white rounded-sm border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
+<li data-id="{{ !empty($formField) ? $formField->id :'' }}" class="accordion-row  bg-white rounded-sm border border-gray300 mt-20 py-15 py-lg-30 px-10 px-lg-20">
     <div class="d-flex align-items-center justify-content-between " role="tab" id="form_{{ !empty($formField) ? $formField->id :'record' }}">
         <div class="d-flex align-items-center" href="#collapseForm{{ !empty($formField) ? $formField->id :'record' }}" aria-controls="collapseForm{{ !empty($formField) ? $formField->id :'record' }}" data-parent="#formFieldsCard" role="button"
              data-toggle="collapse"

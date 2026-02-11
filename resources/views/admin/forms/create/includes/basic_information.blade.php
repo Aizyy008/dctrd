@@ -31,6 +31,16 @@
         </div>
 
         <div class="form-group mt-15">
+            <label class="input-label">{{ trans('admin/main.subtitle') }}</label>
+            <input type="text" name="subtitle" value="{{ !empty($form) ? $form->subtitle : old('subtitle') }}" class="form-control @error('subtitle')  is-invalid @enderror" placeholder=""/>
+            @error('subtitle')
+            <div class="invalid-feedback">
+                {{ $message }}
+            </div>
+            @enderror
+        </div>
+
+        <div class="form-group mt-15">
             <label class="input-label">{{ trans('admin/main.url') }}</label>
             <input type="text" name="url" value="{{ !empty($form) ? $form->url : old('url') }}" class="form-control @error('url')  is-invalid @enderror" placeholder=""/>
             @error('url')
@@ -77,6 +87,50 @@
                     </button>
                 </div>
                 @error('image')
+                <div class="invalid-feedback">
+                    {{ $message }}
+                </div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="form-group mt-15">
+            <label class="input-label">{{ trans('update.header_icon') }}</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <button type="button" class="input-group-text admin-file-manager" data-input="header_icon" data-preview="holder">
+                        <i class="fa fa-upload"></i>
+                    </button>
+                </div>
+                <input type="text" name="header_icon" id="header_icon" value="{{ !empty($form) ? $form->header_icon : old('header_icon') }}" class="form-control @error('header_icon')  is-invalid @enderror"/>
+                <div class="input-group-append">
+                    <button type="button" class="input-group-text admin-file-view" data-input="header_icon">
+                        <i class="fa fa-eye"></i>
+                    </button>
+                </div>
+                @error('header_icon')
+                <div class="invalid-feedback">
+                    {{ $message }}
+                </div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="form-group mt-15">
+            <label class="input-label">{{ trans('update.header_overlay_image') }}</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <button type="button" class="input-group-text admin-file-manager" data-input="header_overlay_image" data-preview="holder">
+                        <i class="fa fa-upload"></i>
+                    </button>
+                </div>
+                <input type="text" name="header_overlay_image" id="header_overlay_image" value="{{ !empty($form) ? $form->header_overlay_image : old('header_overlay_image') }}" class="form-control @error('header_overlay_image')  is-invalid @enderror"/>
+                <div class="input-group-append">
+                    <button type="button" class="input-group-text admin-file-view" data-input="header_overlay_image">
+                        <i class="fa fa-eye"></i>
+                    </button>
+                </div>
+                @error('header_overlay_image')
                 <div class="invalid-feedback">
                     {{ $message }}
                 </div>
@@ -140,7 +194,7 @@
                     @endforeach
                 </select>
 
-                <div class="text-muted text-small mt-1">{{ trans('update.forms_user_roles_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.forms_user_roles_hint') }}</div>
                 @error('role_ids')
                 <div class="invalid-feedback d-block">
                     {{ $message }}
@@ -159,7 +213,7 @@
                         @endforeach
                     @endif
                 </select>
-                <div class="text-muted text-small mt-1">{{ trans('update.cashback_users_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.cashback_users_hint') }}</div>
                 @error('users_ids')
                 <div class="invalid-feedback d-block">
                     {{ $message }}
@@ -180,7 +234,7 @@
                         <option value="{{ $userGroup->id }}" {{ in_array($userGroup->id, $selectedGroupIds) ? 'selected' : '' }}>{{ $userGroup->name }}</option>
                     @endforeach
                 </select>
-                <div class="text-muted text-small mt-1">{{ trans('update.cashback_user_groups_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.cashback_user_groups_hint') }}</div>
                 @error('group_ids')
                 <div class="invalid-feedback d-block">
                     {{ $message }}
@@ -195,10 +249,8 @@
                     <label class="custom-control-label" for="enableResubmissionSwitch"></label>
                 </div>
             </div>
-            
+
         </div>
-
-
 
 
         <div class="form-group">
@@ -219,7 +271,7 @@
                 </div>
                 @enderror
             </div>
-            <div class="text-muted text-small mt-1">{{ trans('update.cashback_start_date_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.cashback_start_date_hint') }}</div>
         </div>
 
         <div class="form-group">
@@ -241,7 +293,7 @@
                 </div>
                 @enderror
             </div>
-            <div class="text-muted text-small mt-1">{{ trans('update.cashback_end_date_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.cashback_end_date_hint') }}</div>
         </div>
 
     </div>

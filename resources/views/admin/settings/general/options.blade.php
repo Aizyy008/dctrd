@@ -27,7 +27,7 @@
                                 <span class="custom-switch-indicator"></span>
                                 <label class="custom-switch-description mb-0 cursor-pointer" for="{{ $directPublicationOption }}Switch">{{ trans("update.{$directPublicationOption}") }}</label>
                             </label>
-                            <p class="font-12 text-gray mb-0">{{ trans("update.{$directPublicationOption}_hint") }}</p>
+                            <p class="font-12 text-gray-500 mb-0">{{ trans("update.{$directPublicationOption}_hint") }}</p>
                         </div>
                     @endforeach
 
@@ -44,7 +44,7 @@
                             <span class="custom-switch-indicator"></span>
                             <label class="custom-switch-description mb-0 cursor-pointer" for="allow_instructor_delete_contentSwitch">{{ trans("update.allow_instructor_delete_content") }}</label>
                         </label>
-                        <p class="font-12 text-gray mb-0">{{ trans("update.allow_instructor_delete_content_hint") }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans("update.allow_instructor_delete_content_hint") }}</p>
                     </div>
 
                     <div class="js-content-delete-method-field form-group {{ (!empty($itemValue) and !empty($itemValue['allow_instructor_delete_content'])) ? '' : 'd-none' }}">
@@ -71,7 +71,13 @@
                             <span class="custom-switch-indicator"></span>
                             <label class="custom-switch-description mb-0 cursor-pointer" for="disable_registration_verification_processSwitch">{{ trans("update.disable_registration_verification_process") }}</label>
                         </label>
-                        <p class="font-12 text-gray mb-0">{{ trans("update.disable_registration_verification_process_hint") }}</p>
+                        <p class="font-12 text-gray-500 mb-0">{{ trans("update.disable_registration_verification_process_hint") }}</p>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label>{{ trans('update.duration_of_resend_verification_code') }} ({{ trans('public.minutes') }})</label>
+                        <input type="number" name="value[duration_of_resend_verification_code]" class="form-control" value="{{ (!empty($itemValue) and !empty($itemValue['duration_of_resend_verification_code'])) ? $itemValue['duration_of_resend_verification_code'] : '' }}">
+                        <p class="font-12 text-gray-500 mt-1">{{ trans("update.duration_of_resend_verification_code_hint") }}</p>
                     </div>
 
                 </div>

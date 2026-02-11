@@ -3,7 +3,7 @@
 
         <div class="col-12">
             <div class="d-flex align-items-center justify-content-between">
-                <h5 class="section-title after-line m-0 flex-1 mr-10">{{ trans('update.login_history') }}</h5>
+                <h5 class="section-title after-line m-0 mr-12">{{ trans('update.login_history') }}</h5>
 
                 @can('admin_user_login_history_end_session')
                     @include('admin.includes.delete_button',[
@@ -15,8 +15,8 @@
                 @endcan
             </div>
 
-            <div class="table-responsive mt-5">
-                <table class="table table-striped font-14">
+            <div class="table-responsive mt-1">
+                <table class="table custom-table font-14">
                     <tr>
                         <th>{{ trans('update.os') }}</th>
                         <th>{{ trans('update.browser') }}</th>
@@ -55,24 +55,38 @@
 
                                 <td>{{ $session->getDuration() }}</td>
 
-                                <td class="text-center mb-2" width="120">
+                                <td class="text-center">
+                                    <div class="btn-group dropdown table-actions position-relative">
+                                        <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                                            <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+                                        </button>
 
-                                    @can('admin_user_login_history_end_session')
-                                        @if(empty($session->session_end_at))
-                                            @include('admin.includes.delete_button',[
-                                                'url' => getAdminPanelUrl().'/users/login-history/'.$session->id.'/end-session' ,
-                                                'btnIcon' => 'fa-arrow-down',
-                                                'tooltip' => trans('update.end_session')
-                                               ])
-                                        @endif
-                                    @endcan
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                        @can('admin_user_login_history_end_session')
+                                      @if(empty($session->session_end_at))
+                                          @include('admin.includes.delete_button',[
+                                              'url' => getAdminPanelUrl().'/users/login-history/'.$session->id.'/end-session',
+                                              'btnClass' => 'dropdown-item text-danger mb-3 py-3 px-0 font-14',
+                                              'btnText' => trans('update.end_session'),
+                                              'btnIcon' => 'logout',
+                                              'iconType' => 'lin',
+                                              'iconClass' => 'text-danger mr-2'
+                                          ])
+                                      @endif
+                                  @endcan
 
-                                    @can('admin_user_login_history_delete')
-                                        @include('admin.includes.delete_button',[
-                                                'url' => getAdminPanelUrl().'/users/login-history/'.$session->id.'/delete' ,
-                                               ])
-                                    @endcan
-
+                                  @can('admin_user_login_history_delete')
+                                      @include('admin.includes.delete_button',[
+                                          'url' => getAdminPanelUrl().'/users/login-history/'.$session->id.'/delete',
+                                          'btnClass' => 'dropdown-item text-danger mb-0 py-3 px-0 font-14',
+                                          'btnText' => trans('admin/main.delete'),
+                                          'btnIcon' => 'trash',
+                                          'iconType' => 'lin',
+                                          'iconClass' => 'text-danger mr-2'
+                                      ])
+                                  @endcan
+                                        </div>
+                                    </div>
                                 </td>
 
                             </tr>

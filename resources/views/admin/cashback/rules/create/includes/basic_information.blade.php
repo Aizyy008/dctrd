@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="col-12 col-md-5">
+    <div class="col-12 col-md-6">
 
         @if(!empty(getGeneralSettings('content_translate')))
             <div class="form-group">
@@ -41,7 +41,7 @@
                     @endforeach
                 @endif
             </select>
-            <div class="text-muted text-small mt-1">{{ trans('update.cashback_users_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.cashback_users_hint') }}</div>
             @error('users_ids')
             <div class="invalid-feedback d-block">
                 {{ $message }}
@@ -62,7 +62,7 @@
                     <option value="{{ $userGroup->id }}" {{ in_array($userGroup->id, $selectedGroupIds) ? 'selected' : '' }}>{{ $userGroup->name }}</option>
                 @endforeach
             </select>
-            <div class="text-muted text-small mt-1">{{ trans('update.cashback_user_groups_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.cashback_user_groups_hint') }}</div>
             @error('group_ids')
             <div class="invalid-feedback d-block">
                 {{ $message }}
@@ -88,7 +88,7 @@
                 </div>
                 @enderror
             </div>
-            <div class="text-muted text-small mt-1">{{ trans('update.cashback_start_date_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.cashback_start_date_hint') }}</div>
         </div>
 
         <div class="form-group">
@@ -110,7 +110,7 @@
                 </div>
                 @enderror
             </div>
-            <div class="text-muted text-small mt-1">{{ trans('update.cashback_end_date_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.cashback_end_date_hint') }}</div>
         </div>
 
     </div>

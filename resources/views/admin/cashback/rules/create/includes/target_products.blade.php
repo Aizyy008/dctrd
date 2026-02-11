@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="col-12 col-md-5">
+    <div class="col-12 col-md-6">
 
         <div class="form-group mt-15 ">
             <label class="input-label d-block">{{ trans('update.target_types') }}</label>

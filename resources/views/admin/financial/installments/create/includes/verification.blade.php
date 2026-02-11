@@ -9,7 +9,7 @@
                     <label class="custom-control-label" for="verificationSwitch"></label>
                 </div>
             </div>
-            <p class="text-muted font-12">{{ trans('update.installment_verification_hint') }}</p>
+            <p class="text-gray-500 font-12">{{ trans('update.installment_verification_hint') }}</p>
         </div>
 
         <div class="js-verification-fields {{ (!empty($installment) && $installment->verification) ? '' : 'd-none' }}">
@@ -17,10 +17,10 @@
             <div class="form-group ">
                 <label class="control-label">{{ trans('update.verification_description') }}</label>
                 <textarea name="verification_description" class="summernote form-control text-left  @error('verification_description') is-invalid @enderror" data-height="180">{{ (!empty($installment)) ? $installment->verification_description :'' }}</textarea>
-                <div class="text-muted text-small mt-1">{{ trans('update.installment_verification_description_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_verification_description_hint') }}</div>
                 <div class="invalid-feedback">@error('verification_description') {{ $message }} @enderror</div>
             </div>
-            
+
             <div class="form-group mt-15">
                 <label class="input-label">{{ trans('update.verification_banner') }}</label>
                 <div class="input-group">
@@ -35,14 +35,14 @@
                             <i class="fa fa-eye"></i>
                         </button>
                     </div>
-                    
-                    @error('verification_banner')
-                    <div class="invalid-feedback">
-                        {{ $message }}
-                    </div>
-                    @enderror
-                    <p class="text-muted font-12">{{ trans('update.installment_verification_banner_hint') }}</p>
                 </div>
+
+                @error('verification_banner')
+                <div class="invalid-feedback">
+                    {{ $message }}
+                </div>
+                @enderror
+                <p class="text-gray-500 font-12">{{ trans('update.installment_verification_banner_hint') }}</p>
             </div>
 
             <div class="form-group mt-15">
@@ -59,14 +59,14 @@
                             <i class="fa fa-eye"></i>
                         </button>
                     </div>
-                    
-                    @error('verification_video')
-                    <div class="invalid-feedback">
-                        {{ $message }}
-                    </div>
-                    @enderror
-                    <p class="text-muted font-12">{{ trans('update.installment_verification_video_hint') }}</p>
                 </div>
+
+                @error('verification_video')
+                <div class="invalid-feedback">
+                    {{ $message }}
+                </div>
+                @enderror
+                <p class="text-gray-500 font-12">{{ trans('update.installment_verification_video_hint') }}</p>
             </div>
 
         </div>
@@ -79,7 +79,7 @@
                     <label class="custom-control-label" for="request_uploadsSwitch"></label>
                 </div>
             </div>
-            <p class="text-muted font-12">{{ trans('update.installment_request_uploads_hint') }}</p>
+            <p class="text-gray-500 font-12">{{ trans('update.installment_request_uploads_hint') }}</p>
         </div>
 
         <div class="mb-20">
@@ -90,7 +90,7 @@
                     <label class="custom-control-label" for="bypassSwitch"></label>
                 </div>
             </div>
-            <p class="text-muted font-12">{{ trans('update.installment_bypass_verification_for_verified_users_hint') }}</p>
+            <p class="text-gray-500 font-12">{{ trans('update.installment_bypass_verification_for_verified_users_hint') }}</p>
         </div>
 
     </div>

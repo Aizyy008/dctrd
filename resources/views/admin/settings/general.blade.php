@@ -50,14 +50,6 @@
                                 <li class="nav-item">
                                     <a class="nav-link" id="sms_channels-tab" data-toggle="tab" href="#sms_channels" role="tab" aria-controls="sms_channels" aria-selected="true">{{ trans('update.sms_channels') }}</a>
                                 </li>
-                                {{-- ++++++++++++ Tab Header : language_over_ip ++++++++++++ --}}
-                                <li class="nav-item">
-                                    <a  class="nav-link" id="language_over_ip-tab" data-toggle="tab" 
-                                        href="#language_over_ip" 
-                                        role="tab" aria-controls="language_over_ip" aria-selected="true">
-                                        {{ trans('update.language_over_ip') }}
-                                    </a>
-                                </li>
                             </ul>
 
                             <div class="tab-content" id="myTabContent2">
@@ -68,9 +60,6 @@
                                 @include('admin.settings.general.security',['itemValue' => (!empty($settings) and !empty($settings['security'])) ? $settings['security']->value : ''])
                                 @include('admin.settings.general.options',['itemValue' => (!empty($settings) and !empty($settings['general_options'])) ? $settings['general_options']->value : ''])
                                 @include('admin.settings.general.sms_channels',['itemValue' => (!empty($settings) and !empty($settings['sms_channels'])) ? $settings['sms_channels']->value : ''])
-                                {{-- ++++++++++++ Tab Content : language_over_ip ++++++++++++ --}}
-                                @include('admin.settings.general.language_over_ip',['itemValue' => (!empty($settings) and !empty($settings['language_over_ip'])) ? $settings['language_over_ip']->value : ''])
-
                             </div>
 
                         </div>
@@ -83,5 +72,5 @@
 
 @push('scripts_bottom')
 
-    <script src="/assets/default/js/admin/settings/general.min.js"></script>
+    <script src="/assets/admin/js/parts/settings/general.min.js"></script>
 @endpush

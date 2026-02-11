@@ -196,5 +196,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/form_submissions_details.min.js"></script>
+    <script src="/assets/admin/js/parts/form_submissions_details.min.js"></script>
 @endpush

@@ -52,7 +52,7 @@
                                     <div class="row">
                                         <div class="col-12 col-md-8">
                                             <form action="{{ getAdminPanelUrl() }}/settings/seo_metas/store" method="post">
-                                            {{ csrf_field() }}
+                                                {{ csrf_field() }}
 
                                                 <div class="form-group">
                                                     <label>{{ trans('update.extra_meta_tags') }}</label>
@@ -95,6 +95,18 @@
                                                         </div>
                                                         @enderror
                                                     </div>
+
+                                                    @if(in_array($page, ['upcoming_courses_lists', 'bundles_lists', 'products_lists']))
+                                                        <div class="form-group">
+                                                            <label>{{ trans('update.bottom_seo_title') }}</label>
+                                                            <input type="text" name="value[{{ $page }}][bottom_seo_title]" value="{{ (!empty($itemValue) and !empty($itemValue[$page]) and !empty($itemValue[$page]['bottom_seo_title'])) ? $itemValue[$page]['bottom_seo_title'] : "" }}" class="form-control"/>
+                                                        </div>
+
+                                                        <div class="form-group">
+                                                            <label>{{ trans('update.bottom_seo_content') }}</label>
+                                                            <textarea name="value[{{ $page }}][bottom_seo_content]" rows="4" class="form-control">{{ (!empty($itemValue) and !empty($itemValue[$page]) and !empty($itemValue[$page]['bottom_seo_content'])) ? $itemValue[$page]['bottom_seo_content'] : "" }}</textarea>
+                                                        </div>
+                                                    @endif
 
                                                     <div class="form-group custom-switches-stacked">
                                                         <label class="custom-switch pl-0 d-flex align-items-center">

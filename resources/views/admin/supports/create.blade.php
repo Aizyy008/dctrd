@@ -73,8 +73,6 @@
                                             @enderror
                                         </div>
 
-                                        <div class="row align-items-center">
-                                            <div class="col-12 col-md-8">
                                                 <div class="form-group mt-15">
                                                     <label class="input-label">{{ trans('admin/main.attach') }}</label>
                                                     <div class="input-group">
@@ -91,13 +89,12 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                            <div class="hstack gap-2 text-right">
+                                                <button class="btn btn-primary">{{ trans('admin/main.send') }}</button>
                                             </div>
 
-                                            <div class="col-12 col-md-4 mt-2 mt-md-0">
-                                                <button class="btn btn-primary w-100">{{ trans('admin/main.send') }}</button>
-                                            </div>
-                                        </div>
-
+                                     
                                     </form>
                                 </div>
                             </div>

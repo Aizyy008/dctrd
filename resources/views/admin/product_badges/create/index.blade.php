@@ -179,7 +179,7 @@
                                     </div>
 
                                     <div class="table-responsive mt-15">
-                                        <table class="table table-striped font-14">
+                                        <table class="table custom-table font-14">
                                             <tr>
                                                 <th>{{ trans('admin/main.type') }}</th>
                                                 <th class="text-left">{{ trans('update.content') }}</th>
@@ -227,5 +227,5 @@
     <script src="/assets/admin/vendor/bootstrap-colorpicker/bootstrap-colorpicker.min.js"></script>
     <script src="/assets/default/vendors/sweetalert2/dist/sweetalert2.min.js"></script>
 
-    <script src="/assets/default/js/admin/product_badges.min.js"></script>
+    <script src="/assets/admin/js/parts/product_badges.min.js"></script>
 @endpush

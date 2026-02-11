@@ -92,8 +92,8 @@
             <div class="add-answer-container">
 
                 @if (!empty($question_edit->quizzesQuestionsAnswers) and !$question_edit->quizzesQuestionsAnswers->isEmpty())
-                    @foreach ($question_edit->quizzesQuestionsAnswers as $answer)
-                        @include('admin.quizzes.modals.multiple_answer_form',['answer' => $answer])
+                    @foreach ($question_edit->quizzesQuestionsAnswers as $answerRow)
+                        @include('admin.quizzes.modals.multiple_answer_form', ['answer' => $answerRow])
                     @endforeach
                 @else
                     @include('admin.quizzes.modals.multiple_answer_form')

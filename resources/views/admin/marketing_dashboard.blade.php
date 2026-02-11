@@ -14,9 +14,9 @@
         <div class="row">
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                 <div class="card card-statistic-1">
-                    <div class="card-icon bg-warning">
-                        <i class="fas fa-users"></i>
-                    </div>
+                    <div class="card-icon bg-warning-30 rounded-12">
+                                <x-iconsax-bul-user-remove class="icons text-warning" width="32px" height="32px"/>
+                            </div>
                     <div class="card-wrap">
                         <div class="card-header">
                             <h4>{{trans('admin/main.users_without_purchases')}}</h4>
@@ -29,8 +29,9 @@
             </div>
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                 <div class="card card-statistic-1">
-                    <div class="card-icon bg-danger">
-                        <i class="fas fa-users"></i></div>
+                   <div class="card-icon bg-danger-30 rounded-12">
+                                <x-iconsax-bul-profile-2user class="icons text-danger" width="32px" height="32px"/>
+                            </div>
                     <div class="card-wrap">
                         <div class="card-header">
                             <h4>{{trans('admin/main.teachers_without_class')}}</h4>
@@ -44,8 +45,9 @@
 
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                 <div class="card card-statistic-1">
-                    <div class="card-icon bg-primary">
-                        <i class="fas fa-star"></i></div>
+                    <div class="card-icon bg-primary-40 rounded-12">
+                                <x-iconsax-bul-star class="icons text-primary" width="32px" height="32px"/>
+                            </div>
                     <div class="card-wrap">
                         <div class="card-header">
                             <h4>{{trans('admin/main.featured_classes')}}</h4>
@@ -59,8 +61,9 @@
 
             <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                 <div class="card card-statistic-1">
-                    <div class="card-icon bg-success">
-                        <i class="fas fa-percentage"></i></div>
+                   <div class="card-icon bg-success-30 rounded-12">
+                                <x-iconsax-bul-receipt-discount class="icons text-success" width="32px" height="32px"/>
+                            </div>
                     <div class="card-wrap">
                         <div class="card-header">
                             <h4>{{trans('admin/main.active_discounts')}}</h4>
@@ -179,12 +182,12 @@
                     <div class="card-header">
                         <h4>{{trans('admin/main.top_selling_classes')}}</h4>
                         <div class="card-header-action">
-                            <a href="{{ getAdminPanelUrl() }}/webinars?type=course&sort=sales_desc" class="btn btn-primary">{{trans('admin/main.view_more')}}<i class="fas fa-chevron-right"></i></a>
+                            <a href="{{ getAdminPanelUrl() }}/webinars?type=course&sort=sales_desc" class="btn btn-sm btn-primary">{{trans('admin/main.view_more')}}<i class="fas fa-chevron-right"></i></a>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive text-center">
-                            <table class="table table-striped font-14">
+                            <table class="table custom-table font-14 ">
 
                                 <tr>
                                     <th>#</th>
@@ -197,9 +200,9 @@
                                     <tr>
                                         <td>{{ $getTopSellingClass->id }}</td>
                                         <td>
-                                            <a href="{{ $getTopSellingClass->getUrl() }}" target="_blank" class="media-body text-left">
-                                                <div>{{ $getTopSellingClass->title }}</div>
-                                                <div class="text-primary text-small font-600-bold">{{ trans('webinars.'.$getTopSellingClass->type) }}</div>
+                                            <a href="{{ $getTopSellingClass->getUrl() }}" target="_blank" class="media-body text-dark text-left">
+                                                <div class="text-dark">{{ $getTopSellingClass->title }}</div>
+                                                <div class="text-gray-500 text-small">{{ trans('webinars.'.$getTopSellingClass->type) }}</div>
                                             </a>
                                         </td>
                                         <td>{{ $getTopSellingClass->sales_count }}</td>
@@ -223,7 +226,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive text-center">
-                            <table class="table table-striped font-14">
+                            <table class="table custom-table font-14 ">
                                 <tr>
                                     <th>#</th>
                                     <th class="text-left">{{trans('admin/main.consultant')}}</th>
@@ -258,7 +261,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive text-center">
-                            <table class="table table-striped font-14">
+                            <table class="table custom-table font-14 ">
                                 <tr>
                                     <th>{{trans('admin/main.id')}}</th>
                                     <th class="text-left">{{trans('admin/main.name')}}</th>
@@ -294,7 +297,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive text-center">
-                            <table class="table table-striped font-14">
+                            <table class="table custom-table font-14 ">
                                 <tr>
                                     <th>{{trans('admin/main.id')}}</th>
                                     <th class="text-left">{{trans('admin/main.name')}}</th>
@@ -332,7 +335,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive text-center">
-                            <table class="table table-striped font-14">
+                            <table class="table custom-table font-14 ">
                                 <tr>
                                     <th>#</th>
                                     <th class="text-left">{{trans('admin/main.name')}}</th>
@@ -366,7 +369,7 @@
     <script src="/assets/default/vendors/chartjs/chart.min.js"></script>
     <script src="/assets/admin/vendor/owl.carousel/owl.carousel.min.js"></script>
 
-    <script src="/assets/admin/js/marketing_dashboard.min.js"></script>
+    <script src="/assets/admin/js/parts/marketing_dashboard.min.js"></script>
 
     <script>
         (function ($) {

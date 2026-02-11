@@ -188,5 +188,5 @@
 
 @push('scripts_bottom')
     <script src="/assets/vendors/summernote/summernote-bs4.min.js"></script>
-    <script src="/assets/default/js/admin/settings/cookie_settings.min.js"></script>
+    <script src="/assets/admin/js/parts/settings/cookie_settings.min.js"></script>
 @endpush

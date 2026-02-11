@@ -99,6 +99,6 @@
     <script src="/assets/default/vendors/sortable/jquery-ui.min.js"></script>
     <script src="/assets/admin/vendor/bootstrap-colorpicker/bootstrap-colorpicker.min.js"></script>
 
-    <script src="/assets/default/js/admin/create_certificate_template.min.js"></script>
+    <script src="/assets/admin/js/parts/create_certificate_template.min.js"></script>
 
 @endpush

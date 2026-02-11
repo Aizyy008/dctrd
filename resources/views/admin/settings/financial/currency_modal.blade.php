@@ -52,7 +52,7 @@
                 <input type="number" name="exchange_rate" class="js-ajax-exchange_rate form-control" value="{{ (!empty($editCurrency) and !empty($editCurrency->exchange_rate)) ? $editCurrency->exchange_rate : 0 }}">
                 <div class="invalid-feedback"></div>
 
-                <p class="mt-1 text-muted font-12">{{ trans('update.insert_the_selected_currency_exchange_rate_to_the_default_currency',['sign' => $currency]) }}</p>
+                <p class="mt-1 text-gray-500 font-12">{{ trans('update.insert_the_selected_currency_exchange_rate_to_the_default_currency',['sign' => $currency]) }}</p>
             </div>
 
             <div class="d-flex align-items-center justify-content-end mt-3">

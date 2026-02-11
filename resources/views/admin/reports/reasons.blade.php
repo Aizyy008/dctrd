@@ -50,10 +50,9 @@
                                                     <input type="text" name="value[]"
                                                            class="form-control w-auto flex-grow-1"
                                                            placeholder="{{ trans('admin/main.choose_title') }}"/>
-
-                                                    <button type="button" class="btn btn-success add-btn fas fa-plus ml-2"></button>
+                                                    <button type="button" class="btn btn-success add-btn ml-2"><x-iconsax-lin-add class="icons text-white" width="16px" height="16px"/></button>
                                                 </div>
-                                                <div class="text-muted text-small mt-1">{{ trans('admin/main.report_reasons_hint') }}</div>
+                                                <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.report_reasons_hint') }}</div>
                                             </div>
 
                                             @if(!empty($value) and count($value))
@@ -64,8 +63,7 @@
                                                                    class="form-control w-auto flex-grow-1"
                                                                    value="{{ $item }}"
                                                                    placeholder="{{ trans('admin/main.choose_title') }}"/>
-
-                                                            <button type="button" class="btn fas fa-times remove-btn btn-danger ml-2"></button>
+                                                            <button type="button" class="btn btn-danger remove-btn ml-2"><x-iconsax-lin-trash class="icons text-white" width="16px" height="16px"/></button>
                                                         </div>
                                                     </div>
                                                 @endforeach
@@ -74,7 +72,9 @@
                                     </div>
                                 </div>
 
+                                <div class="text-right mt-4">
                                 <button type="submit" class="btn btn-primary">{{ trans('admin/main.save_change') }}</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -85,5 +85,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/reports.min.js"></script>
+    <script src="/assets/admin/js/parts/reports.min.js"></script>
 @endpush

@@ -40,7 +40,11 @@
                                 @endcan
 
                                 <li class="nav-item">
-                                    <a class="nav-link " id="referral-tab" data-toggle="tab" href="#referral" role="tab" aria-controls="referral" aria-selected="true">{{ trans('admin/main.referral') }}</a>
+                                    <a class="nav-link {{ (request()->get('tab') == "referral") ? 'active' : '' }}" id="referral-tab" href="{{ getAdminPanelUrl("/settings/financial?tab=referral") }}">{{ trans('admin/main.referral') }}</a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link {{ (request()->get('tab') == "referral_how_work") ? 'active' : '' }}" id="referral_how_work-tab" href="{{ getAdminPanelUrl("/settings/financial?tab=referral_how_work") }}">{{ trans('update.referral_how_work') }}</a>
                                 </li>
 
                                 <li class="nav-item">
@@ -67,7 +71,13 @@
                                     @include('admin.settings.financial.payment_channel.lists')
                                 @endcan
 
-                                @include('admin.settings.financial.referral',['itemValue' => (!empty($settings) and !empty($settings['referral'])) ? $settings['referral']->value : ''])
+                                @if(request()->get('tab') == "referral")
+                                    @include('admin.settings.financial.referral')
+                                @endif
+
+                                @if(request()->get('tab') == "referral_how_work")
+                                    @include('admin.settings.financial.referral_how_work')
+                                @endif
 
                                 @if(request()->get('tab') == "currency")
                                     @include('admin.settings.financial.currency',['itemValue' => (!empty($settings) and !empty($settings[\App\Models\Setting::$currencySettingsName])) ? $settings[\App\Models\Setting::$currencySettingsName]->value : ''])

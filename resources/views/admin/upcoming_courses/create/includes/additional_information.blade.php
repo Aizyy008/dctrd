@@ -45,7 +45,7 @@
         <div class="form-group mt-15">
             <label class="input-label">{{ trans('public.capacity') }}</label>
             <input type="number" name="capacity" value="{{ (!empty($upcomingCourse) and !empty($upcomingCourse->capacity)) ? $upcomingCourse->capacity : old('capacity') }}" class="form-control @error('capacity')  is-invalid @enderror" placeholder="{{ trans('forms.capacity_placeholder') }}"/>
-            <div class="text-muted text-small mt-1">{{ trans('admin/main.class_url_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.class_url_hint') }}</div>
             @error('capacity')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -84,7 +84,7 @@
         <div class="form-group">
             <label class="input-label">{{ trans('update.sections') }}</label>
             <input type="number" min="0" name="sections" value="{{ (!empty($upcomingCourse) and !empty($upcomingCourse->sections)) ? $upcomingCourse->sections : old('sections') }}" class="form-control @error('sections')  is-invalid @enderror"/>
-            <div class="text-muted text-small mt-1">{{ trans('update.upcoming_sections_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.upcoming_sections_hint') }}</div>
             @error('sections')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -95,7 +95,7 @@
         <div class="form-group">
             <label class="input-label">{{ trans('public.parts') }}</label>
             <input type="number" min="0" name="parts" value="{{ (!empty($upcomingCourse) and !empty($upcomingCourse->parts)) ? $upcomingCourse->parts : old('parts') }}" class="form-control @error('parts')  is-invalid @enderror"/>
-            <div class="text-muted text-small mt-1">{{ trans('update.upcoming_parts_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.upcoming_parts_hint') }}</div>
             @error('parts')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -106,7 +106,7 @@
         <div class="form-group">
             <label class="input-label">{{ trans('update.course_progress') }}</label>
             <input type="number" min="0" name="course_progress" value="{{ (!empty($upcomingCourse) and !empty($upcomingCourse->course_progress)) ? $upcomingCourse->course_progress : old('course_progress') }}" class="form-control @error('course_progress')  is-invalid @enderror" placeholder="{{ trans('update.progress_placeholder') }}"/>
-            <div class="text-muted text-small mt-1">{{ trans('update.upcoming_progress_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('update.upcoming_progress_hint') }}</div>
             @error('course_progress')
             <div class="invalid-feedback">
                 {{ $message }}
@@ -152,8 +152,16 @@
                 <div class="form-group mt-30 d-flex align-items-center justify-content-between ">
                     <label class="cursor-pointer input-label" for="forumSwitch">{{ trans('update.course_forum') }}</label>
                     <div class="custom-control custom-switch">
-                        <input type="checkbox" name="forum" class="custom-control-input" id="forumSwitch" {{ !empty($upcomingCourse) && $upcomingCourse->forum ? 'checked' : (old('forum') ? 'checked' : '')  }}>
+                        <input type="checkbox" name="forum" class="custom-control-input" id="forumSwitch" {{ (!empty($upcomingCourse) && $upcomingCourse->forum) ? 'checked' : (old('forum') ? 'checked' : '')  }}>
                         <label class="custom-control-label" for="forumSwitch"></label>
+                    </div>
+                </div>
+
+                <div class="form-group mt-30 d-flex align-items-center justify-content-between ">
+                    <label class="cursor-pointer input-label" for="assignmentsSwitch">{{ trans('update.course_assignments') }}</label>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" name="assignments" class="custom-control-input" id="assignmentsSwitch" {{ (!empty($upcomingCourse) && $upcomingCourse->assignments) ? 'checked' : (old('assignments') ? 'checked' : '')  }}>
+                        <label class="custom-control-label" for="assignmentsSwitch"></label>
                     </div>
                 </div>
 
@@ -221,7 +229,7 @@
 
                         @foreach($filter->options as $option)
                             <div class="form-group mt-3 d-flex align-items-center justify-content-between">
-                                <label class="text-gray font-14" for="filterOptions{{ $option->id }}">{{ $option->title }}</label>
+                                <label class="text-gray-500 font-14" for="filterOptions{{ $option->id }}">{{ $option->title }}</label>
                                 <div class="custom-control custom-checkbox">
                                     <input type="checkbox" name="filters[]" value="{{ $option->id }}" {{ ((!empty($upcomingCourseFilterOptions) && in_array($option->id, $upcomingCourseFilterOptions)) ? 'checked' : '') }} class="custom-control-input" id="filterOptions{{ $option->id }}">
                                     <label class="custom-control-label" for="filterOptions{{ $option->id }}"></label>

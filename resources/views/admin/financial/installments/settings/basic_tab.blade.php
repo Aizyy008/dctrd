@@ -22,7 +22,7 @@
                     <span class="custom-switch-indicator"></span>
                     <label class="custom-switch-description mb-0 cursor-pointer" for="installmentStatusSwitch">{{ trans('admin/main.active') }}</label>
                 </label>
-                <div class="text-muted text-small">{{ trans('update.installment_setting_active_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.installment_setting_active_hint') }}</div>
             </div>
 
             <div class="form-group custom-switches-stacked">
@@ -32,7 +32,7 @@
                     <span class="custom-switch-indicator"></span>
                     <label class="custom-switch-description mb-0 cursor-pointer" for="disableCourseSwitch">{{ trans('update.disable_course_access_when_user_have_an_overdue_installment') }}</label>
                 </label>
-                <div class="text-muted text-small">{{ trans('update.disable_course_access_when_user_have_an_overdue_installment_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.disable_course_access_when_user_have_an_overdue_installment_hint') }}</div>
             </div>
 
             <div class="form-group custom-switches-stacked">
@@ -42,7 +42,7 @@
                     <span class="custom-switch-indicator"></span>
                     <label class="custom-switch-description mb-0 cursor-pointer" for="disableAllCourseSwitch">{{ trans('update.disable_all_courses_access_when_user_have_an_overdue_installment') }}</label>
                 </label>
-                <div class="text-muted text-small">{{ trans('update.disable_all_courses_access_when_user_have_an_overdue_installment_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.disable_all_courses_access_when_user_have_an_overdue_installment_hint') }}</div>
             </div>
 
             <div class="form-group custom-switches-stacked">
@@ -52,7 +52,7 @@
                     <span class="custom-switch-indicator"></span>
                     <label class="custom-switch-description mb-0 cursor-pointer" for="disableWhenOverdueSwitch">{{ trans('update.disable_instalments_when_the_user_have_an_overdue_installment') }}</label>
                 </label>
-                <div class="text-muted text-small">{{ trans('update.disable_instalments_when_the_user_have_an_overdue_installment_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.disable_instalments_when_the_user_have_an_overdue_installment_hint') }}</div>
             </div>
 
             <div class="form-group custom-switches-stacked">
@@ -62,7 +62,7 @@
                     <span class="custom-switch-indicator"></span>
                     <label class="custom-switch-description mb-0 cursor-pointer" for="allowCancelVerificationSwitch">{{ trans('update.allow_cancel_verification') }}</label>
                 </label>
-                <div class="text-muted text-small">{{ trans('update.allow_cancel_verification_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.allow_cancel_verification_hint') }}</div>
             </div>
 
             <div class="form-group custom-switches-stacked">
@@ -72,13 +72,13 @@
                     <span class="custom-switch-indicator"></span>
                     <label class="custom-switch-description mb-0 cursor-pointer" for="displayInstallmentButtonSwitch">{{ trans('update.display_installment_button') }}</label>
                 </label>
-                <div class="text-muted text-small">{{ trans('update.display_installment_button_hint') }}</div>
+                <div class="text-gray-500 text-small">{{ trans('update.display_installment_button_hint') }}</div>
             </div>
 
             <div class="form-group">
                 <label>{{ trans('update.overdue_interval_days') }}</label>
                 <input type="number" name="value[overdue_interval_days]" value="{{ (!empty($basicValue) and !empty($basicValue['overdue_interval_days'])) ? $basicValue['overdue_interval_days'] : old('overdue_interval_days') }}" class="form-control text-center"/>
-                <div class="text-muted text-small mt-1">{{ trans('update.overdue_interval_days_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.overdue_interval_days_hint') }}</div>
             </div>
 
             <div class="form-group">
@@ -87,22 +87,23 @@
                     <option value="top_of_page" {{ (!empty($basicValue) and !empty($basicValue['installment_plans_position']) and $basicValue['installment_plans_position'] == "top_of_page") ? 'selected' : '' }}>{{ trans('update.top_of_page') }}</option>
                     <option value="bottom_of_page" {{ (!empty($basicValue) and !empty($basicValue['installment_plans_position']) and $basicValue['installment_plans_position'] == "bottom_of_page") ? 'selected' : '' }}>{{ trans('update.bottom_of_page') }}</option>
                 </select>
-                <div class="text-muted text-small mt-1">{{ trans('update.installment_plans_position_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.installment_plans_position_hint') }}</div>
             </div>
 
             <div class="form-group">
                 <label>{{ trans('update.reminder_before_overdue_days') }}</label>
                 <input type="number" name="value[reminder_before_overdue_days]" value="{{ (!empty($basicValue) and !empty($basicValue['reminder_before_overdue_days'])) ? $basicValue['reminder_before_overdue_days'] : old('reminder_before_overdue_days') }}" class="form-control text-center"/>
-                <div class="text-muted text-small mt-1">{{ trans('update.reminder_before_overdue_days_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.reminder_before_overdue_days_hint') }}</div>
             </div>
 
             <div class="form-group">
                 <label>{{ trans('update.reminder_after_overdue_days') }}</label>
                 <input type="number" name="value[reminder_after_overdue_days]" value="{{ (!empty($basicValue) and !empty($basicValue['reminder_after_overdue_days'])) ? $basicValue['reminder_after_overdue_days'] : old('reminder_after_overdue_days') }}" class="form-control text-center"/>
-                <div class="text-muted text-small mt-1">{{ trans('update.reminder_after_overdue_days_hint') }}</div>
+                <div class="text-gray-500 text-small mt-1">{{ trans('update.reminder_after_overdue_days_hint') }}</div>
             </div>
-
+            <div class="text-right">
             <button type="submit" class="btn btn-primary mt-1">{{ trans('admin/main.submit') }}</button>
+            </div>
         </form>
     </div>
 </div>

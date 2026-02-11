@@ -86,7 +86,7 @@
 
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-striped font-14 ">
+                                <table class="table custom-table font-14 ">
                                     <tr>
                                         <th class="text-left">{{trans('admin/main.content')}}</th>
                                         <th class="text-left">{{trans('admin/main.instructor')}}</th>
@@ -129,11 +129,11 @@
                                         @endphp
 
                                         <tr>
-                                            <th class="text-left">
+                                            <th class="text-left font-weight-200">
                                                 <span class="d-block">{{ $contentItemTitle }}</span>
 
                                                 @if(!empty($contentType))
-                                                    <span class="d-block font-12 text-gray mt-1">{{ trans('update.'.$contentType) }}</span>
+                                                    <span class="d-block font-12 text-gray-500 mt-1">{{ trans('update.'.$contentType) }}</span>
                                                 @endif
                                             </th>
 
@@ -141,11 +141,11 @@
                                                 <span class="d-block">{{ $request->user->full_name }}</span>
 
                                                 @if(!empty($request->user->email))
-                                                    <span class="d-block font-12 text-gray mt-1">{{ $request->user->email }}</span>
+                                                    <span class="d-block font-12 text-gray-500 mt-1">{{ $request->user->email }}</span>
                                                 @endif
 
                                                 @if(!empty($request->user->mobile))
-                                                    <span class="d-block font-12 text-gray mt-1">{{ $request->user->mobile }}</span>
+                                                    <span class="d-block font-12 text-gray-500 mt-1">{{ $request->user->mobile }}</span>
                                                 @endif
                                             </th>
 
@@ -184,29 +184,43 @@
                                                 {{ trans('admin/main.'.$request->status) }}
                                             </td>
 
-                                            <td class="align-middle text-right">
+<td class="align-middle text-right">
+    <div class="btn-group dropdown table-actions position-relative">
+        @if($request->status == "pending")
+            <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
+                <x-iconsax-lin-more class="icons text-gray-500" width="20px" height="20px"/>
+            </button>
 
-                                                @can('admin_content_delete_requests_actions')
-                                                    @if($request->status == "pending")
-                                                        @include('admin.includes.delete_button',[
-                                                                'url' => getAdminPanelUrl("/content-delete-requests/{$request->id}/approve"),
-                                                                'btnClass' => 'text-primary text-decoration-none btn-transparent btn-sm mr-1',
-                                                                'btnText' => '<i class="fa fa-check"></i>',
-                                                                'tooltip' => trans("admin/main.approve"),
-                                                                ])
+            <div class="dropdown-menu dropdown-menu-right">
+                @can('admin_content_delete_requests_actions')
+                    <div class="dropdown-item d-flex align-items-center mb-3 py-3 px-0 gap-4">
+                        @include('admin.includes.delete_button',[
+                            'url' => getAdminPanelUrl().'/content-delete-requests/'.$request->id.'/approve',
+                            'btnClass' => 'text-success',
+                            'btnText' => trans('admin/main.approve'),
+                            'btnIcon' => 'tick-circle',
+                            'iconType' => 'lin',
+                            'iconClass' => 'text-success mr-2'
+                        ])
+                    </div>
 
-                                                        @include('admin.includes.delete_button',[
-                                                        'url' => getAdminPanelUrl("/content-delete-requests/{$request->id}/reject"),
-                                                        'btnClass' => 'text-danger text-decoration-none btn-transparent btn-sm',
-                                                        'btnText' => '<i class="fa fa-times"></i>',
-                                                        'tooltip' => trans("admin/main.reject"),
-                                                        ])
-                                                    @else
-                                                        -
-                                                    @endif
-                                                @endcan
-
-                                            </td>
+                    <div class="dropdown-item d-flex align-items-center mb-0 py-3 px-0 gap-4">
+                        @include('admin.includes.delete_button',[
+                            'url' => getAdminPanelUrl().'/content-delete-requests/'.$request->id.'/reject',
+                            'btnClass' => 'text-danger',
+                            'btnText' => trans('admin/main.reject'),
+                            'btnIcon' => 'close-circle',
+                            'iconType' => 'lin',
+                            'iconClass' => 'text-danger mr-2'
+                        ])
+                    </div>
+                @endcan
+            </div>
+        @else
+            <span class="text-muted">-</span>
+        @endif
+    </div>
+</td>
                                         </tr>
                                     @endforeach
 
@@ -246,5 +260,5 @@
 @endsection
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/content-delete-requests.min.js"></script>
+    <script src="/assets/admin/js/parts/content-delete-requests.min.js"></script>
 @endpush

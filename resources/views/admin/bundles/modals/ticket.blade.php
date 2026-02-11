@@ -51,7 +51,7 @@
             <label class="input-label">{{ trans('public.capacity') }}</label>
             <input type="text" name="capacity" class="js-ajax-capacity form-control" placeholder="{{ trans('forms.empty_means_unlimited') }}"/>
             <div class="invalid-feedback"></div>
-            <div class="text-muted text-small mt-1">{{ trans('admin/main.price_plan_modal_capacity_hint') }}</div>
+            <div class="text-gray-500 text-small mt-1">{{ trans('admin/main.price_plan_modal_capacity_hint') }}</div>
         </div>
 
         <div class="mt-30 d-flex align-items-center justify-content-end">

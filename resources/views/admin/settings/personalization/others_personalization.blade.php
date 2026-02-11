@@ -31,6 +31,34 @@
                     </label>
                 </div>
 
+
+                <h5 class="text-dark font-20 mt-5">{{ trans('update.secure_payment_text') }}</h5>
+
+                <div class="form-group custom-switches-stacked mb-0 mt-3">
+                    <label class="custom-switch pl-0">
+                        <input type="hidden" name="value[show_secure_payment_text]" value="0">
+                        <input type="checkbox" name="value[show_secure_payment_text]" id="show_secure_payment_text_switch" value="1" {{ (!empty($itemValue) and !empty($itemValue['show_secure_payment_text']) and $itemValue['show_secure_payment_text']) ? 'checked="checked"' : '' }} class="custom-switch-input"/>
+                        <span class="custom-switch-indicator"></span>
+                        <label class="custom-switch-description mb-0 cursor-pointer" for="show_secure_payment_text_switch">{{ trans('admin/main.show') }}</label>
+                    </label>
+
+                    <div class="mt-1 text-gray-500">{{ trans('update.secure_payment_text_hint') }}</div>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label>{{ trans('update.secure_payment_image') }}</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button type="button" class="input-group-text admin-file-manager" data-input="secure_payment_image" data-preview="holder">
+                                <i class="fa fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <input type="text" name="value[secure_payment_image]" id="secure_payment_image" value="{{ (!empty($itemValue) and !empty($itemValue['secure_payment_image'])) ? $itemValue['secure_payment_image'] : '' }}" class="form-control"/>
+                    </div>
+                    <div class="mt-2 text-gray-500">{{ trans('update.secure_payment_image_hint') }}</div>
+                </div>
+
+
                 <h5 class="text-dark font-20 mt-5">{{ trans('update.avatar_settings') }}</h5>
 
                 <div class="form-group">
@@ -50,6 +78,18 @@
                             </button>
                         </div>
                         <input type="text" name="value[default_user_avatar]" id="default_user_avatar" value="{{ (!empty($itemValue) and !empty($itemValue['default_user_avatar'])) ? $itemValue['default_user_avatar'] : '' }}" class="form-control"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label">{{ trans('update.default_user_profile_secondary_image') }}</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button type="button" class="input-group-text admin-file-manager" data-input="default_user_profile_secondary_image" data-preview="holder">
+                                <i class="fa fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <input type="text" name="value[default_user_profile_secondary_image]" id="default_user_profile_secondary_image" value="{{ (!empty($itemValue) and !empty($itemValue['default_user_profile_secondary_image'])) ? $itemValue['default_user_profile_secondary_image'] : '' }}" class="form-control"/>
                     </div>
                 </div>
 
@@ -73,5 +113,5 @@
 </div>
 
 @push('scripts_bottom')
-    <script src="/assets/default/js/admin/settings/others_personalization.min.js"></script>
+    <script src="/assets/admin/js/parts/settings/others_personalization.min.js"></script>
 @endpush

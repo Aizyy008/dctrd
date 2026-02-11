@@ -1,9 +1,11 @@
 <section class="mt-50">
-    <div class="">
+
+      <div class="d-flex justify-content-between align-items-center">
         <h2 class="section-title after-line">{{ trans('public.chapters') }} ({{ trans('public.optional') }})</h2>
+        <button type="button" class="js-add-chapter btn btn-primary btn-sm mt-15" data-webinar-id="{{ $webinar->id }}">{{ trans('public.new_chapter') }}</button>
     </div>
 
-    <button type="button" class="js-add-chapter btn btn-primary btn-sm mt-15" data-webinar-id="{{ $webinar->id }}">{{ trans('public.new_chapter') }}</button>
+   
 
     @include('admin.webinars.create_includes.accordions.chapter')
 </section>
