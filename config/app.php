@@ -215,6 +215,11 @@ return [
         Paytabscom\Laravel_paytabs\PaypageServiceProvider::class,
         PayMob\PayMobServiceProvider::class,
         Clickpaysa\Laravel_package\PaypageServiceProvider::class,
+        \App\Providers\LandingBuilderProvider::class,
+        App\Providers\LicenseEventServiceProvider::class,
+        App\Providers\PluginBundleLicenseServiceProvider::class,
+        App\Providers\ThemeBuilderLicenseServiceProvider::class,
+        App\Providers\MobileAppLicenseServiceProvider::class,
     ],
 
     /*
