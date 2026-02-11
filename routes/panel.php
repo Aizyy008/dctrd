@@ -13,10 +13,10 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
     /* Dashboard */
     Route::get('/', 'DashboardController@index');
 
-    /* Events */
-    Route::group(['prefix' => 'events'], function () {
-        Route::get('/', 'EventsController@index');
-        Route::post('/get-by-day', 'EventsController@getEventsByDay');
+    /* Events Calender */
+    Route::group(['prefix' => 'events-calender'], function () {
+        Route::get('/', 'EventsCalendarController@index');
+        Route::post('/get-by-day', 'EventsCalendarController@getEventsByDay');
     });
 
     Route::post('/content-delete-request', 'ContentDeleteRequestController@store');
@@ -46,8 +46,12 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
             Route::post('/order-items', 'WebinarController@orderItems');
             Route::post('/{id}/getContentItemByLocale', 'WebinarController@getContentItemByLocale');
 
-            Route::group(['prefix' => '{webinar_id}/statistics'], function () {
+            Route::group(['prefix' => '{course_id}/statistics'], function () {
                 Route::get('/', 'WebinarStatisticController@index');
+            });
+
+            Route::group(['prefix' => '{course_id}/media'], function () {
+                Route::get('/delete-icon', 'WebinarController@deleteIcon');
             });
         });
 
@@ -82,6 +86,18 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::group(['prefix' => 'personal-notes'], function () {
             Route::get('/', 'CoursePersonalNotesController@index');
             Route::get('/{id}/delete', 'CoursePersonalNotesController@delete');
+        });
+
+        /* Attendances */
+        Route::group(['prefix' => 'attendances', 'middleware' => 'user.not.access'], function () {
+            Route::get('/', 'AttendancesController@index');
+            Route::get('/{session_id}/details', 'AttendanceDetailsController@index');
+            Route::get('/{session_id}/details/{student_id}/status/{status}', 'AttendanceDetailsController@changeStatus');
+        });
+
+        /* My Attendances */
+        Route::group(['prefix' => 'my-attendances'], function () {
+            Route::get('/', 'MyAttendancesController@index');
         });
     });
 
@@ -162,11 +178,18 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/store', 'SessionController@store');
         Route::post('/{id}/update', 'SessionController@update');
         Route::get('/{id}/delete', 'SessionController@destroy');
-        Route::get('/{id}/joinToBigBlueButton', 'SessionController@joinToBigBlueButton');
-        Route::get('/{id}/joinToAgora', 'SessionController@joinToAgora');
+
         Route::get('/{id}/endAgora', 'SessionController@endAgora');
         Route::get('/{id}/toggleUsersJoinToAgora', 'SessionController@toggleUsersJoinToAgora');
-        Route::get('/{id}/joinToJitsi', 'SessionController@joinToJitsi');
+
+
+        /* Join */
+        Route::group(['prefix' => '/{id}/join'], function () {
+            Route::get('/', 'SessionController@joinToSession');
+            Route::get('/toBigBlueButton', 'SessionController@joinToBigBlueButton');
+            Route::get('/toAgora', 'SessionController@joinToAgora');
+            Route::get('/toJitsi', 'SessionController@joinToJitsi');
+        });
     });
 
     Route::group(['prefix' => 'chapters'], function () {
@@ -275,6 +298,63 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::post('/{id}/create-session', 'ReserveMeetingController@createSession');
 
         Route::get('/{id}/contact-info', 'ReserveMeetingController@getContactInfoModal');
+
+        /* Meeting Packages*/
+        Route::group(['prefix' => 'packages'], function () {
+            Route::get('/', 'MeetingPackagesController@index');
+            Route::post('/store', 'MeetingPackagesController@store');
+            Route::get('/{id}/edit', 'MeetingPackagesController@edit');
+            Route::post('/{id}/update', 'MeetingPackagesController@update');
+            Route::get('/{id}/delete', 'MeetingPackagesController@delete');
+        });
+
+        /* Sold Packages */
+        Route::group(['prefix' => 'sold-packages'], function () {
+            Route::get('/', 'SoldMeetingPackagesController@index');
+            Route::get('/{id}/get-student-detail', 'SoldMeetingPackagesController@getStudentDetail');
+
+            /* Sessions */
+            Route::group(['prefix' => '{id}/sessions'], function () {
+                Route::get('/', 'SoldMeetingPackageSessionsController@index');
+
+                /* Date */
+                Route::get('/{session_id}/set-date', 'SoldMeetingPackageSessionsController@getSessionDateForm');
+                Route::post('/{session_id}/set-date', 'SoldMeetingPackageSessionsController@updateSessionDate');
+
+                /* API */
+                Route::get('/{session_id}/set-api', 'SoldMeetingPackageSessionsController@getSessionApiForm');
+                Route::post('/{session_id}/set-api', 'SoldMeetingPackageSessionsController@updateSessionApi');
+
+                /* Join */
+                Route::get('/{session_id}/join-modal', 'SoldMeetingPackageSessionsController@joinToSessionModal');
+                Route::get('/{session_id}/join-to-session', 'SoldMeetingPackageSessionsController@joinToSession');
+
+                /* Finish */
+                Route::get('/{session_id}/finish-modal', 'SoldMeetingPackageSessionsController@finishSessionModal');
+                Route::get('/{session_id}/finish', 'SoldMeetingPackageSessionsController@finishSession');
+            });
+        });
+
+        /* Purchased Packages */
+        Route::group(['prefix' => 'purchased-packages'], function () {
+            Route::get('/', 'PurchasedMeetingPackagesController@index');
+            Route::get('/{id}/get-instructor-detail', 'PurchasedMeetingPackagesController@getInstructorDetail');
+
+            /* Sessions */
+            Route::group(['prefix' => '{id}/sessions'], function () {
+                Route::get('/', 'PurchasedMeetingPackageSessionsController@index');
+
+                /* Join */
+                Route::get('/{session_id}/join-modal', 'PurchasedMeetingPackageSessionsController@joinToSessionModal');
+                Route::get('/{session_id}/join-to-session', 'PurchasedMeetingPackageSessionsController@joinToSession');
+
+                /* Finish */
+                Route::get('/{session_id}/finish-modal', 'PurchasedMeetingPackageSessionsController@finishSessionModal');
+                Route::get('/{session_id}/finish', 'PurchasedMeetingPackageSessionsController@finishSession');
+            });
+        });
+
+
     });
 
     Route::group(['prefix' => 'financial'], function () {
@@ -550,6 +630,86 @@ Route::group(['namespace' => 'Panel', 'prefix' => 'panel', 'middleware' => ['imp
         Route::get('/', 'AiContentController@index');
         Route::post('/generate', 'AiContentController@generate');
     });
+
+    // Events Routes
+    Route::group(['prefix' => 'events', 'middleware' => 'check_event_feature_status'], function () {
+        Route::get('/', 'EventsController@index');
+        Route::get('/new', 'EventsController@create');
+        Route::post('/store', 'EventsController@store');
+        Route::get('/{id}/edit', 'EventsController@edit');
+        Route::get('/{id}/step/{step}', 'EventsController@edit');
+        Route::post('/{id}/update', 'EventsController@update');
+        Route::get('/{id}/delete', 'EventsController@delete');
+
+        Route::post('/search', 'EventsController@search');
+        Route::post('/{id}/getContentItemByLocale', 'EventsController@getContentItemByLocale');
+
+        // Tickets
+        Route::group(['prefix' => '{event_id}/tickets'], function () {
+            Route::post('/store', 'EventTicketsController@store');
+            Route::post('/{id}/update', 'EventTicketsController@update');
+            Route::get('/{id}/delete', 'EventTicketsController@delete');
+            Route::post('/order-items', 'EventTicketsController@orderItems');
+        });
+
+        // Speakers
+        Route::group(['prefix' => '{event_id}/speakers'], function () {
+            Route::post('/store', 'EventSpeakersController@store');
+            Route::post('/{id}/update', 'EventSpeakersController@update');
+            Route::get('/{id}/delete', 'EventSpeakersController@delete');
+            Route::post('/order-items', 'EventSpeakersController@orderItems');
+        });
+
+        // Create Session
+        Route::group(['prefix' => '{event_id}/create-session'], function () {
+            Route::get('/', 'EventsSessionController@getSessionModal');
+            Route::post('/', 'EventsSessionController@createSession');
+        });
+
+        // Join Session
+        Route::get('/{event_id}/join-session-modal', 'EventsSessionController@getJoinSessionModal');
+        Route::get('/{event_id}/join-session', 'EventsSessionController@joinToSession');
+
+        // Sold Tickets
+        Route::group(['prefix' => '{event_id}/sold-tickets'], function () {
+            Route::get('/', 'EventSoldTicketsController@index');
+            Route::get('/{id}/details', 'EventSoldTicketsController@details');
+        });
+
+        // organization_lists
+        Route::group(['prefix' => 'my-organization'], function () {
+            Route::get('/', 'OrganizationEventsController@index');
+        });
+
+        // my_purchases
+        Route::group(['prefix' => 'my-purchases'], function () {
+            Route::get('/', 'MyPurchaseEventsController@index');
+            Route::get('/{event_id}/join-modal', 'MyPurchaseEventsController@joinToSessionModal');
+            Route::get('/{event_id}/join-to-session', 'MyPurchaseEventsController@joinToSession');
+            Route::get('/{event_id}/invoice', 'MyPurchaseEventsController@invoice');
+
+            Route::group(['prefix' => '{event_id}/tickets'], function () {
+                Route::get('/', 'MyPurchaseEventTicketsController@index');
+                Route::get('/{id}/details', 'MyPurchaseEventTicketsController@details');
+            });
+        });
+
+        // comments
+        Route::group(['prefix' => 'comments'], function () {
+            Route::get('/', 'MyEventsCommentsController@index');
+            Route::post('/{id}/update', 'MyEventsCommentsController@update');
+            Route::get('/{id}/delete', 'MyEventsCommentsController@destroy');
+            Route::post('/{id}/reply', 'MyEventsCommentsController@reply');
+            Route::post('/{id}/report', 'MyEventsCommentsController@report');
+        });
+
+        // my_comments
+        Route::group(['prefix' => 'my-comments'], function () {
+            Route::get('/', 'MyCommentsOnEventsController@index');
+        });
+
+    });
+
 
 });
 

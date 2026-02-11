@@ -37,6 +37,17 @@ Route::group(['prefix' => 'cookie-security', 'middleware' => ['share', 'imperson
     Route::post('/customize', 'Web\CookieSecurityController@setCustomize');
 });
 
+// Captcha
+Route::group(['prefix' => 'captcha'], function () {
+    Route::post('create', function () {
+        $response = ['status' => 'success', 'captcha_src' => captcha_src('flat')];
+
+        return response()->json($response);
+    });
+    Route::get('{config?}', '\Mews\Captcha\CaptchaController@getCaptcha');
+});
+
+
 /* Emergency Database Update */
 Route::get('/emergencyDatabaseUpdate', function () {
     \Illuminate\Support\Facades\Artisan::call('migrate', [
@@ -82,7 +93,7 @@ Route::group(['namespace' => 'Auth', 'middleware' => ['check_mobile_app', 'share
 
 Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impersonate', 'share', 'check_maintenance', 'check_restriction']], function () {
     Route::get('/stripe', function () {
-        return view('web.default.cart.channels.stripe');
+        return view('design_1.web.cart.payment.channels.stripe');
     });
 
     // set Locale
@@ -233,7 +244,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
         });
 
         Route::group(['prefix' => 'users'], function () {
-            Route::get('/{username}/follow', 'UserController@followToggle');
+            Route::get('/{username}/follow', 'UserProfileController@followToggle');
         });
 
         Route::group(['prefix' => 'become-instructor'], function () {
@@ -241,7 +252,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
             Route::get('/packages', 'BecomeInstructorController@packages')->name('becomeInstructorPackages');
             Route::get('/packages/{id}/checkHasInstallment', 'BecomeInstructorController@checkPackageHasInstallment');
             Route::get('/packages/{id}/installments', 'BecomeInstructorController@getInstallmentsByRegistrationPackage');
-            Route::post('/', 'BecomeInstructorController@store');
+            Route::post('/store', 'BecomeInstructorController@store');
             Route::post('/form-fields', 'BecomeInstructorController@getFormFieldsByUserType');
         });
 
@@ -285,6 +296,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     });
 
     Route::group(['prefix' => 'subscribes'], function () {
+        Route::get('/{id}/details', 'SubscribeController@details');
         Route::get('/apply/bundle/{bundleSlug}', 'SubscribeController@bundleApply');
         Route::get('/apply/{webinarSlug}', 'SubscribeController@apply');
     });
@@ -329,21 +341,12 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
         Route::get('/{link}', 'PagesController@index');
     });
 
-    // Captcha
-    Route::group(['prefix' => 'captcha'], function () {
-        Route::post('create', function () {
-            $response = ['status' => 'success', 'captcha_src' => captcha_src('flat')];
-
-            return response()->json($response);
-        });
-        Route::get('{config?}', '\Mews\Captcha\CaptchaController@getCaptcha');
-    });
-
     Route::post('/newsletters', 'UserController@makeNewsletter');
 
-    Route::group(['prefix' => 'jobs'], function () {
-        Route::get('/{methodName}', 'JobsController@index');
-        Route::post('/{methodName}', 'JobsController@index');
+    /* Cron Jobs Routes */
+    Route::group(['prefix' => 'cron-jobs'], function () {
+        Route::get('/{methodName}', 'CronJobsController@index');
+        Route::post('/{methodName}', 'CronJobsController@index');
     });
 
     Route::group(['prefix' => 'regions'], function () {
@@ -481,6 +484,43 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     Route::group(['prefix' => 'landings'], function () {
         Route::get('/{landing_url}', 'LandingController@index');
     });
+
+    /* Events */
+    Route::group(['prefix' => 'events', 'middleware' => 'check_event_feature_status'], function () {
+
+        /* Validation */
+        Route::group(['prefix' => 'validation'], function () {
+            Route::get('/', 'EventTicketValidationController@index');
+            Route::post('/check', 'EventTicketValidationController@checkValidate');
+        });
+
+        // Lists & Show
+        Route::get('/', 'EventsController@index');
+        Route::get('{slug}', 'EventsController@show');
+        Route::get('/{slug}/share-modal', 'EventsController@getShareModal');
+        Route::get('/{slug}/report-modal', 'EventsController@getReportModal');
+        Route::post('{id}/report', 'EventsController@report');
+
+        /* Free Ticket */
+        Route::post('/{slug}/tickets/{id}/free', 'EventsController@getFreeTicket');
+
+        /* Reviews */
+        Route::group(['prefix' => '{slug}/reviews'], function () {
+            Route::post('/load-more', 'EventReviewController@getReviewsByEventSlug');
+            Route::post('/store', 'EventReviewController@store');
+            Route::post('/store-reply-comment', 'EventReviewController@storeReplyComment');
+            Route::get('/{id}/delete', 'EventReviewController@destroy');
+            Route::get('/{id}/delete-comment/{commentId}', 'EventReviewController@destroy');
+        });
+
+    });
+
+    /* Events */
+    Route::group(['prefix' => 'meeting-packages'], function () {
+        Route::get('/', 'MeetingPackagesController@index');
+        Route::get('/{id}/free', 'MeetingPackagesController@buyFree');
+    });
+
 });
 
 // Purchase Code Routes
