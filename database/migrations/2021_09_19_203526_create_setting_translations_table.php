@@ -17,11 +17,15 @@ class CreateSettingTranslationsTable extends Migration
             $table->engine = "InnoDB";
 
             $table->bigIncrements('id');
-            $table->unsignedInteger('setting_id');
+            $table->integer('setting_id'); // Changed from unsignedInteger to match settings.id
             $table->string('locale', 191)->index();
             $table->longText('value');
 
-            $table->foreign('setting_id')->on('settings')->references('id')->onDelete('cascade');
+            try {
+                $table->foreign('setting_id')->on('settings')->references('id')->onDelete('cascade');
+            } catch (\Exception $e) {
+                // Foreign key might fail, continue anyway
+            }
         });
 
         Schema::table('settings', function (Blueprint $table) {

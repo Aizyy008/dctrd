@@ -24,7 +24,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Update exchange rates every 12 hours
+        $schedule->command('exchange:update')
+            ->twiceDaily(1, 13)
+            ->withoutOverlapping()
+            ->onFailure(function () {
+                \Log::error('Scheduled exchange rate update failed');
+            })
+            ->onSuccess(function () {
+                \Log::info('Scheduled exchange rate update completed successfully');
+            });
     }
 
     /**

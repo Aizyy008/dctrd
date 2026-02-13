@@ -2457,7 +2457,7 @@ function checkShowCookieSecurityDialog()
 function getLeafletApiPath()
 {
     return "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-    //return 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+    // Alternative: Use Mapbox tiles (requires API key in config)
 }
 
 function getDefaultMapsLocation(): array
@@ -2662,4 +2662,163 @@ function getAvailableUploadFileSources()
     }
 
     return $sources;
+}
+
+/**
+ * Convert currency for current user or guest
+ * 
+ * @param float $amount
+ * @param string|null $fromCurrency
+ * @return float
+ */
+function convertCurrency($amount, $fromCurrency = null)
+{
+    try {
+        $exchangeService = app(\App\Services\ExchangeRateService::class);
+        
+        if (!$exchangeService->isEnabled()) {
+            return $amount;
+        }
+        
+        $fromCurrency = $fromCurrency ?? config('exchange.base_currency', 'USD');
+        
+        // Get user's preferred currency
+        $toCurrency = $fromCurrency;
+        if (auth()->check() && !empty(auth()->user()->preferred_currency)) {
+            $toCurrency = auth()->user()->preferred_currency;
+        }
+        
+        return $exchangeService->convert($amount, $fromCurrency, $toCurrency);
+    } catch (\Exception $e) {
+        \Log::error('Currency conversion error: ' . $e->getMessage());
+        return $amount;
+    }
+}
+
+/**
+ * Format currency with user's preferred currency
+ * 
+ * @param float $amount
+ * @param string|null $fromCurrency
+ * @return string
+ */
+function formatCurrency($amount, $fromCurrency = null)
+{
+    $converted = convertCurrency($amount, $fromCurrency);
+    $currency = auth()->check() && !empty(auth()->user()->preferred_currency) 
+        ? auth()->user()->preferred_currency 
+        : config('exchange.base_currency', 'USD');
+    
+    return $currency . ' ' . number_format($converted, 2);
+}
+
+/**
+ * Convert unit for current user
+ * 
+ * @param float $value
+ * @param string $type (length, mass, area)
+ * @param string|null $fromUnit
+ * @return float
+ */
+function convertUnit($value, $type, $fromUnit = null)
+{
+    try {
+        $unitService = app(\App\Services\UnitConversionService::class);
+        
+        if (!$unitService->isEnabled()) {
+            return $value;
+        }
+        
+        $fromUnit = $fromUnit ?? $unitService->getBaseUnit($type);
+        
+        if (!auth()->check()) {
+            return $value;
+        }
+        
+        $toUnit = match($type) {
+            'length' => auth()->user()->preferred_length_unit ?? 'km',
+            'mass' => auth()->user()->preferred_mass_unit ?? 'kg',
+            'area' => auth()->user()->preferred_area_unit ?? 'sqm',
+            default => $fromUnit,
+        };
+        
+        return $unitService->convert($value, $type, $fromUnit, $toUnit);
+    } catch (\Exception $e) {
+        \Log::error('Unit conversion error: ' . $e->getMessage());
+        return $value;
+    }
+}
+
+/**
+ * Convert and format unit for display
+ * 
+ * @param float $value
+ * @param string $type
+ * @param string|null $fromUnit
+ * @param bool $short
+ * @return string
+ */
+function formatUnit($value, $type, $fromUnit = null, $short = false)
+{
+    try {
+        $unitService = app(\App\Services\UnitConversionService::class);
+        
+        if (!$unitService->isEnabled()) {
+            $fromUnit = $fromUnit ?? $unitService->getBaseUnit($type);
+            return $unitService->format($value, $fromUnit, $short);
+        }
+        
+        $converted = convertUnit($value, $type, $fromUnit);
+        
+        $unit = 'km';
+        if (auth()->check()) {
+            $unit = match($type) {
+                'length' => auth()->user()->preferred_length_unit ?? 'km',
+                'mass' => auth()->user()->preferred_mass_unit ?? 'kg',
+                'area' => auth()->user()->preferred_area_unit ?? 'sqm',
+                default => $unitService->getBaseUnit($type),
+            };
+        }
+        
+        return $unitService->format($converted, $unit, $short);
+    } catch (\Exception $e) {
+        \Log::error('Unit formatting error: ' . $e->getMessage());
+        return number_format($value, 2);
+    }
+}
+
+/**
+ * Get user's preferred currency
+ * 
+ * @return string
+ */
+function getUserCurrency()
+{
+    if (auth()->check() && !empty(auth()->user()->preferred_currency)) {
+        return auth()->user()->preferred_currency;
+    }
+    return config('exchange.base_currency', 'USD');
+}
+
+/**
+ * Get user's preferred unit for a type
+ * 
+ * @param string $type
+ * @return string
+ */
+function getUserUnit($type)
+{
+    $unitService = app(\App\Services\UnitConversionService::class);
+    $baseUnit = $unitService->getBaseUnit($type);
+    
+    if (!auth()->check()) {
+        return $baseUnit;
+    }
+    
+    return match($type) {
+        'length' => auth()->user()->preferred_length_unit ?? $baseUnit,
+        'mass' => auth()->user()->preferred_mass_unit ?? $baseUnit,
+        'area' => auth()->user()->preferred_area_unit ?? $baseUnit,
+        default => $baseUnit,
+    };
 }

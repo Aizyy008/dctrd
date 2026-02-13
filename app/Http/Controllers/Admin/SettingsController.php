@@ -420,4 +420,61 @@ class SettingsController extends Controller
 
         return back();
     }
+
+    /**
+     * Update exchange rates manually
+     */
+    public function updateExchangeRates()
+    {
+        $this->authorize('admin_settings_financial');
+
+        try {
+            $exchangeService = app(\App\Services\ExchangeRateService::class);
+            
+            if ($exchangeService->updateRates()) {
+                $lastUpdate = $exchangeService->getLastUpdateTime();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Exchange rates updated successfully',
+                    'last_update' => $lastUpdate ? $lastUpdate->format('Y-m-d H:i:s') : null,
+                ]);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update exchange rates. Check logs for details.',
+            ], 500);
+        } catch (\Exception $e) {
+            \Log::error('Manual exchange rate update failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get exchange rate settings
+     */
+    public function getExchangeRateSettings()
+    {
+        $this->authorize('admin_settings_financial');
+
+        try {
+            $exchangeService = app(\App\Services\ExchangeRateService::class);
+            
+            return response()->json([
+                'enabled' => $exchangeService->isEnabled(),
+                'last_update' => $exchangeService->getLastUpdateTime(),
+                'supported_currencies' => $exchangeService->getSupportedCurrencies(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
