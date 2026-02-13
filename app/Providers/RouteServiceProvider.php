@@ -52,6 +52,8 @@ class RouteServiceProvider extends ServiceProvider
 
         $this->mapPanelRoutes();
 
+        $this->mapExchangeUnitsRoutes();
+
         //
     }
 
@@ -103,5 +105,17 @@ class RouteServiceProvider extends ServiceProvider
         Route::middleware('web')
             ->namespace($this->namespace)
             ->group(base_path('routes/panel.php'));
+    }
+
+    /**
+     * Define the "exchange & units" routes for the application.
+     *
+     * @return void
+     */
+    protected function mapExchangeUnitsRoutes()
+    {
+        Route::middleware('web')
+            ->namespace($this->namespace)
+            ->group(base_path('routes/exchange_units.php'));
     }
 }

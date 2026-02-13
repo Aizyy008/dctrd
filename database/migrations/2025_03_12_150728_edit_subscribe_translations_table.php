@@ -15,9 +15,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('subscribe_translations', function (Blueprint $table) {
-            $table->renameColumn('description', 'subtitle');
-        });
+        // MariaDB doesn't support renameColumn, use CHANGE instead
+        DB::statement("ALTER TABLE `subscribe_translations` CHANGE `description` `subtitle` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
 
         Schema::table('subscribe_translations', function (Blueprint $table) {
             $table->text('description')->nullable();

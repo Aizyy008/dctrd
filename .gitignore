@@ -455,13 +455,32 @@ $RECYCLE.BIN/
 .nfs*
 
 # ============================================
+# PowerShell Scripts & Markdown Files
+# ============================================
+# PowerShell Scripts
+*.ps1
+*.psm1
+*.psd1
+*.txt
+
+# Markdown Documentation (except essential files)
+*.md
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!CODE_OF_CONDUCT.md
+!SECURITY.md
+!LICENSE.md
+
+# ============================================
 # END OF GITIGNORE
 # ============================================
 
 # Notes:
 # - This .gitignore is comprehensive for Laravel + RocketLMS
 # - Excludes external systems (_ERP, _Mirror, nextcloud)
+# - Excludes PowerShell scripts and temporary MD files
 # - Keeps essential config and documentation files
 # - Protects sensitive credentials and API keys
 # - Excludes large media and backup files
-# - Version: 1.0 (2026-01-31)
+# - Version: 1.1 (2026-02-13)

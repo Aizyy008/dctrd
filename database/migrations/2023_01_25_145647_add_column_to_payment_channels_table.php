@@ -14,7 +14,7 @@ class AddColumnToPaymentChannelsTable extends Migration
     public function up()
     {
         Schema::table('payment_channels', function (Blueprint $table) {
-            $table->text('currencies')->nullable()->after('settings');
+            $table->text('currencies')->nullable()->after('credentials');
         });
     }
 }
